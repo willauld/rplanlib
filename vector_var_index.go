@@ -10,10 +10,10 @@ func my_check_index_sequence(years, taxbins, cgbins, accounts int, accmap map[st
 	//row = [0] * nvars
 	for i := 0; i < years; i++ {
 		for k := 0; k < taxbins; k++ {
-			if varindex.x(i, k) != ky {
+			if varindex.X(i, k) != ky {
 				pass_ok = false
 				fmt.Printf("varindex.x(%d,%d) is %d not %d as it should be",
-					i, k, varindex.x(i, k), ky)
+					i, k, varindex.X(i, k), ky)
 			}
 			ky += 1
 		}
@@ -21,10 +21,10 @@ func my_check_index_sequence(years, taxbins, cgbins, accounts int, accmap map[st
 	if accmap["aftertax"] > 0 {
 		for i := 0; i < years; i++ {
 			for l := 0; l < cgbins; l++ {
-				if varindex.y(i, l) != ky {
-					pass_ok = False
+				if varindex.Y(i, l) != ky {
+					pass_ok = false
 					fmt.Printf("varindex.y(%d,%d) is %d not %d as it should be",
-						i, l, varindex.y(i, l), ky)
+						i, l, varindex.Y(i, l), ky)
 				}
 				ky += 1
 			}
@@ -32,29 +32,29 @@ func my_check_index_sequence(years, taxbins, cgbins, accounts int, accmap map[st
 	}
 	for i := 0; i < years; i++ {
 		for j := 0; j < accounts; j++ {
-			if varindex.w(i, j) != ky {
+			if varindex.W(i, j) != ky {
 				pass_ok = false
 				fmt.Printf("varindex.w(%d,%d) is %d not %d as it should be",
-					i, j, varindex.w(i, j), ky)
+					i, j, varindex.W(i, j), ky)
 			}
 			ky += 1
 		}
 	}
 	for i := 0; i < years+1; i++ { // b[] has an extra year
 		for j := 0; j < accounts; j++ {
-			if varindex.b(i, j) != ky {
+			if varindex.B(i, j) != ky {
 				pass_ok = false
 				fmt.Printf("varindex.b(%d,%d) is %d not %d as it should be",
-					i, j, varindex.b(i, j), ky)
+					i, j, varindex.B(i, j), ky)
 			}
 			ky += 1
 		}
 	}
 	for i := 0; i < years; i++ {
-		if varindex.s(i) != ky {
+		if varindex.S(i) != ky {
 			pass_ok = false
 			fmt.Printf("varindex.s(%d) is %d not %d as it should be",
-				i, varindex.s(i), ky)
+				i, varindex.S(i), ky)
 		}
 		ky += 1
 	}
@@ -62,7 +62,7 @@ func my_check_index_sequence(years, taxbins, cgbins, accounts int, accmap map[st
 		for i := 0; i < years; i++ {
 			for j := 0; j < accounts; j++ {
 				if varindex.D(i, j) != ky {
-					pass_ok = False
+					pass_ok = false
 					fmt.Printf("varindex.D(%d,%d) is %d not %d as it should be",
 						i, j, varindex.D(i, j), ky)
 				}
@@ -97,73 +97,86 @@ type vectorVarIndex struct {
 func NewVectorVarIndex(iyears, itaxbins, icgbins, iaccounts int,
 	iaccmap map[string]int) vectorVarIndex {
 
-	ycount = 0
+	ycount := 0
 	if iaccmap["aftertax"] > 0 { // no cgbins if no aftertax account
 		ycount = iyears * icgbins
 	}
+	xcount := iyears * itaxbins
+	wcount := iyears * iaccounts
+	bcount := (iyears + 1) * iaccounts
+	dcount := iyears * iaccounts
+	scount := iyears
+	vsize := xcount + ycount + wcount + bcount + scount + dcount
+	ystart := xcount
+	wstart := ystart + ycount
+	bstart := wstart + wcount
+	sstart := bstart + bcount
+	dstart := sstart + scount
+
 	return vectorVarIndex{
 		Years:    iyears,
 		Taxbins:  itaxbins,
 		Cgbins:   icgbins,
 		Accounts: iaccounts,
 		Accmap:   iaccmap,
-		Xcount:   iyears * itaxbins,
+		Xcount:   xcount,
 		Ycount:   ycount,
-		Wcount:   iyears * iaccounts,
+		Wcount:   wcount,
 		// final balances in years+1,
-		Bcount: (iyears + 1) * iaccounts,
-		Scount: iyears,
-		Dcount: iyears * iaccounts,
-		Vsize: Xcount + Ycount + Wcount +
-			Bcount + Scount + Dcount,
+		Bcount: bcount,
+		Scount: scount,
+		Dcount: dcount,
+		Vsize:  vsize,
 
 		//xstart = 0
-		Ystart: Xcount,
-		Wstart: Ystart + Ycount,
-		Bstart: Wstart + Wcount,
-		Sstart: Bstart + Bcount,
-		Dstart: Sstart + Scount,
+		Ystart: ystart,
+		Wstart: wstart,
+		Bstart: bstart,
+		Sstart: sstart,
+		Dstart: dstart,
 	}
 }
 
-func (v vectorVarIndex) X(i, k int) {
+func (v vectorVarIndex) X(i, k int) int {
 	//assert i >= 0 and i < v.Years
 	//assert k >= 0 and k < v.Taxbins
 	return i*v.Taxbins + k
 }
 
-func (v vectorVarIndex) Y(i, l int) {
+func (v vectorVarIndex) Y(i, l int) int {
 	//assert v.Accmap["aftertax"] > 0
 	//assert i >= 0 and i < v.Years
 	//assert l >= 0 and l < v.Cgbins
 	return v.Ystart + i*v.Cgbins + l
 }
 
-func (v vectorVarIndex) W(i, j int) {
+func (v vectorVarIndex) W(i, j int) int {
 	//assert i >= 0 and i < v.Years
 	//assert j >= 0 and j < v.Accounts
 	return v.Wstart + i*v.Accounts + j
 }
 
-func (v vectorVarIndex) B(i, j int) {
+func (v vectorVarIndex) B(i, j int) int {
 	//assert i >= 0 and i < v.Years + 1  // b has an extra year on the end
 	//assert j >= 0 and j < v.Accounts
 	return v.Bstart + i*v.Accounts + j
 }
 
-func (v vectorVarIndex) S(i int) {
+func (v vectorVarIndex) S(i int) int {
 	//assert i >= 0 and i < v.Years
 	return v.Sstart + i
 }
 
-func (v vectorVarIndex) D(i, j int) {
+func (v vectorVarIndex) D(i, j int) int {
 	//assert S.accmap["aftertax"] > 0
 	//assert j >= 0 and j < v.Accounts
 	//assert i >= 0 and i < v.Years
 	return v.Dstart + i*v.Accounts + j
 }
 
-func (v vectorVarIndex) Varstr(indx int) {
+func (v vectorVarIndex) Varstr(indx int) string {
+	var a, b, c int
+
 	//assert indx < v.Vsize
 	if indx < v.Xcount {
 		a = indx // v.taxbins

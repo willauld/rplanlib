@@ -30,10 +30,46 @@ func TestVectorVarIndex(t *testing.T) {
 	for i, elem := range tests {
 		vvindex := NewVectorVarIndex(elem.years, elem.taxbins,
 			elem.cgbins, elem.accnum, elem.accmap)
-		OK := my_check_index_sequence(elem.years, elem.taxbins,
+		OK := checkIndexSequence(elem.years, elem.taxbins,
 			elem.cgbins, elem.accnum, elem.accmap, vvindex)
 		if OK != true {
 			t.Errorf("VectorVarIndex case %d: Failed\n", i)
 		}
 	}
+}
+
+func TestTaxinfo(t *testing.T) {
+	tests := []struct {
+		filingStatus string
+		//spot check info
+		brackets          int
+		thirdBracketStart float64
+	}{
+		{
+			filingStatus:      "single",
+			brackets:          7,
+			thirdBracketStart: 37950,
+		},
+		{
+			filingStatus:      "joint",
+			brackets:          7,
+			thirdBracketStart: 75900,
+		},
+		{
+			filingStatus:      "mseparate",
+			brackets:          7,
+			thirdBracketStart: 37950,
+		},
+	}
+	for i, elem := range tests {
+		ti := NewTaxInfo(elem.filingStatus)
+		brackets := len(*ti.Taxtable)
+		if brackets != elem.brackets {
+			t.Errorf("Taxinfo case %d: Failed - Expected %d brackes but found %d\n", i, elem.brackets, brackets)
+		}
+		if (*ti.Taxtable)[2][0] != elem.thirdBracketStart {
+			t.Errorf("Taxinfo case %d: Failed - Expected %f for third bracket start but found %f\n", i, elem.thirdBracketStart, (*ti.Taxtable)[2][0])
+		}
+	}
+
 }

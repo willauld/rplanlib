@@ -139,12 +139,14 @@ func NewVectorVarIndex(iyears, itaxbins, icgbins, iaccounts int,
 	}
 }
 
+// X (i,k) returns the variable index in a variable vector
 func (v VectorVarIndex) X(i, k int) int {
 	//assert i >= 0 and i < v.Years
 	//assert k >= 0 and k < v.Taxbins
 	return i*v.Taxbins + k
 }
 
+// Y (i,l) returns the variable index in a variable vector
 func (v VectorVarIndex) Y(i, l int) int {
 	//assert v.Accmap["aftertax"] > 0
 	//assert i >= 0 and i < v.Years
@@ -152,23 +154,27 @@ func (v VectorVarIndex) Y(i, l int) int {
 	return v.Ystart + i*v.Cgbins + l
 }
 
+// W (i,j) returns the variable index in a variable vector
 func (v VectorVarIndex) W(i, j int) int {
 	//assert i >= 0 and i < v.Years
 	//assert j >= 0 and j < v.Accounts
 	return v.Wstart + i*v.Accounts + j
 }
 
+// B (i,j) returns the variable index in a variable vector
 func (v VectorVarIndex) B(i, j int) int {
 	//assert i >= 0 and i < v.Years + 1  // b has an extra year on the end
 	//assert j >= 0 and j < v.Accounts
 	return v.Bstart + i*v.Accounts + j
 }
 
+// S (i) returns the variable index in a variable vector
 func (v VectorVarIndex) S(i int) int {
 	//assert i >= 0 and i < v.Years
 	return v.Sstart + i
 }
 
+// D (i,j) returns the variable index in a variable vector
 func (v VectorVarIndex) D(i, j int) int {
 	//assert S.accmap["aftertax"] > 0
 	//assert j >= 0 and j < v.Accounts
@@ -176,6 +182,7 @@ func (v VectorVarIndex) D(i, j int) int {
 	return v.Dstart + i*v.Accounts + j
 }
 
+// Varstr returns the variable name and index(s) for the variable at indx in the variable vector
 func (v VectorVarIndex) Varstr(indx int) string {
 	var a, b, c int
 

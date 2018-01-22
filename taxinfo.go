@@ -1,5 +1,7 @@
 package rplanlib
 
+import "math"
+
 type tableref2d *[][]float64
 type tableref1d *[]float64
 
@@ -92,7 +94,7 @@ type Taxinfo struct {
 	Primeresidence float64    // exclusion for prime residence
 
 	Accountspecs map[string](map[string]float32)
-	Contribspecs map[string]float32
+	Contribspecs map[string]float64
 
 	Penalty      float64 // for early withdrawal
 	SStaxable    float64 // taxable portion of SS
@@ -112,7 +114,7 @@ func NewTaxInfo(status string) Taxinfo {
 			"aftertax": {"tax": 0.9, "basis": 0}},
 
 		// 401(k), 403(b) and TSP currently have the same limits
-		Contribspecs: map[string]float32{"401k": 18000, "401kCatchup": 6000,
+		Contribspecs: map[string]float64{"401k": 18000, "401kCatchup": 6000,
 			"TDRA": 5500, "TDRACatchup": 1000, "CatchupAge": 50},
 
 		Penalty:      0.1,       // 10% early withdrawal penalty
@@ -143,4 +145,91 @@ func NewTaxInfo(status string) Taxinfo {
 	//print('stded:\n', self.stded, '\n')
 	//print('RMD:\n', self.RMD, '\n')
 	return ti
+}
+
+/* Keep???? TODO FIXME
+func expandYears(numyr, ageAtStart, agestr) ([]float64) {
+	bucket := make([]float64, numyr)
+        for age := agelist(agestr) {
+            year := age - ageAtStart
+            if year < 0 {
+                continue
+			} else if year >= numyr {
+                break
+			} else {
+                bucket[year] = 1
+			}
+		}
+		return bucket
+}
+*/
+
+// TODO: FIXME NEED UNIT TEST FOR THIS FUNCTION
+// maxContributions returns the max allowable contributions for one or all retirees
+func (ti Taxinfo) maxContribution(year int, retirees []retiree, retireekey string, iRate float64) float64 {
+	//FIXME: not currently handling 401K max contributions TODO
+	max := 0.0
+	for _, v := range retirees {
+		if retireekey == "" || v.mykey == retireekey { // Sum all retiree
+			max += ti.Contribspecs["TDRA"]
+			startage := v.ageAtStart
+			age := startage + year
+			if age >= int(ti.Contribspecs["CatchupAge"]) {
+				max += ti.Contribspecs["TDRACatchup"]
+			}
+			havePlan := v.definedContributionPlan
+			if havePlan {
+				a := v.dcpBuckets
+				/* no lazy expantion in golang implementation, created in NewModelSpecs()
+				                    if a == nil {
+				                        // lazy expantion of the definedContributionPlan info
+				                        v.dcpBuckets = expandYears(startage, have_plan)
+				                        a = v.dcpBuckets
+									}
+				*/
+				if a[year] == 1 {
+					max += ti.Contribspecs["401k"]
+					if age >= int(ti.Contribspecs["CatchupAge"]) {
+						max += ti.Contribspecs["401kCatchup"]
+					}
+				}
+			}
+		}
+	}
+
+	max *= math.Pow(iRate, float64(year)) // adjust for inflation
+	//print('maxContribution: %6.0f' % max, retireekey)
+	return max
+}
+
+// TODO: FIXME NEED UNIT TEST FOR THIS FUNCTION
+// applyEarlyPenalty returns a bool indicating if an early penalty needs to be applied
+func (ti Taxinfo) applyEarlyPenalty(year int, r *retiree) bool {
+	response := false
+	//v := r.match_retiree(retireekey)
+	if r == nil {
+		return response
+	}
+	age := r.ageAtStart + year
+	if age < 60 { // IRA retirement account require penalty if withdrawn before age 59.5
+		response = true
+	}
+	return response
+}
+
+// TODO: FIXME NEED UNIT TEST FOR THIS FUNCTION
+// rmdNeeded returns the life expectance to use if needed or zero otherwise
+func (ti Taxinfo) rmdNeeded(year int, r *retiree) float64 {
+	rmd := 0.0
+	//v = self.match_retiree(retireekey)
+	if r == nil {
+		//print("RMD_NEEDED() year: %d, rmd: %6.3f, Not Valid Retiree, retiree: %s" % (year, rmd, retireekey))
+		return rmd
+	}
+	age := r.ageAtStart + year
+	if age >= 70 { // IRA retirement: minimum distribution starting age 70.5
+		rmd = (*ti.RMD)[age-70]
+	}
+	//print("RMD_NEEDED() year: %d, rmd: %6.3f, age: %d, retiree: %s" % (year, rmd, age, retireekey))
+	return rmd
 }

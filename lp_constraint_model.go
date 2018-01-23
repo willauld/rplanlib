@@ -21,7 +21,9 @@ type account struct {
 	acctype       string
 	mykey         string
 }
-type modelSpecs struct {
+
+// ModelSpecs struct contains the needed info for building an RPlanner constraint model
+type ModelSpecs struct {
 	InputParams map[string]string
 	vindx       VectorVarIndex
 
@@ -53,16 +55,14 @@ type modelSpecs struct {
 func intMax(a, b int) int {
 	if a > b {
 		return a
-	} else {
-		return b
 	}
+	return b
 }
 func intMin(a, b int) int {
 	if a < b {
 		return a
-	} else {
-		return b
 	}
+	return b
 }
 func checkStrconvError(e error) {
 	if e != nil {
@@ -119,13 +119,14 @@ func buildVector(yearly, startAge, endAge, vecStartAge, vecEndAge int, rate floa
 	return vec, nil
 }
 
+// NewModelSpecs creates a ModelSpecs object
 func NewModelSpecs(vindx VectorVarIndex,
 	ti Taxinfo,
 	ip map[string]string,
 	verbose bool,
-	TDRA_ROTHRA_DEPOSITS bool) modelSpecs {
+	TDRA_ROTHRA_DEPOSITS bool) ModelSpecs {
 
-	ms := modelSpecs{
+	ms := ModelSpecs{
 		InputParams: ip,
 		vindx:       vindx,
 		ti:          ti,
@@ -227,7 +228,7 @@ class lp_constraint_model:
 // Minimize: c^T * x
 // Subject to: A_ub * x <= b_ub
 // all vars positive
-func (ms modelSpecs) BuildModel() ([]float64, [][]float64, []float64) {
+func (ms ModelSpecs) BuildModel() ([]float64, [][]float64, []float64) {
 
 	// TODO integrate the following assignments into the code and remove them
 	//S = ms.S
@@ -463,7 +464,7 @@ func (ms modelSpecs) BuildModel() ([]float64, [][]float64, []float64) {
 	// Add constraints for (11')
 	//
 	for year := 0; year < ms.numyr; year++ {
-		adj_inf := math.Pow(ms.iRate, float64(ms.prePlanYears+year))
+		adjInf := math.Pow(ms.iRate, float64(ms.prePlanYears+year))
 		row := make([]float64, nvars)
 		for j := 0; j < intMin(2, len(ms.accounttable)); j++ {
 			// IRA can only be in the first two accounts
@@ -476,7 +477,7 @@ func (ms modelSpecs) BuildModel() ([]float64, [][]float64, []float64) {
 			row[ms.vindx.X(year, k)] = -1
 		}
 		A = append(A, row)
-		b = append(b, ms.ti.Stded*adj_inf-ms.taxed[year]-ms.ti.SStaxable*ms.SS[year])
+		b = append(b, ms.ti.Stded*adjInf-ms.taxed[year]-ms.ti.SStaxable*ms.SS[year])
 	}
 	//
 	// Add constraints for (12')
@@ -536,7 +537,7 @@ func (ms modelSpecs) BuildModel() ([]float64, [][]float64, []float64) {
 	//
 	if ms.accmap["aftertax"] > 0 {
 		for year := 0; year < ms.numyr; year++ {
-			adj_inf := math.Pow(ms.iRate, float64(ms.prePlanYears+year))
+			adjInf := math.Pow(ms.iRate, float64(ms.prePlanYears+year))
 			for l := 0; l < len(*ms.ti.Capgainstable)-1; l++ {
 				row := make([]float64, nvars)
 				row[ms.vindx.Y(year, l)] = 1
@@ -546,7 +547,7 @@ func (ms modelSpecs) BuildModel() ([]float64, [][]float64, []float64) {
 					}
 				}
 				A = append(A, row)
-				b = append(b, (*ms.ti.Capgainstable)[l][1]*adj_inf) // mcg[i,l] inflation adjusted
+				b = append(b, (*ms.ti.Capgainstable)[l][1]*adjInf) // mcg[i,l] inflation adjusted
 				//printConstraint( row, ms.ti.Capgainstable[l][1]*adj_inf)
 			}
 		}
@@ -628,7 +629,7 @@ func (ms modelSpecs) BuildModel() ([]float64, [][]float64, []float64) {
 
 // TODO: FIXME NEED UNIT TEST FOR THIS FUNCTION
 // accountOwnerAge finds the age of the retiree who owns the account
-func (ms modelSpecs) accountOwnerAge(year int, acc account) int {
+func (ms ModelSpecs) accountOwnerAge(year int, acc account) int {
 	age := 0
 	retireekey := acc.mykey
 	v := ms.matchRetiree(retireekey)
@@ -640,7 +641,7 @@ func (ms modelSpecs) accountOwnerAge(year int, acc account) int {
 
 // TODO: FIXME NEED UNIT TEST FOR THIS FUNCTION
 // matchRetiree searches retirees by key returning nil if not found
-func (ms modelSpecs) matchRetiree(retireekey string) *retiree {
+func (ms ModelSpecs) matchRetiree(retireekey string) *retiree {
 	for _, v := range ms.retirees {
 		//print("    retiree: ", v)
 		if v.mykey == retireekey {
@@ -652,7 +653,7 @@ func (ms modelSpecs) matchRetiree(retireekey string) *retiree {
 
 // TODO: FIXME NEED UNIT TEST FOR THIS FUNCTION
 // cgTaxableFraction estimates the portion of capital gains not from basis
-func (ms modelSpecs) cgTaxableFraction(year int) float64 {
+func (ms ModelSpecs) cgTaxableFraction(year int) float64 {
 	f := 1.0
 	if ms.accmap["aftertax"] > 0 {
 		for _, v := range ms.accounttable {
@@ -667,8 +668,8 @@ func (ms modelSpecs) cgTaxableFraction(year int) float64 {
 	return f
 }
 
-func (ms modelSpecs) printModelMatrix(c []float64, A [][]float64, b []float64, s []float64, non_binding_only bool) {
-	if !non_binding_only {
+func (ms ModelSpecs) printModelMatrix(c []float64, A [][]float64, b []float64, s []float64, nonBindingOnly bool) {
+	if !nonBindingOnly {
 		fmt.Printf("c: ")
 		ms.printModelRow(c, false)
 		fmt.Printf("\n")
@@ -697,12 +698,12 @@ func (ms modelSpecs) printModelMatrix(c []float64, A [][]float64, b []float64, s
 	fmt.Printf("\n")
 }
 
-func (ms modelSpecs) printConstraint(row []float64, b float64) {
+func (ms ModelSpecs) printConstraint(row []float64, b float64) {
 	ms.printModelRow(row, true)
 	fmt.Printf("<= b[]: %6.2f", b)
 }
 
-func (ms modelSpecs) printModelRow(row []float64, suppress_newline bool) {
+func (ms ModelSpecs) printModelRow(row []float64, suppressNewline bool) {
 	for i := 0; i < ms.numyr; i++ {
 		for k := 0; k < len(*ms.ti.Taxtable); k++ {
 			if row[ms.vindx.X(i, k)] != 0 {
@@ -747,7 +748,7 @@ func (ms modelSpecs) printModelRow(row []float64, suppress_newline bool) {
 			}
 		}
 	}
-	if !suppress_newline {
+	if !suppressNewline {
 		fmt.Printf("\n")
 	}
 }

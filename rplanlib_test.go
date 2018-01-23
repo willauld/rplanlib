@@ -162,8 +162,66 @@ func TestMaxContribution(t *testing.T) {
 	}
 }
 
-func TestApplyEarlyPenalty(t *testing.T) {}
-func TestRmdNeeded(t *testing.T)         {}
+func TestApplyEarlyPenalty(t *testing.T) {
+	retiree1 := retiree{
+		age:        56,
+		ageAtStart: 57,
+		throughAge: 100,
+		mykey:      "retiree1",
+		definedContributionPlan: false,
+		dcpBuckets:              nil,
+	}
+
+	tests := []struct {
+		filingStatus string
+		year         int
+		response     bool
+		retireer     *retiree
+	}{
+		{
+			filingStatus: "single",
+			year:         2,
+			response:     true,
+			retireer:     &retiree1,
+		},
+		{
+			filingStatus: "single",
+			year:         10,
+			response:     false,
+			retireer:     &retiree1,
+		},
+		{
+			filingStatus: "single",
+			year:         3,
+			response:     false,
+			retireer:     &retiree1,
+		},
+		{
+			filingStatus: "single",
+			year:         1,
+			response:     false,
+			retireer:     nil,
+		},
+	}
+	for i, elem := range tests {
+		ti := NewTaxInfo(elem.filingStatus)
+		response := ti.applyEarlyPenalty(elem.year, elem.retireer)
+		if response != elem.response {
+			t.Errorf("applyEarlyPenalty case %d: Failed - Expected %v but found %v\n", i, elem.response, response)
+		}
+	}
+}
+
+/*
+	tests := []struct {
+	}{
+		{},
+	}
+	for i, elem := range tests {
+	}
+*/
+
+func TestRmdNeeded(t *testing.T) {}
 
 //
 // Testing for lp_constraint_model.go

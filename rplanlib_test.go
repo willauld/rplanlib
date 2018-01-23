@@ -17,14 +17,14 @@ func TestVectorVarIndex(t *testing.T) {
 		accnum  int
 		accmap  map[string]int
 	}{
-		{
+		{ // case 0
 			years:   10,
 			taxbins: 8,
 			cgbins:  3,
 			accnum:  3,
 			accmap:  map[string]int{"IRA": 1, "Roth": 1, "Aftertax": 1},
 		},
-		{
+		{ // case 1
 			years:   100,
 			taxbins: 8,
 			cgbins:  3,
@@ -54,17 +54,17 @@ func TestTaxinfo(t *testing.T) {
 		brackets          int
 		thirdBracketStart float64
 	}{
-		{
+		{ // case 0
 			filingStatus:      "single",
 			brackets:          7,
 			thirdBracketStart: 37950,
 		},
-		{
+		{ // case 1
 			filingStatus:      "joint",
 			brackets:          7,
 			thirdBracketStart: 75900,
 		},
-		{
+		{ // case 2
 			filingStatus:      "mseparate",
 			brackets:          7,
 			thirdBracketStart: 37950,
@@ -91,25 +91,25 @@ func TestMaxContribution(t *testing.T) {
 		year         int
 		irate        float64
 	}{
-		{
+		{ // case 0
 			filingStatus: "single",
 			retireeindx:  0,
 			year:         5,
 			irate:        1.025,
 		},
-		{
+		{ // case 0
 			filingStatus: "mseparate",
 			retireeindx:  1,
 			year:         5,
 			irate:        1.025,
 		},
-		{
+		{ // case 0
 			filingStatus: "joint",
 			retireeindx:  1,
 			year:         5,
 			irate:        1.025,
 		},
-		{
+		{ // case 0
 			filingStatus: "joint",
 			retireeindx:  2, // pass in an empty key
 			year:         5,
@@ -178,25 +178,25 @@ func TestApplyEarlyPenalty(t *testing.T) {
 		response     bool
 		retireer     *retiree
 	}{
-		{
+		{ // case 0
 			filingStatus: "single",
 			year:         2,
 			response:     true,
 			retireer:     &retiree1,
 		},
-		{
+		{ // case 1
 			filingStatus: "single",
 			year:         10,
 			response:     false,
 			retireer:     &retiree1,
 		},
-		{
+		{ // case 2
 			filingStatus: "single",
 			year:         3,
 			response:     false,
 			retireer:     &retiree1,
 		},
-		{
+		{ // case 3
 			filingStatus: "single",
 			year:         1,
 			response:     false,
@@ -221,13 +221,77 @@ func TestApplyEarlyPenalty(t *testing.T) {
 	}
 */
 
-func TestRmdNeeded(t *testing.T) {}
+func TestRmdNeeded(t *testing.T) {
+	retiree1 := retiree{
+		age:        56,
+		ageAtStart: 57,
+		throughAge: 100,
+		mykey:      "retiree1",
+		definedContributionPlan: false,
+		dcpBuckets:              nil,
+	}
+
+	tests := []struct {
+		filingStatus string
+		year         int
+		response     float64
+		retireer     *retiree
+	}{
+		{ // case 0
+			filingStatus: "joint",
+			year:         5,
+			response:     0,
+			retireer:     &retiree1,
+		},
+		{ // case 1
+			filingStatus: "joint",
+			year:         5,
+			response:     0,
+			retireer:     &retiree1,
+		},
+		{ // case 2
+			filingStatus: "joint",
+			year:         12,
+			response:     0,
+			retireer:     &retiree1,
+		},
+		{ // case 3
+			filingStatus: "joint",
+			year:         13, // should start here
+			response:     27.4,
+			retireer:     &retiree1,
+		},
+		{ // case 3
+			filingStatus: "joint",
+			year:         23, // should start here
+			response:     18.7,
+			retireer:     &retiree1,
+		},
+	}
+	for i, elem := range tests {
+		ti := NewTaxInfo(elem.filingStatus)
+		response := ti.rmdNeeded(elem.year, elem.retireer)
+		if response != elem.response {
+			t.Errorf("rmdNeeded case %d: Failed - Expected %v but found %v\n", i, elem.response, response)
+		}
+	}
+
+}
 
 //
 // Testing for lp_constraint_model.go
 //
 
-func TestIntMax(t *testing.T)            {}
+func TestIntMax(t *testing.T) {
+	/*
+		tests := []struct {
+		}{
+			{},
+		}
+		for i, elem := range tests {
+		}
+	*/
+}
 func TestIntMin(t *testing.T)            {}
 func TestCheckStrconvError(t *testing.T) {}
 func TestMergeVectors(t *testing.T)      {}

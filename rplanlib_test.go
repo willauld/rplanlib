@@ -283,14 +283,38 @@ func TestRmdNeeded(t *testing.T) {
 //
 
 func TestIntMax(t *testing.T) {
-	/*
-		tests := []struct {
-		}{
-			{},
+	tests := []struct {
+		a   int
+		b   int
+		max int
+	}{
+		{ // case 0
+			a:   5,
+			b:   6,
+			max: 6,
+		},
+		{ // case 1
+			a:   7,
+			b:   6,
+			max: 7,
+		},
+		{ // case 2
+			a:   6,
+			b:   6,
+			max: 6,
+		},
+		{ // case 3
+			a:   -10,
+			b:   -6,
+			max: -6,
+		},
+	}
+	for i, elem := range tests {
+		rmax := intMax(elem.a, elem.b)
+		if rmax != elem.max {
+			t.Errorf("intMax case %d: Failed - Expected %v but found %v\n", i, elem.max, rmax)
 		}
-		for i, elem := range tests {
-		}
-	*/
+	}
 }
 func TestIntMin(t *testing.T)            {}
 func TestCheckStrconvError(t *testing.T) {}

@@ -1,6 +1,7 @@
 package rplanlib
 
 import (
+	"fmt"
 	"math"
 	"testing"
 )
@@ -351,7 +352,54 @@ func TestIntMin(t *testing.T) {
 		}
 	}
 }
-func TestCheckStrconvError(t *testing.T) {}
+
+/*
+func checkStrconvError(e error) {
+	if e != nil {
+		panic(e)
+	}
+}
+*/
+/*
+	tests := []struct {
+	}{
+		{},
+	}
+	for i, elem := range tests {
+	}
+*/
+func TestCheckStrconvError(t *testing.T) {
+	tests := []struct {
+		//err    error
+		errstr string
+	}{
+		{errstr: "case 0"},
+		{errstr: "case 1"},
+		{ // case 2
+			errstr: "",
+		},
+	}
+	for i, elem := range tests {
+		var err error
+		err = nil
+		if elem.errstr != "" {
+			err = fmt.Errorf(elem.errstr)
+		}
+		func() {
+			defer func() {
+				r := recover()
+				if r == nil && elem.errstr != "" {
+					t.Errorf("checkStrcovError case %d.a should have panicked!", i)
+				} else if elem.errstr == "" && r != nil {
+					t.Errorf("checkStrcovError case %d.b should have panicked!", i)
+				}
+			}()
+			// This function should cause a panic
+			checkStrconvError(err)
+		}()
+	}
+}
+
 func TestMergeVectors(t *testing.T)      {}
 func TestBuildVector(t *testing.T)       {}
 func TestNewModelSpecs(t *testing.T)     {}

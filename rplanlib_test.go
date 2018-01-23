@@ -316,7 +316,41 @@ func TestIntMax(t *testing.T) {
 		}
 	}
 }
-func TestIntMin(t *testing.T)            {}
+
+func TestIntMin(t *testing.T) {
+	tests := []struct {
+		a   int
+		b   int
+		min int
+	}{
+		{ // case 0
+			a:   5,
+			b:   6,
+			min: 5,
+		},
+		{ // case 1
+			a:   7,
+			b:   6,
+			min: 6,
+		},
+		{ // case 2
+			a:   6,
+			b:   6,
+			min: 6,
+		},
+		{ // case 3
+			a:   -10,
+			b:   -6,
+			min: -10,
+		},
+	}
+	for i, elem := range tests {
+		rmin := intMin(elem.a, elem.b)
+		if rmin != elem.min {
+			t.Errorf("intMin case %d: Failed - Expected %v but found %v\n", i, elem.min, rmin)
+		}
+	}
+}
 func TestCheckStrconvError(t *testing.T) {}
 func TestMergeVectors(t *testing.T)      {}
 func TestBuildVector(t *testing.T)       {}

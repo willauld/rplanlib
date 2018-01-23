@@ -542,7 +542,7 @@ func (ms modelSpecs) BuildModel() ([]float64, [][]float64, []float64) {
 				}
 				A = append(A, row)
 				b = append(b, (*ms.ti.Capgainstable)[l][1]*adj_inf) // mcg[i,l] inflation adjusted
-				//print_constraint( row, ms.ti.Capgainstable[l][1]*adj_inf)
+				//printConstraint( row, ms.ti.Capgainstable[l][1]*adj_inf)
 			}
 		}
 	}
@@ -662,10 +662,10 @@ func (ms modelSpecs) cgTaxableFraction(year int) float64 {
 	return f
 }
 
-func (ms modelSpecs) print_model_matrix(c []float64, A [][]float64, b []float64, s []float64, non_binding_only bool) {
+func (ms modelSpecs) printModelMatrix(c []float64, A [][]float64, b []float64, s []float64, non_binding_only bool) {
 	if !non_binding_only {
 		fmt.Printf("c: ")
-		ms.print_model_row(c, false)
+		ms.printModelRow(c, false)
 		fmt.Printf("\n")
 		fmt.Printf("B? i: A_ub[i]: b[i]")
 		for constraint := 0; constraint < len(A); constraint++ {
@@ -675,7 +675,7 @@ func (ms modelSpecs) print_model_matrix(c []float64, A [][]float64, b []float64,
 				fmt.Printf("B ")
 			}
 			fmt.Printf("%d: ", constraint)
-			ms.print_constraint(A[constraint], b[constraint])
+			ms.printConstraint(A[constraint], b[constraint])
 		}
 	} else {
 		fmt.Printf(" i: A_ub[i]: b[i]")
@@ -684,7 +684,7 @@ func (ms modelSpecs) print_model_matrix(c []float64, A [][]float64, b []float64,
 			if s[constraint] > 0 {
 				j++
 				fmt.Printf("%d: ", constraint)
-				ms.print_constraint(A[constraint], b[constraint])
+				ms.printConstraint(A[constraint], b[constraint])
 			}
 		}
 		fmt.Printf("\n\n%d non-binding constrains printed\n", j)
@@ -692,12 +692,12 @@ func (ms modelSpecs) print_model_matrix(c []float64, A [][]float64, b []float64,
 	fmt.Printf("\n")
 }
 
-func (ms modelSpecs) print_constraint(row []float64, b float64) {
-	ms.print_model_row(row, true)
+func (ms modelSpecs) printConstraint(row []float64, b float64) {
+	ms.printModelRow(row, true)
 	fmt.Printf("<= b[]: %6.2f", b)
 }
 
-func (ms modelSpecs) print_model_row(row []float64, suppress_newline bool) {
+func (ms modelSpecs) printModelRow(row []float64, suppress_newline bool) {
 	for i := 0; i < ms.numyr; i++ {
 		for k := 0; k < len(*ms.ti.Taxtable); k++ {
 			if row[ms.vindx.X(i, k)] != 0 {

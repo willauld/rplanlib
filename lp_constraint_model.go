@@ -5,9 +5,10 @@ import "math"
 import "strconv"
 
 type retiree struct {
+	age                     int
 	ageAtStart              int
 	throughAge              int
-	mykey                   string // model doesn't need this but pc version does
+	mykey                   string
 	definedContributionPlan bool
 	dcpBuckets              []float64
 }
@@ -28,26 +29,25 @@ type modelSpecs struct {
 	allowTdraRothraDeposits bool
 
 	// The following was through 'S'
-	numyr        int
+	numyr        int    // years in plan
+	prePlanYears int    // years before plan starts
 	maximize     string // "Spending" or "PlusEstate"
 	accounttable []account
 	accmap       map[string]int
 	retirees     []retiree
 
-	income         []float64
-	SS             []float64
-	expenses       []float64
-	taxed          []float64
-	asset_sale     []float64
-	cg_asset_taxed []float64
+	income       []float64
+	SS           []float64
+	expenses     []float64
+	taxed        []float64
+	assetSale    []float64
+	cgAssetTaxed []float64
 
 	iRate float64
 	rRate float64
 
 	min float64
 	max float64
-
-	prePlanYears int
 }
 
 func intMax(a, b int) int {
@@ -123,13 +123,13 @@ func NewModelSpecs(vindx VectorVarIndex,
 	ti Taxinfo,
 	ip map[string]string,
 	verbose bool,
-	no_TDRA_ROTHRA_DEPOSITS bool) modelSpecs {
+	TDRA_ROTHRA_DEPOSITS bool) modelSpecs {
 
 	ms := modelSpecs{
 		InputParams: ip,
 		vindx:       vindx,
 		ti:          ti,
-		allowTdraRothraDeposits: no_TDRA_ROTHRA_DEPOSITS,
+		allowTdraRothraDeposits: TDRA_ROTHRA_DEPOSITS,
 		maximize:                "Spending", // or "PlusEstate"
 		iRate:                   1.025,
 		rRate:                   1.06,
@@ -161,6 +161,7 @@ func NewModelSpecs(vindx VectorVarIndex,
 		yearsToRetire1 := retireAge1 - age1
 		yearsToRetire2 := retireAge2 - age2
 		yearsToRetire := intMin(yearsToRetire1, yearsToRetire2)
+		ms.prePlanYears = yearsToRetire
 		startPlan := yearsToRetire + age1
 		through1 := planThroughAge1 - age1
 		through2 := planThroughAge2 - age2
@@ -171,6 +172,7 @@ func NewModelSpecs(vindx VectorVarIndex,
 		//accmap: map[string]int
 		retirees := []retiree{
 			{
+				age:        age1,
 				ageAtStart: retireAge1,
 				throughAge: planThroughAge1,
 				mykey:      "retiree1",
@@ -178,6 +180,7 @@ func NewModelSpecs(vindx VectorVarIndex,
 				dcpBuckets:              nil,
 			},
 			{
+				age:        age2,
 				ageAtStart: retireAge2,
 				throughAge: planThroughAge2,
 				mykey:      "retiree2",
@@ -355,11 +358,12 @@ func (ms modelSpecs) BuildModel() ([]float64, [][]float64, []float64) {
 			}
 		}
 		A = append(A, row)
-		//b+=[min(ms.income[year],ms.maxContribution(year,None))]
+		//b+=[min(ms.income[year],ms.ti.maxContribution(year,None))]
 		// using ms.taxed rather than ms.income because income could
 		// include non-taxed anueities that don't count.
 		None := ""
-		b = append(b, math.Min(ms.taxed[year], ms.ti.maxContribution(year, ms.retirees, None, ms.iRate)))
+		infyears := ms.prePlanYears + year
+		b = append(b, math.Min(ms.taxed[year], ms.ti.maxContribution(year, infyears, ms.retirees, None, ms.iRate)))
 	}
 	//
 	// Add constaints for (7') rows
@@ -377,7 +381,8 @@ func (ms modelSpecs) BuildModel() ([]float64, [][]float64, []float64) {
 				}
 			}
 			A = append(A, row)
-			b = append(b, ms.ti.maxContribution(year, ms.retirees, v.mykey, ms.iRate))
+			infyears := ms.prePlanYears + year
+			b = append(b, ms.ti.maxContribution(year, infyears, ms.retirees, v.mykey, ms.iRate))
 		}
 	}
 	//
@@ -496,13 +501,13 @@ func (ms modelSpecs) BuildModel() ([]float64, [][]float64, []float64) {
 			}
 			// Awful Hack! If year of asset sale, assume w(i,j)-D(i,j) is
 			// negative so taxable from this is zero
-			if ms.cg_asset_taxed[year] <= 0 { // i.e., no sale
+			if ms.cgAssetTaxed[year] <= 0 { // i.e., no sale
 				j := len(ms.accounttable) - 1 // last Acc is investment / stocks
 				row[ms.vindx.W(year, j)] = -1 * f
 				row[ms.vindx.D(year, j)] = f
 			}
 			A = append(A, row)
-			b = append(b, ms.cg_asset_taxed[year])
+			b = append(b, ms.cgAssetTaxed[year])
 		}
 	}
 	//
@@ -514,7 +519,7 @@ func (ms modelSpecs) BuildModel() ([]float64, [][]float64, []float64) {
 			row := make([]float64, nvars)
 			////// Awful Hack! If year of asset sale, assume w(i,j)-D(i,j) is
 			////// negative so taxable from this is zero
-			if ms.cg_asset_taxed[year] <= 0 { // i.e., no sale
+			if ms.cgAssetTaxed[year] <= 0 { // i.e., no sale
 				j := len(ms.accounttable) - 1 // last Acc is investment / stocks
 				row[ms.vindx.W(year, j)] = f
 				row[ms.vindx.D(year, j)] = -f
@@ -523,7 +528,7 @@ func (ms modelSpecs) BuildModel() ([]float64, [][]float64, []float64) {
 				row[ms.vindx.Y(year, l)] = -1
 			}
 			A = append(A, row)
-			b = append(b, -ms.cg_asset_taxed[year])
+			b = append(b, -ms.cgAssetTaxed[year])
 		}
 	}
 	//
@@ -561,10 +566,10 @@ func (ms modelSpecs) BuildModel() ([]float64, [][]float64, []float64) {
 			// In the event of a sell of an asset for the year
 			temp := 0.0
 			if ms.accounttable[j].acctype == "aftertax" {
-				temp = ms.asset_sale[year] * ms.accounttable[j].rRate //TODO test
+				temp = ms.assetSale[year] * ms.accounttable[j].rRate //TODO test
 			}
 			b = append(b, temp)
-			//print("temp_a: ", temp, "rate", ms.accounttable[j].rate , "asset sell price: ", ms.asset_sale[year]  )
+			//print("temp_a: ", temp, "rate", ms.accounttable[j].rate , "asset sell price: ", ms.assetSale[year]  )
 		}
 	}
 	//
@@ -581,10 +586,10 @@ func (ms modelSpecs) BuildModel() ([]float64, [][]float64, []float64) {
 			A = append(A, row)
 			temp := 0.0
 			if ms.accounttable[j].acctype == "aftertax" {
-				temp = -1 * ms.asset_sale[year] * ms.accounttable[j].rRate //TODO test
+				temp = -1 * ms.assetSale[year] * ms.accounttable[j].rRate //TODO test
 			}
 			b = append(b, temp)
-			//print("temp_b: ", temp, "rate", ms.accounttable[j].rate , "asset sell price: ", ms.asset_sale[year]  )
+			//print("temp_b: ", temp, "rate", ms.accounttable[j].rate , "asset sell price: ", ms.assetSale[year]  )
 		}
 	}
 	//

@@ -93,7 +93,7 @@ type Taxinfo struct {
 	Stded          float64    // standard deduction
 	Primeresidence float64    // exclusion for prime residence
 
-	Accountspecs map[string](map[string]float32)
+	Accountspecs map[string]float64
 	Contribspecs map[string]float64
 
 	Penalty      float64 // for early withdrawal
@@ -109,9 +109,11 @@ func NewTaxInfo(status string) Taxinfo {
 	ssnontaxable := 1 - sstaxable
 	ti := Taxinfo{
 		// Account specs contains some initial information # TODO if maxcontrib not used delete
-		Accountspecs: map[string]map[string]float32{"IRA": {"tax": 0.85, "maxcontrib": 18000 + 5500*2},
-			"roth":     {"tax": 1.0, "maxcontrib": 5500 * 2},
-			"aftertax": {"tax": 0.9, "basis": 0}},
+		Accountspecs: map[string]float64{
+			"IRAtax":      0.85,
+			"rothtax":     1.0,
+			"aftertaxtax": 0.9,
+		},
 
 		// 401(k), 403(b) and TSP currently have the same limits
 		Contribspecs: map[string]float64{"401k": 18000, "401kCatchup": 6000,
@@ -166,11 +168,12 @@ func expandYears(numyr, ageAtStart, agestr) ([]float64) {
 
 // TODO: FIXME NEED UNIT TEST FOR THIS FUNCTION
 // maxContributions returns the max allowable contributions for one or all retirees
-func (ti Taxinfo) maxContribution(year int, retirees []retiree, retireekey string, iRate float64) float64 {
+func (ti Taxinfo) maxContribution(year int, yearsToInflateBy int, retirees []retiree, retireekey string, iRate float64) float64 {
 	//FIXME: not currently handling 401K max contributions TODO
 	max := 0.0
-	for _, v := range retirees {
-		if retireekey == "" || v.mykey == retireekey { // Sum all retiree
+	for i := 0; i < 2; i++ {
+		v := retirees[i]
+		if retireekey == "" || v.mykey == retireekey { // if "", Sum all retiree
 			max += ti.Contribspecs["TDRA"]
 			startage := v.ageAtStart
 			age := startage + year
@@ -196,8 +199,7 @@ func (ti Taxinfo) maxContribution(year int, retirees []retiree, retireekey strin
 			}
 		}
 	}
-
-	max *= math.Pow(iRate, float64(year)) // adjust for inflation
+	max *= math.Pow(iRate, float64(yearsToInflateBy))
 	//print('maxContribution: %6.0f' % max, retireekey)
 	return max
 }

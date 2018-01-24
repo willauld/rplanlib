@@ -353,21 +353,6 @@ func TestIntMin(t *testing.T) {
 	}
 }
 
-/*
-func checkStrconvError(e error) {
-	if e != nil {
-		panic(e)
-	}
-}
-*/
-/*
-	tests := []struct {
-	}{
-		{},
-	}
-	for i, elem := range tests {
-	}
-*/
 func TestCheckStrconvError(t *testing.T) {
 	tests := []struct {
 		//err    error
@@ -400,13 +385,180 @@ func TestCheckStrconvError(t *testing.T) {
 	}
 }
 
-func TestMergeVectors(t *testing.T)      {}
-func TestBuildVector(t *testing.T)       {}
-func TestNewModelSpecs(t *testing.T)     {}
-func TestBuildModel(t *testing.T)        {}
-func TestAccountOwnerAge(t *testing.T)   {}
-func TestMatchRetiree(t *testing.T)      {}
-func TestCgTaxableFraction(t *testing.T) {}
-func TestPrintModelMatrix(t *testing.T)  {}
-func TestPrintConstraint(t *testing.T)   {}
-func TestPrintModelRow(t *testing.T)     {}
+func TestMergeVectors(t *testing.T) {
+	tests := []struct {
+		a      []float64
+		b      []float64
+		errstr string
+	}{
+		{ // Case 0
+			a:      []float64{5, 2, -2, 388886, 0},
+			b:      []float64{20, 30, 40, 50, 60},
+			errstr: "",
+		},
+		{ // Case 1
+			a:      []float64{5, 2, -2, 388886, 0, 20},
+			b:      []float64{20, 30, 40, 50, 60},
+			errstr: "mergeVectors: Can not merge, lengths do not match, 6 vs 5",
+		},
+	}
+	for i, elem := range tests {
+		newv, err := mergeVectors(elem.a, elem.b)
+		if err != nil {
+			if len(elem.a) == len(elem.b) {
+				t.Errorf("mergeVectors case %d failed but should not have!", i)
+			}
+			s := fmt.Sprintf("%v", err)
+			if s != elem.errstr {
+				t.Errorf("mergeVectors case %d failed with incorrect err string\n\tExpected: '%s' but found: '%s'", i, elem.errstr, s)
+			}
+			continue
+		}
+		for i := 0; i < len(newv); i++ {
+			if newv[i] != elem.a[i]+elem.b[i] {
+				t.Errorf("mergeVectors case %d merged values do no sum", i)
+			}
+		}
+	}
+}
+
+/*
+func buildVector(yearly, startAge, endAge, vecStartAge, vecEndAge int, rate float64, baseAge int) ([]float64, error) {
+*/
+func TestBuildVector(t *testing.T) {
+	tests := []struct {
+		yearly      int
+		startAge    int
+		endAge      int
+		vecStartAge int
+		vecEndAge   int
+		rate        float64
+		baseAge     int
+	}{
+		{ // case 0 // over begining of vec
+			yearly:      1,
+			startAge:    45,
+			endAge:      66,
+			vecStartAge: 62,
+			vecEndAge:   100,
+			rate:        1.025,
+			baseAge:     40,
+		},
+		{ // case 1 // over ending of vec
+			yearly:      1,
+			startAge:    70,
+			endAge:      102,
+			vecStartAge: 62,
+			vecEndAge:   100,
+			rate:        1.025,
+			baseAge:     40,
+		},
+		{ // case 2 // in the middle of vec
+			yearly:      1,
+			startAge:    66,
+			endAge:      68,
+			vecStartAge: 62,
+			vecEndAge:   100,
+			rate:        1.025,
+			baseAge:     40,
+		},
+		{ // case 3 // all above vec
+			yearly:      1,
+			startAge:    145,
+			endAge:      166,
+			vecStartAge: 62,
+			vecEndAge:   100,
+			rate:        1.025,
+			baseAge:     40,
+		},
+		{ // case 4 // all below vec
+			yearly:      1,
+			startAge:    45,
+			endAge:      60,
+			vecStartAge: 62,
+			vecEndAge:   100,
+			rate:        1.025,
+			baseAge:     40,
+		},
+		{ // case 5 // all match vec
+			yearly:      1,
+			startAge:    62,
+			endAge:      100,
+			vecStartAge: 62,
+			vecEndAge:   100,
+			rate:        1.025,
+			baseAge:     40,
+		},
+		// TODO: Add error cases
+		//	- vec start > vec end
+		//	- start age > end age
+		//	-
+	}
+	for i, elem := range tests {
+		newv, err := buildVector(elem.yearly, elem.startAge, elem.endAge, elem.vecStartAge, elem.vecEndAge, elem.rate, elem.baseAge)
+		if err != nil {
+			// tbd TODO fix this
+			fmt.Printf("&&&&&&&&&& buildVector() returned and err for case %d: %s\n", i, err)
+		}
+		fnz := -1
+		if elem.startAge < elem.vecEndAge && elem.startAge >= elem.vecStartAge {
+			fnz = elem.startAge - elem.vecStartAge
+		} else if elem.startAge < elem.vecStartAge && elem.endAge > elem.vecStartAge /*elem.vecEndAge*/ {
+			fnz = 0
+		}
+		lnz := len(newv) + 1
+		if elem.endAge < elem.vecEndAge && elem.endAge >= elem.vecStartAge {
+			lnz = elem.endAge - elem.vecStartAge
+		} else if elem.endAge >= elem.vecEndAge && elem.startAge <= elem.vecEndAge {
+			lnz = len(newv) - 1
+		}
+		//fmt.Printf("CASE %d: ===================================\n", i)
+		//fmt.Printf("### endAge(%d) < vecEndAge(%d) && endAge(%d) >= vecStartAge(%d)\n", elem.endAge, elem.vecEndAge, elem.endAge, elem.vecStartAge)
+		//fmt.Printf("*** endAge(%d) >= vecEndAge(%d) && startAge(%d) <= vecEndAge(%d)\n", elem.endAge, elem.vecEndAge, elem.startAge, elem.vecEndAge)
+		firstNonZero := -1
+		lastNonZero := len(newv) + 1
+		for f := 0; f < len(newv); f++ {
+			if newv[f] != 0 && firstNonZero < 0 {
+				firstNonZero = f
+			}
+			if newv[f] != 0 && firstNonZero >= 0 {
+				lastNonZero = f
+			}
+		}
+		if fnz != firstNonZero {
+			t.Errorf("buildVector case %d: firstNonZero is incorrect, expected %d, found %d", i, fnz, firstNonZero)
+		}
+		if lnz != lastNonZero {
+			t.Errorf("buildVector case %d: lastNonZero is incorrect, expected %d, found %d", i, lnz, lastNonZero)
+		}
+		//fmt.Printf("Case %d: newv len:%d ============\n", i, len(newv))
+		//fmt.Printf("firstNonZero: %d, lastNonZero: %d\n", firstNonZero, lastNonZero)
+		//fmt.Printf("fnz: %d, lnz: %d\n", fnz, lnz)
+		//fmt.Printf("Case %d: %v\n", i, newv)
+	}
+}
+
+func TestNewModelSpecs(t *testing.T) { /* TODO:FIXME:IMPLEMENTME */ }
+
+func TestBuildModel(t *testing.T) { /* TODO:FIXME:IMPLEMENTME */ }
+
+func TestAccountOwnerAge(t *testing.T) { /* TODO:FIXME:IMPLEMENTME */ }
+
+func TestMatchRetiree(t *testing.T) { /* TODO:FIXME:IMPLEMENTME */ }
+
+func TestCgTaxableFraction(t *testing.T) { /* TODO:FIXME:IMPLEMENTME */ }
+
+func TestPrintModelMatrix(t *testing.T) { /* TODO:FIXME:IMPLEMENTME */ }
+
+func TestPrintConstraint(t *testing.T) { /* TODO:FIXME:IMPLEMENTME */ }
+
+func TestPrintModelRow(t *testing.T) { /* TODO:FIXME:IMPLEMENTME */ }
+
+/*
+	tests := []struct {
+	}{
+		{},
+	}
+	for i, elem := range tests {
+	}
+*/

@@ -85,35 +85,38 @@ func mergeVectors(v1, v2 []float64) ([]float64, error) {
 
 // buildVector creates a vector with a 'rate' adjusted 'yearly' amount in buckets between start and end age
 func buildVector(yearly, startAge, endAge, vecStartAge, vecEndAge int, rate float64, baseAge int) ([]float64, error) {
+	zeroVector := false
 	//verify that startAge and endAge are within vecStart and end
 	if vecStartAge > vecEndAge {
 		err := fmt.Errorf("vec start age (%d) is greater than vec end age (%d)", vecStartAge, vecEndAge)
 		return nil, err
-	}
-	if startAge < vecStartAge {
-		startAge = vecStartAge
-	}
-	if startAge > vecEndAge {
-		startAge = vecEndAge
-	}
-	if endAge < vecStartAge {
-		endAge = vecStartAge
-	}
-	if endAge > vecEndAge {
-		endAge = vecEndAge
 	}
 	if startAge > endAge {
 		err := fmt.Errorf("start age (%d) is greater than end age (%d)", startAge, endAge)
 		return nil, err
 	}
 
+	if startAge < vecStartAge && endAge >= vecStartAge {
+		startAge = vecStartAge
+	}
+	if startAge > vecEndAge {
+		zeroVector = true
+	}
+	if endAge < vecStartAge {
+		zeroVector = true
+	}
+	if endAge > vecEndAge && startAge < vecEndAge {
+		endAge = vecEndAge
+	}
 	vecSize := vecEndAge - vecStartAge
 	vec := make([]float64, vecSize)
-	for i := 0; i < vecSize; i++ {
-		if i >= startAge-vecStartAge && i <= endAge-vecStartAge {
-			to := float64(startAge - baseAge + i)
-			adj := math.Pow(rate, to)
-			vec[i] = float64(yearly) * adj // or something like this FIXME TODO
+	if !zeroVector {
+		for i := 0; i < vecSize; i++ {
+			if i >= startAge-vecStartAge && i <= endAge-vecStartAge {
+				to := float64(startAge - baseAge + i)
+				adj := math.Pow(rate, to)
+				vec[i] = float64(yearly) * adj // or something like this FIXME TODO
+			}
 		}
 	}
 	return vec, nil

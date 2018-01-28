@@ -96,9 +96,13 @@ type VectorVarIndex struct {
 }
 
 // NewVectorVarIndex creates an object for index translation
-func NewVectorVarIndex(iyears, itaxbins, icgbins, iaccounts int,
+func NewVectorVarIndex(iyears, itaxbins, icgbins int,
 	iaccmap map[string]int) VectorVarIndex {
 
+	iaccounts := 0
+	for _, n := range iaccmap {
+		iaccounts += n
+	}
 	ycount := 0
 	if iaccmap["aftertax"] > 0 { // no cgbins if no aftertax account
 		ycount = iyears * icgbins

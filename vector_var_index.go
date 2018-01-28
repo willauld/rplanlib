@@ -8,7 +8,7 @@ func checkIndexSequence(years, taxbins, cgbins int, accmap map[string]int, varin
 		accounts += acc
 	}
 	// varindex.?() functions are laid out to index a vector of variables
-	// laid out in the order x(i,k), y(i,l), w(i,j), b(i,j), s(i), D(i,j), ns()
+	// laid out in the order x(i,k), y(i,l), w(i,j), b(i,j), s(i), D(i,j)
 	passOk := true
 	ky := 0
 	//row = [0] * nvars

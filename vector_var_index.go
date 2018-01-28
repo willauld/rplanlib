@@ -2,7 +2,11 @@ package rplanlib
 
 import "fmt"
 
-func checkIndexSequence(years, taxbins, cgbins, accounts int, accmap map[string]int, varindex VectorVarIndex) bool {
+func checkIndexSequence(years, taxbins, cgbins int, accmap map[string]int, varindex VectorVarIndex) bool {
+	accounts := 0
+	for _, acc := range accmap {
+		accounts += acc
+	}
 	// varindex.?() functions are laid out to index a vector of variables
 	// laid out in the order x(i,k), y(i,l), w(i,j), b(i,j), s(i), D(i,j), ns()
 	passOk := true

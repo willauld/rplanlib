@@ -35,7 +35,7 @@ func TestVectorVarIndex(t *testing.T) {
 	}
 	for i, elem := range tests {
 		vvindex := NewVectorVarIndex(elem.years, elem.taxbins,
-			elem.cgbins, elem.accnum, elem.accmap)
+			elem.cgbins /*elem.accnum,*/, elem.accmap)
 		OK := checkIndexSequence(elem.years, elem.taxbins,
 			elem.cgbins, elem.accnum, elem.accmap, vvindex)
 		if OK != true {
@@ -422,9 +422,6 @@ func TestMergeVectors(t *testing.T) {
 	}
 }
 
-/*
-func buildVector(yearly, startAge, endAge, vecStartAge, vecEndAge int, rate float64, baseAge int) ([]float64, error) {
-*/
 func TestBuildVector(t *testing.T) {
 	tests := []struct {
 		yearly      int
@@ -434,6 +431,7 @@ func TestBuildVector(t *testing.T) {
 		vecEndAge   int
 		rate        float64
 		baseAge     int
+		errstr      string
 	}{
 		{ // case 0 // over begining of vec
 			yearly:      1,
@@ -443,6 +441,7 @@ func TestBuildVector(t *testing.T) {
 			vecEndAge:   100,
 			rate:        1.025,
 			baseAge:     40,
+			errstr:      "",
 		},
 		{ // case 1 // over ending of vec
 			yearly:      1,
@@ -452,6 +451,7 @@ func TestBuildVector(t *testing.T) {
 			vecEndAge:   100,
 			rate:        1.025,
 			baseAge:     40,
+			errstr:      "",
 		},
 		{ // case 2 // in the middle of vec
 			yearly:      1,
@@ -461,6 +461,7 @@ func TestBuildVector(t *testing.T) {
 			vecEndAge:   100,
 			rate:        1.025,
 			baseAge:     40,
+			errstr:      "",
 		},
 		{ // case 3 // all above vec
 			yearly:      1,
@@ -470,6 +471,7 @@ func TestBuildVector(t *testing.T) {
 			vecEndAge:   100,
 			rate:        1.025,
 			baseAge:     40,
+			errstr:      "",
 		},
 		{ // case 4 // all below vec
 			yearly:      1,
@@ -479,6 +481,7 @@ func TestBuildVector(t *testing.T) {
 			vecEndAge:   100,
 			rate:        1.025,
 			baseAge:     40,
+			errstr:      "",
 		},
 		{ // case 5 // all match vec
 			yearly:      1,
@@ -488,17 +491,39 @@ func TestBuildVector(t *testing.T) {
 			vecEndAge:   100,
 			rate:        1.025,
 			baseAge:     40,
+			errstr:      "",
 		},
-		// TODO: Add error cases
-		//	- vec start > vec end
-		//	- start age > end age
-		//	-
+		{ // case 6 // vec start > vec end
+			yearly:      1,
+			startAge:    62,
+			endAge:      100,
+			vecStartAge: 100,
+			vecEndAge:   62,
+			rate:        1.025,
+			baseAge:     40,
+			errstr:      "vec start age (100) is greater than vec end age (62)",
+		},
+		{ // case 7 // start age > end age
+			yearly:      1,
+			startAge:    100,
+			endAge:      62,
+			vecStartAge: 62,
+			vecEndAge:   100,
+			rate:        1.025,
+			baseAge:     40,
+			errstr:      "start age (100) is greater than end age (62)",
+		},
 	}
 	for i, elem := range tests {
 		newv, err := buildVector(elem.yearly, elem.startAge, elem.endAge, elem.vecStartAge, elem.vecEndAge, elem.rate, elem.baseAge)
 		if err != nil {
+			es := fmt.Sprintf("%s", err)
+			if elem.errstr != es {
+				t.Errorf("buildVector case %d: expected errstr '%s', found '%s'", i, elem.errstr, es)
+			}
 			// tbd TODO fix this
-			fmt.Printf("&&&&&&&&&& buildVector() returned and err for case %d: %s\n", i, err)
+			//fmt.Printf("&&&&&&&&&& buildVector() returned and err for case %d: %s\n", i, err)
+			continue
 		}
 		fnz := -1
 		if elem.startAge < elem.vecEndAge && elem.startAge >= elem.vecStartAge {
@@ -538,11 +563,54 @@ func TestBuildVector(t *testing.T) {
 	}
 }
 
-func TestNewModelSpecs(t *testing.T) { /* TODO:FIXME:IMPLEMENTME */ }
+func TestNewModelSpecs(t *testing.T) {
+	tests := []struct {
+		years         int
+		accmap        map[string]int
+		ip            map[string]string
+		verbose       bool
+		allowDeposits bool
+		filingStatus  string
+	}{
+		{
+			years:         10,
+			accmap:        map[string]int{"IRA": 1, "Roth": 1, "Aftatax": 1},
+			ip:            map[string]string{"filingStatus": "single"},
+			verbose:       false,
+			allowDeposits: false,
+		},
+	}
+	for i, elem := range tests {
+		ti := NewTaxInfo(elem.ip["filingStatus"])
+		taxbins := len(*ti.Taxtable)
+		cgbins := len(*ti.Capgainstable)
+		accnum := 0
+		for _, acc := range elem.accmap {
+			accnum += acc
+		}
+		vindx := NewVectorVarIndex(elem.years, taxbins,
+			cgbins /*accnum,*/, elem.accmap)
+		ms := NewModelSpecs(vindx, ti, elem.ip, elem.verbose,
+			elem.allowDeposits)
+		if ms.iRate > 10 {
+			t.Errorf("NewModelSpecs case %d: expected %d, found %d", i, i, i)
+		}
+	}
+}
 
 func TestBuildModel(t *testing.T) { /* TODO:FIXME:IMPLEMENTME */ }
 
-func TestAccountOwnerAge(t *testing.T) { /* TODO:FIXME:IMPLEMENTME */ }
+func TestAccountOwnerAge(t *testing.T) {
+	/*
+			tests := []struct {
+			}{
+				{},
+			}
+			for i, elem := range tests {
+		func (ms ModelSpecs) accountOwnerAge(year int, acc account) int {
+			}
+	*/
+}
 
 func TestMatchRetiree(t *testing.T) { /* TODO:FIXME:IMPLEMENTME */ }
 

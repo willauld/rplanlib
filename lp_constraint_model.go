@@ -127,13 +127,13 @@ func NewModelSpecs(vindx VectorVarIndex,
 	ti Taxinfo,
 	ip map[string]string,
 	verbose bool,
-	TDRA_ROTHRA_DEPOSITS bool) ModelSpecs {
+	allowDeposits bool) ModelSpecs {
 
 	ms := ModelSpecs{
 		InputParams: ip,
 		vindx:       vindx,
 		ti:          ti,
-		allowTdraRothraDeposits: TDRA_ROTHRA_DEPOSITS,
+		allowTdraRothraDeposits: allowDeposits,
 		maximize:                "Spending", // or "PlusEstate"
 		iRate:                   1.025,
 		rRate:                   1.06,

@@ -15,29 +15,26 @@ func TestVectorVarIndex(t *testing.T) {
 		years   int
 		taxbins int
 		cgbins  int
-		accnum  int
 		accmap  map[string]int
 	}{
 		{ // case 0
 			years:   10,
 			taxbins: 8,
 			cgbins:  3,
-			accnum:  3,
 			accmap:  map[string]int{"IRA": 1, "Roth": 1, "Aftertax": 1},
 		},
 		{ // case 1
 			years:   100,
 			taxbins: 8,
 			cgbins:  3,
-			accnum:  5,
 			accmap:  map[string]int{"IRA": 2, "Roth": 2, "Aftertax": 1},
 		},
 	}
 	for i, elem := range tests {
 		vvindex := NewVectorVarIndex(elem.years, elem.taxbins,
-			elem.cgbins /*elem.accnum,*/, elem.accmap)
+			elem.cgbins, elem.accmap)
 		OK := checkIndexSequence(elem.years, elem.taxbins,
-			elem.cgbins, elem.accnum, elem.accmap, vvindex)
+			elem.cgbins, elem.accmap, vvindex)
 		if OK != true {
 			t.Errorf("VectorVarIndex case %d: Failed\n", i)
 		}
@@ -570,14 +567,146 @@ func TestNewModelSpecs(t *testing.T) {
 		ip            map[string]string
 		verbose       bool
 		allowDeposits bool
-		filingStatus  string
+		iRate         float64
 	}{
-		{
-			years:         10,
-			accmap:        map[string]int{"IRA": 1, "Roth": 1, "Aftatax": 1},
-			ip:            map[string]string{"filingStatus": "single"},
+		{ // Case 0 // joint
+			years:  10,
+			accmap: map[string]int{"IRA": 1, "Roth": 1, "Aftatax": 1},
+			ip: map[string]string{
+				"setName":                    "activeParams",
+				"filingStatus":               "joint",
+				"eT_Age1 INTEGER":            "65",
+				"eT_Age2 INTEGER":            "63",
+				"eT_RetireAge1 INTEGER":      "66",
+				"eT_RetireAge2 INTEGER":      "66",
+				"eT_PlanThroughAge1 INTEGER": "100",
+				"eT_PlanThroughAge2 INTEGER": "100",
+				"eT_PIA1 INTEGER":            "30", // 30k
+				"eT_PIA2 INTEGER":            "-1",
+				"eT_SS_Start1 INTEGER":       "70",
+				"eT_SS_Start2 INTEGER":       "66",
+				"eT_TDRA1 INTEGER":           "200", // 200k
+				"eT_TDRA2 INTEGER":           "100", // 100k
+				"eT_TDRA_Rate1 REAL":         "",
+				"eT_TDRA_Rate2 REAL":         "",
+				"eT_TDRA_Contrib1 INTEGER":   "",
+				"eT_TDRA_Contrib2 INTEGER":   "",
+				"eT_TDRA_ContribStartAge1":   "",
+				"eT_TDRA_ContribStartAge2":   "",
+				"eT_TDRA_ContribEndAge1":     "",
+				"eT_TDRA_ContribEndAge2":     "",
+				"eT_Roth1":                   "",
+				"eT_Roth2":                   "",
+				"eT_Roth_Rate1":              "",
+				"eT_Roth_Rate2":              "",
+				"eT_Roth_Contrib1":           "",
+				"eT_Roth_Contrib2":           "",
+				"eT_Roth_ContribStartAge1":   "",
+				"eT_Roth_ContribStartAge2":   "",
+				"eT_Roth_ContribEndAge1":     "",
+				"eT_Roth_ContribEndAge2":     "",
+				"eT_Aftatax":                 "50", // 50k
+				"eT_Aftatax_Rate":            "7.25",
+				"eT_Aftatax_Contrib":         "",
+				"eT_Aftatax_ContribStartAge": "",
+				"eT_Aftatax_ContribEndAge":   "",
+			},
 			verbose:       false,
 			allowDeposits: false,
+			iRate:         1.025,
+		},
+		{ // Case 1 // mseparate
+			years:  10,
+			accmap: map[string]int{"IRA": 1, "Roth": 1, "Aftatax": 1},
+			ip: map[string]string{
+				"setName":                    "activeParams",
+				"filingStatus":               "mseparate",
+				"eT_Age1 INTEGER":            "",
+				"eT_Age2 INTEGER":            "",
+				"eT_RetireAge1 INTEGER":      "",
+				"eT_RetireAge2 INTEGER":      "",
+				"eT_PlanThroughAge1 INTEGER": "",
+				"eT_PlanThroughAge2 INTEGER": "",
+				"eT_PIA1 INTEGER":            "",
+				"eT_PIA2 INTEGER":            "",
+				"eT_SS_Start1 INTEGER":       "",
+				"eT_SS_Start2 INTEGER":       "",
+				"eT_TDRA1 INTEGER":           "",
+				"eT_TDRA2 INTEGER":           "",
+				"eT_TDRA_Rate1 REAL":         "",
+				"eT_TDRA_Rate2 REAL":         "",
+				"eT_TDRA_Contrib1 INTEGER":   "",
+				"eT_TDRA_Contrib2 INTEGER":   "",
+				"eT_TDRA_ContribStartAge1":   "",
+				"eT_TDRA_ContribStartAge2":   "",
+				"eT_TDRA_ContribEndAge1":     "",
+				"eT_TDRA_ContribEndAge2":     "",
+				"eT_Roth1":                   "",
+				"eT_Roth2":                   "",
+				"eT_Roth_Rate1":              "",
+				"eT_Roth_Rate2":              "",
+				"eT_Roth_Contrib1":           "",
+				"eT_Roth_Contrib2":           "",
+				"eT_Roth_ContribStartAge1":   "",
+				"eT_Roth_ContribStartAge2":   "",
+				"eT_Roth_ContribEndAge1":     "",
+				"eT_Roth_ContribEndAge2":     "",
+				"eT_Aftatax":                 "",
+				"eT_Aftatax_Rate":            "",
+				"eT_Aftatax_Contrib":         "",
+				"eT_Aftatax_ContribStartAge": "",
+				"eT_Aftatax_ContribEndAge":   "",
+			},
+			verbose:       false,
+			allowDeposits: false,
+			iRate:         1.025,
+		},
+		{ // Case 2 // single
+			years:  10,
+			accmap: map[string]int{"IRA": 1, "Roth": 1, "Aftatax": 1},
+			//ip:            map[string]string{"filingStatus": "single"},
+			ip: map[string]string{
+				"setName":                    "activeParams",
+				"filingStatus":               "single",
+				"eT_Age1 INTEGER":            "",
+				"eT_Age2 INTEGER":            "",
+				"eT_RetireAge1 INTEGER":      "",
+				"eT_RetireAge2 INTEGER":      "",
+				"eT_PlanThroughAge1 INTEGER": "",
+				"eT_PlanThroughAge2 INTEGER": "",
+				"eT_PIA1 INTEGER":            "",
+				"eT_PIA2 INTEGER":            "",
+				"eT_SS_Start1 INTEGER":       "",
+				"eT_SS_Start2 INTEGER":       "",
+				"eT_TDRA1 INTEGER":           "",
+				"eT_TDRA2 INTEGER":           "",
+				"eT_TDRA_Rate1 REAL":         "",
+				"eT_TDRA_Rate2 REAL":         "",
+				"eT_TDRA_Contrib1 INTEGER":   "",
+				"eT_TDRA_Contrib2 INTEGER":   "",
+				"eT_TDRA_ContribStartAge1":   "",
+				"eT_TDRA_ContribStartAge2":   "",
+				"eT_TDRA_ContribEndAge1":     "",
+				"eT_TDRA_ContribEndAge2":     "",
+				"eT_Roth1":                   "",
+				"eT_Roth2":                   "",
+				"eT_Roth_Rate1":              "",
+				"eT_Roth_Rate2":              "",
+				"eT_Roth_Contrib1":           "",
+				"eT_Roth_Contrib2":           "",
+				"eT_Roth_ContribStartAge1":   "",
+				"eT_Roth_ContribStartAge2":   "",
+				"eT_Roth_ContribEndAge1":     "",
+				"eT_Roth_ContribEndAge2":     "",
+				"eT_Aftatax":                 "",
+				"eT_Aftatax_Rate":            "",
+				"eT_Aftatax_Contrib":         "",
+				"eT_Aftatax_ContribStartAge": "",
+				"eT_Aftatax_ContribEndAge":   "",
+			},
+			verbose:       false,
+			allowDeposits: false,
+			iRate:         1.025,
 		},
 	}
 	for i, elem := range tests {
@@ -592,13 +721,51 @@ func TestNewModelSpecs(t *testing.T) {
 			cgbins /*accnum,*/, elem.accmap)
 		ms := NewModelSpecs(vindx, ti, elem.ip, elem.verbose,
 			elem.allowDeposits)
-		if ms.iRate > 10 {
-			t.Errorf("NewModelSpecs case %d: expected %d, found %d", i, i, i)
+		if ms.iRate != elem.iRate {
+			t.Errorf("NewModelSpecs case %d: iRate expected %f, found %f", i, elem.iRate, ms.iRate)
 		}
 	}
 }
 
-func TestBuildModel(t *testing.T) { /* TODO:FIXME:IMPLEMENTME */ }
+func TestBuildModel(t *testing.T) {
+	tests := []struct {
+		years         int
+		accmap        map[string]int
+		ip            map[string]string
+		verbose       bool
+		allowDeposits bool
+		iRate         float64
+	}{
+		{ // Case 0 // joint
+			years:         10,
+			accmap:        map[string]int{"IRA": 1, "Roth": 1, "Aftatax": 1},
+			ip:            map[string]string{"filingStatus": "joint"},
+			verbose:       false,
+			allowDeposits: false,
+			iRate:         1.025,
+		},
+	}
+	for i, elem := range tests {
+		ti := NewTaxInfo(elem.ip["filingStatus"])
+		taxbins := len(*ti.Taxtable)
+		cgbins := len(*ti.Capgainstable)
+		accnum := 0
+		for _, acc := range elem.accmap {
+			accnum += acc
+		}
+		vindx := NewVectorVarIndex(elem.years, taxbins,
+			cgbins, elem.accmap)
+		ms := NewModelSpecs(vindx, ti, elem.ip, elem.verbose,
+			elem.allowDeposits)
+		/**/
+		c, A, b := ms.BuildModel()
+		ms.printModelMatrix(c, A, b, nil, false)
+		/**/
+		if ms.iRate != elem.iRate {
+			t.Errorf("NewModelSpecs case %d: iRate expected %f, found %f", i, elem.iRate, ms.iRate)
+		}
+	}
+}
 
 func TestAccountOwnerAge(t *testing.T) {
 	/*
@@ -629,4 +796,44 @@ func TestPrintModelRow(t *testing.T) { /* TODO:FIXME:IMPLEMENTME */ }
 	}
 	for i, elem := range tests {
 	}
+
+			ip: map[string]string{
+				"setName":                    "",
+				"filingStatus":               "",
+				"eT_Age1 INTEGER":            "",
+				"eT_Age2 INTEGER":            "",
+				"eT_RetireAge1 INTEGER":      "",
+				"eT_RetireAge2 INTEGER":      "",
+				"eT_PlanThroughAge1 INTEGER": "",
+				"eT_PlanThroughAge2 INTEGER": "",
+				"eT_PIA1 INTEGER":            "",
+				"eT_PIA2 INTEGER":            "",
+				"eT_SS_Start1 INTEGER":       "",
+				"eT_SS_Start2 INTEGER":       "",
+				"eT_TDRA1 INTEGER":           "",
+				"eT_TDRA2 INTEGER":           "",
+				"eT_TDRA_Rate1 REAL":         "",
+				"eT_TDRA_Rate2 REAL":         "",
+				"eT_TDRA_Contrib1 INTEGER":   "",
+				"eT_TDRA_Contrib2 INTEGER":   "",
+				"eT_TDRA_ContribStartAge1":   "",
+				"eT_TDRA_ContribStartAge2":   "",
+				"eT_TDRA_ContribEndAge1":     "",
+				"eT_TDRA_ContribEndAge2":     "",
+				"eT_Roth1":                   "",
+				"eT_Roth2":                   "",
+				"eT_Roth_Rate1":              "",
+				"eT_Roth_Rate2":              "",
+				"eT_Roth_Contrib1":           "",
+				"eT_Roth_Contrib2":           "",
+				"eT_Roth_ContribStartAge1":   "",
+				"eT_Roth_ContribStartAge2":   "",
+				"eT_Roth_ContribEndAge1":     "",
+				"eT_Roth_ContribEndAge2":     "",
+				"eT_Aftatax":                 "",
+				"eT_Aftatax_Rate":            "",
+				"eT_Aftatax_Contrib":         "",
+				"eT_Aftatax_ContribStartAge": "",
+				"eT_Aftatax_ContribEndAge":   "",
+			},
 */

@@ -64,8 +64,9 @@ func intMin(a, b int) int {
 	}
 	return b
 }
-func checkStrconvError(e error) {
+func checkStrconvError(e error) { // TODO: should I remove this?
 	if e != nil {
+		//fmt.Printf("checkStrconvError(): %s\n", e)
 		panic(e)
 	}
 }
@@ -122,6 +123,32 @@ func buildVector(yearly, startAge, endAge, vecStartAge, vecEndAge int, rate floa
 	return vec, nil
 }
 
+//TODO: TESTME
+func getIPIntValue(str string) int {
+	if str == "" {
+		return 0
+	}
+	n, e := strconv.Atoi(str)
+	if e != nil {
+		fmt.Printf("GetIPIntValue(): %s\n", e)
+		//panic(e)
+	}
+	return n
+}
+
+//TODO: TESTME
+func getIPFloatValue(str string) float64 {
+	if str == "" {
+		return 0
+	}
+	n, e := strconv.ParseFloat(str, 64)
+	if e != nil {
+		fmt.Printf("GetIPFloatValue(): %s\n", e)
+		//panic(e)
+	}
+	return n
+}
+
 // NewModelSpecs creates a ModelSpecs object
 func NewModelSpecs(vindx VectorVarIndex,
 	ti Taxinfo,
@@ -140,92 +167,122 @@ func NewModelSpecs(vindx VectorVarIndex,
 		min:                     -1,
 		max:                     -1,
 	}
-	/*
-	 ** TODO what if any of the strings returned by ip[] are empty? FIXME
-	 */
+	age1 := getIPIntValue(ip["eT_Age1"])
+	age2 := getIPIntValue(ip["eT_Age2"])
+	retireAge1 := getIPIntValue(ip["eT_RetireAge1"])
+	if retireAge1 < age1 {
+		retireAge1 = age1
+	}
+	retireAge2 := getIPIntValue(ip["eT_RetireAge2"])
+	if retireAge2 < age2 {
+		retireAge2 = age2
+	}
+	planThroughAge1 := getIPIntValue(ip["eT_PlanThroughAge1"])
+	planThroughAge2 := getIPIntValue(ip["eT_PlanThroughAge2"])
+	yearsToRetire1 := retireAge1 - age1
+	yearsToRetire2 := retireAge2 - age2
+	yearsToRetire := intMin(yearsToRetire1, yearsToRetire2)
+	ms.prePlanYears = yearsToRetire
+	startPlan := yearsToRetire + age1
+	through1 := planThroughAge1 - age1
+	through2 := planThroughAge2 - age2
+	endPlan := intMax(through1, through2) + 1 + age1
+	//delta := age1 - age2
+
+	ms.numyr = endPlan - startPlan
+
+	retirees := []retiree{
+		{
+			age:        age1,
+			ageAtStart: retireAge1,
+			throughAge: planThroughAge1,
+			mykey:      "retiree1",
+			definedContributionPlan: false,
+			dcpBuckets:              nil,
+		},
+		{
+			age:        age2,
+			ageAtStart: retireAge2,
+			throughAge: planThroughAge2,
+			mykey:      "retiree2",
+			definedContributionPlan: false,
+			dcpBuckets:              nil,
+		},
+	}
+	ms.retirees = retirees
+
+	//accounttable: []map[string]string
+
+	//accmap: map[string]int
+
+	taxbins := len(*ti.Taxtable)
+	cgbins := len(*ti.Capgainstable)
+	ms.vindx = NewVectorVarIndex(ms.numyr, taxbins, cgbins, ms.accmap)
+
+	//income: []float64 // TODO add real income vector, dummy for now
+	income1 := 0
+	incomeStart1 := startPlan
+	incomeEnd1 := endPlan
+	income, err := buildVector(income1, incomeStart1, incomeEnd1, startPlan, endPlan, ms.iRate, age1)
+	if err != nil {
+		fmt.Printf("BuildVector Failed: %s\n", err)
+	}
+	ms.income = income
+
+	pia1 := getIPIntValue(ip["eT_PIA1"])
+	ssStart1 := getIPIntValue(ip["eT_SS_Start1"])
+	SS1, err := buildVector(pia1, ssStart1, endPlan, startPlan, endPlan, ms.iRate, age1)
+	checkStrconvError(err)
+	pia2 := getIPIntValue(ip["eT_PIA2"])
+	ssStart2 := getIPIntValue(ip["eT_SS_Start2"])
+	SS2, err := buildVector(pia2, ssStart2, endPlan, startPlan, endPlan, ms.iRate, age1)
+	if err != nil {
+		fmt.Printf("BuildVector Failed: %s\n", err)
+	}
+	ms.SS, err = mergeVectors(SS1, SS2)
+	if err != nil {
+		fmt.Printf("mergeVector Failed: %s\n", err)
+	}
+
+	//expenses: []float64 // TODO add real income vector, dummy for now
+	exp1 := 0
+	expStart1 := startPlan
+	expEnd1 := endPlan
+	expenses, err := buildVector(exp1, expStart1, expEnd1, startPlan, endPlan, ms.iRate, age1)
+	if err != nil {
+		fmt.Printf("BuildVector Failed: %s\n", err)
+	}
+	ms.expenses = expenses
+
+	//taxed: []float64 // TODO add real income vector, dummy for now
+	tax1 := 0
+	taxStart1 := startPlan
+	taxEnd1 := endPlan
+	taxed, err := buildVector(tax1, taxStart1, taxEnd1, startPlan, endPlan, ms.iRate, age1)
+	if err != nil {
+		fmt.Printf("BuildVector Failed: %s\n", err)
+	}
+	ms.taxed = taxed
+
+	//asset_sale: []float64
+
+	//cg_asset_taxed: []float64 // TODO add real income vector, dummy for now
+	cgtax1 := 0
+	cgtaxStart1 := startPlan
+	cgtaxEnd1 := endPlan
+	cgtaxed, err := buildVector(cgtax1, cgtaxStart1, cgtaxEnd1, startPlan, endPlan, ms.iRate, age1)
+	if err != nil {
+		fmt.Printf("BuildVector Failed: %s\n", err)
+	}
+	ms.cgAssetTaxed = cgtaxed
+
 	if ip["filingStatus"] == "joint" {
-		age1, err := strconv.Atoi(ip["eT_Age1"])
-		checkStrconvError(err)
-		age2, err := strconv.Atoi(ip["eT_Age2"])
-		checkStrconvError(err)
-		retireAge1, err := strconv.Atoi(ip["eT_RetireAge1"])
-		checkStrconvError(err)
-		if retireAge1 < age1 {
-			retireAge1 = age1
-		}
-		retireAge2, err := strconv.Atoi(ip["eT_RetireAge2"])
-		checkStrconvError(err)
-		if retireAge2 < age2 {
-			retireAge2 = age2
-		}
-		planThroughAge1, err := strconv.Atoi(ip["eT_PlanThroughAge1"])
-		checkStrconvError(err)
-		planThroughAge2, err := strconv.Atoi(ip["eT_PlanThroughAge2"])
-		checkStrconvError(err)
-		yearsToRetire1 := retireAge1 - age1
-		yearsToRetire2 := retireAge2 - age2
-		yearsToRetire := intMin(yearsToRetire1, yearsToRetire2)
-		ms.prePlanYears = yearsToRetire
-		startPlan := yearsToRetire + age1
-		through1 := planThroughAge1 - age1
-		through2 := planThroughAge2 - age2
-		endPlan := intMax(through1, through2) + 1 + age1
-		//delta := age1 - age2
-		ms.numyr = endPlan - startPlan
-		//accounttable: []map[string]string
-		//accmap: map[string]int
-		retirees := []retiree{
-			{
-				age:        age1,
-				ageAtStart: retireAge1,
-				throughAge: planThroughAge1,
-				mykey:      "retiree1",
-				definedContributionPlan: false,
-				dcpBuckets:              nil,
-			},
-			{
-				age:        age2,
-				ageAtStart: retireAge2,
-				throughAge: planThroughAge2,
-				mykey:      "retiree2",
-				definedContributionPlan: false,
-				dcpBuckets:              nil,
-			},
-		}
-		ms.retirees = retirees
-		//income: []float64
-		pia1, err := strconv.Atoi(ip["eT_PIA1"])
-		checkStrconvError(err)
-		ssStart1, err := strconv.Atoi(ip["eT_SS_Start1"])
-		checkStrconvError(err)
-		SS1, err := buildVector(pia1, ssStart1, endPlan, startPlan, endPlan, ms.iRate, age1)
-		checkStrconvError(err)
-		pia2, err := strconv.Atoi(ip["eT_PIA2"])
-		checkStrconvError(err)
-		ssStart2, err := strconv.Atoi(ip["eT_SS_Start2"])
-		checkStrconvError(err)
-		SS2, err := buildVector(pia2, ssStart2, endPlan, startPlan, endPlan, ms.iRate, age1)
-		checkStrconvError(err)
-		ms.SS, err = mergeVectors(SS1, SS2)
-		checkStrconvError(err)
-		//expenses: []float64
-		//taxed: []float64 // maybe have a special function that adds vec to tax vec?
-		//asset_sale: []float64
-		//cg_asset_taxed: []float64
-	} else { // single or mseparate
+		// do nothing
+	} else { // single or mseparate zero retiree2 info
 		// TODO FIXME
 	}
 	return ms
 }
-
-/*
-class lp_constraint_model:
-    def __init__(verbose, no_TDRA_ROTHRA_DEPOSITS):
-        self.S = S
-        self.verbose = verbose
-        self.noTdraRothraDeposits = no_TDRA_ROTHRA_DEPOSITS
-
-*/
 
 // BuildModel for:
 // Minimize: c^T * x

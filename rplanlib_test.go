@@ -277,6 +277,56 @@ func TestRmdNeeded(t *testing.T) {
 }
 
 //
+// Testing for input_params.go
+//
+
+func TestGetIPIntValue(t *testing.T) {
+	tests := []struct {
+		str    string
+		expect int
+		strerr string
+	}{
+		{
+			str:    "",
+			expect: 0,
+			strerr: "",
+		},
+	}
+	for i, elem := range tests {
+		val := getIPIntValue(elem.str)
+		if val != elem.expect {
+			t.Errorf("GetIPIntValue case %d: Failed - Expected %d but found %d\n", i, elem.expect, val)
+		}
+	}
+}
+func TestGetIPFloatValue(t *testing.T) {
+	/*
+		tests := []struct {
+			str string
+
+		}{
+			{},
+		}
+		for i, elem := range tests {
+			modelip := NewInputParams(ip map[string]string) InputParams {
+		}
+	*/
+}
+func TestNewInputParams(t *testing.T) {
+	/*
+		tests := []struct {
+			str string
+
+		}{
+			{},
+		}
+		for i, elem := range tests {
+			modelip := NewInputParams(ip map[string]string) InputParams {
+		}
+	*/
+}
+
+//
 // Testing for lp_constraint_model.go
 //
 
@@ -710,16 +760,16 @@ func TestNewModelSpecs(t *testing.T) {
 		},
 	}
 	for i, elem := range tests {
-		ti := NewTaxInfo(elem.ip["filingStatus"])
+		ip := NewInputParams(elem.ip)
+		ti := NewTaxInfo(ip.filingStatus)
 		taxbins := len(*ti.Taxtable)
 		cgbins := len(*ti.Capgainstable)
 		accnum := 0
-		for _, acc := range elem.accmap {
+		for _, acc := range elem.accmap { //TODO FIXME accmap should come from ImputParams
 			accnum += acc
 		}
-		vindx := NewVectorVarIndex(elem.years, taxbins,
-			cgbins /*accnum,*/, elem.accmap)
-		ms := NewModelSpecs(vindx, ti, elem.ip, elem.verbose,
+		vindx := NewVectorVarIndex(ip.numyr, taxbins, cgbins, elem.accmap)
+		ms := NewModelSpecs(vindx, ti, ip, elem.verbose,
 			elem.allowDeposits)
 		if ms.iRate != elem.iRate {
 			t.Errorf("NewModelSpecs case %d: iRate expected %f, found %f", i, elem.iRate, ms.iRate)
@@ -747,6 +797,7 @@ func TestBuildModel(t *testing.T) {
 	}
 	for i, elem := range tests {
 		ti := NewTaxInfo(elem.ip["filingStatus"])
+		ip := NewInputParams(elem.ip)
 		taxbins := len(*ti.Taxtable)
 		cgbins := len(*ti.Capgainstable)
 		accnum := 0
@@ -755,7 +806,7 @@ func TestBuildModel(t *testing.T) {
 		}
 		vindx := NewVectorVarIndex(elem.years, taxbins,
 			cgbins, elem.accmap)
-		ms := NewModelSpecs(vindx, ti, elem.ip, elem.verbose,
+		ms := NewModelSpecs(vindx, ti, ip, elem.verbose,
 			elem.allowDeposits)
 		/**/
 		c, A, b := ms.BuildModel()
@@ -787,7 +838,19 @@ func TestPrintModelMatrix(t *testing.T) { /* TODO:FIXME:IMPLEMENTME */ }
 
 func TestPrintConstraint(t *testing.T) { /* TODO:FIXME:IMPLEMENTME */ }
 
-func TestPrintModelRow(t *testing.T) { /* TODO:FIXME:IMPLEMENTME */ }
+func TestPrintModelRow(t *testing.T) {
+	/*
+		tests := []struct {
+			row []float64
+			suppressNewline bool
+		}{
+			{},
+		}
+		for i, elem := range tests {
+			ms.printModelRow(elem.row, elem.suppressNewline)
+		}
+	*/
+}
 
 /*
 	tests := []struct {

@@ -2,7 +2,6 @@ package rplanlib
 
 import "fmt"
 import "math"
-import "strconv"
 
 type retiree struct {
 	age                     int
@@ -24,8 +23,8 @@ type account struct {
 
 // ModelSpecs struct contains the needed info for building an RPlanner constraint model
 type ModelSpecs struct {
-	InputParams map[string]string
-	vindx       VectorVarIndex
+	ip    InputParams
+	vindx VectorVarIndex
 
 	ti                      Taxinfo
 	allowTdraRothraDeposits bool
@@ -123,43 +122,17 @@ func buildVector(yearly, startAge, endAge, vecStartAge, vecEndAge int, rate floa
 	return vec, nil
 }
 
-//TODO: TESTME
-func getIPIntValue(str string) int {
-	if str == "" {
-		return 0
-	}
-	n, e := strconv.Atoi(str)
-	if e != nil {
-		fmt.Printf("GetIPIntValue(): %s\n", e)
-		//panic(e)
-	}
-	return n
-}
-
-//TODO: TESTME
-func getIPFloatValue(str string) float64 {
-	if str == "" {
-		return 0
-	}
-	n, e := strconv.ParseFloat(str, 64)
-	if e != nil {
-		fmt.Printf("GetIPFloatValue(): %s\n", e)
-		//panic(e)
-	}
-	return n
-}
-
 // NewModelSpecs creates a ModelSpecs object
 func NewModelSpecs(vindx VectorVarIndex,
 	ti Taxinfo,
-	ip map[string]string,
+	ip InputParams,
 	verbose bool,
 	allowDeposits bool) ModelSpecs {
 
 	ms := ModelSpecs{
-		InputParams: ip,
-		vindx:       vindx,
-		ti:          ti,
+		ip:    ip,
+		vindx: vindx,
+		ti:    ti,
 		allowTdraRothraDeposits: allowDeposits,
 		maximize:                "Spending", // or "PlusEstate"
 		iRate:                   1.025,
@@ -167,49 +140,27 @@ func NewModelSpecs(vindx VectorVarIndex,
 		min:                     -1,
 		max:                     -1,
 	}
-	age1 := getIPIntValue(ip["eT_Age1"])
-	age2 := getIPIntValue(ip["eT_Age2"])
-	retireAge1 := getIPIntValue(ip["eT_RetireAge1"])
-	if retireAge1 < age1 {
-		retireAge1 = age1
-	}
-	retireAge2 := getIPIntValue(ip["eT_RetireAge2"])
-	if retireAge2 < age2 {
-		retireAge2 = age2
-	}
-	planThroughAge1 := getIPIntValue(ip["eT_PlanThroughAge1"])
-	planThroughAge2 := getIPIntValue(ip["eT_PlanThroughAge2"])
-	yearsToRetire1 := retireAge1 - age1
-	yearsToRetire2 := retireAge2 - age2
-	yearsToRetire := intMin(yearsToRetire1, yearsToRetire2)
-	ms.prePlanYears = yearsToRetire
-	startPlan := yearsToRetire + age1
-	through1 := planThroughAge1 - age1
-	through2 := planThroughAge2 - age2
-	endPlan := intMax(through1, through2) + 1 + age1
-	//delta := age1 - age2
-
-	ms.numyr = endPlan - startPlan
 
 	retirees := []retiree{
 		{
-			age:        age1,
-			ageAtStart: retireAge1,
-			throughAge: planThroughAge1,
-			mykey:      "retiree1",
+			age:        ip.age1,
+			ageAtStart: ip.retireAge1,
+			throughAge: ip.planThroughAge1,
+			mykey:      ip.myKey1,
 			definedContributionPlan: false,
 			dcpBuckets:              nil,
 		},
 		{
-			age:        age2,
-			ageAtStart: retireAge2,
-			throughAge: planThroughAge2,
-			mykey:      "retiree2",
+			age:        ip.age2,
+			ageAtStart: ip.retireAge2,
+			throughAge: ip.planThroughAge2,
+			mykey:      ip.myKey2,
 			definedContributionPlan: false,
 			dcpBuckets:              nil,
 		},
 	}
 	ms.retirees = retirees
+	ms.numyr = ip.numyr
 
 	//accounttable: []map[string]string
 
@@ -221,21 +172,19 @@ func NewModelSpecs(vindx VectorVarIndex,
 
 	//income: []float64 // TODO add real income vector, dummy for now
 	income1 := 0
-	incomeStart1 := startPlan
-	incomeEnd1 := endPlan
-	income, err := buildVector(income1, incomeStart1, incomeEnd1, startPlan, endPlan, ms.iRate, age1)
+	incomeStart1 := ip.startPlan
+	incomeEnd1 := ip.endPlan
+	income, err := buildVector(income1, incomeStart1, incomeEnd1, ip.startPlan, ip.endPlan, ms.iRate, ip.age1)
 	if err != nil {
 		fmt.Printf("BuildVector Failed: %s\n", err)
 	}
 	ms.income = income
 
-	pia1 := getIPIntValue(ip["eT_PIA1"])
-	ssStart1 := getIPIntValue(ip["eT_SS_Start1"])
-	SS1, err := buildVector(pia1, ssStart1, endPlan, startPlan, endPlan, ms.iRate, age1)
-	checkStrconvError(err)
-	pia2 := getIPIntValue(ip["eT_PIA2"])
-	ssStart2 := getIPIntValue(ip["eT_SS_Start2"])
-	SS2, err := buildVector(pia2, ssStart2, endPlan, startPlan, endPlan, ms.iRate, age1)
+	SS1, err := buildVector(ip.PIA1, ip.SSStart1, ip.endPlan, ip.startPlan, ip.endPlan, ms.iRate, ip.age1)
+	if err != nil {
+		fmt.Printf("BuildVector Failed: %s\n", err)
+	}
+	SS2, err := buildVector(ip.PIA2, ip.SSStart2, ip.endPlan, ip.startPlan, ip.endPlan, ms.iRate, ip.age1)
 	if err != nil {
 		fmt.Printf("BuildVector Failed: %s\n", err)
 	}
@@ -246,9 +195,9 @@ func NewModelSpecs(vindx VectorVarIndex,
 
 	//expenses: []float64 // TODO add real income vector, dummy for now
 	exp1 := 0
-	expStart1 := startPlan
-	expEnd1 := endPlan
-	expenses, err := buildVector(exp1, expStart1, expEnd1, startPlan, endPlan, ms.iRate, age1)
+	expStart1 := ip.startPlan
+	expEnd1 := ip.endPlan
+	expenses, err := buildVector(exp1, expStart1, expEnd1, ip.startPlan, ip.endPlan, ms.iRate, ip.age1)
 	if err != nil {
 		fmt.Printf("BuildVector Failed: %s\n", err)
 	}
@@ -256,9 +205,9 @@ func NewModelSpecs(vindx VectorVarIndex,
 
 	//taxed: []float64 // TODO add real income vector, dummy for now
 	tax1 := 0
-	taxStart1 := startPlan
-	taxEnd1 := endPlan
-	taxed, err := buildVector(tax1, taxStart1, taxEnd1, startPlan, endPlan, ms.iRate, age1)
+	taxStart1 := ip.startPlan
+	taxEnd1 := ip.endPlan
+	taxed, err := buildVector(tax1, taxStart1, taxEnd1, ip.startPlan, ip.endPlan, ms.iRate, ip.age1)
 	if err != nil {
 		fmt.Printf("BuildVector Failed: %s\n", err)
 	}
@@ -268,15 +217,15 @@ func NewModelSpecs(vindx VectorVarIndex,
 
 	//cg_asset_taxed: []float64 // TODO add real income vector, dummy for now
 	cgtax1 := 0
-	cgtaxStart1 := startPlan
-	cgtaxEnd1 := endPlan
-	cgtaxed, err := buildVector(cgtax1, cgtaxStart1, cgtaxEnd1, startPlan, endPlan, ms.iRate, age1)
+	cgtaxStart1 := ip.startPlan
+	cgtaxEnd1 := ip.endPlan
+	cgtaxed, err := buildVector(cgtax1, cgtaxStart1, cgtaxEnd1, ip.startPlan, ip.endPlan, ms.iRate, ip.age1)
 	if err != nil {
 		fmt.Printf("BuildVector Failed: %s\n", err)
 	}
 	ms.cgAssetTaxed = cgtaxed
 
-	if ip["filingStatus"] == "joint" {
+	if ip.filingStatus == "joint" {
 		// do nothing
 	} else { // single or mseparate zero retiree2 info
 		// TODO FIXME

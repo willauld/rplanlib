@@ -1,7 +1,6 @@
 package rplanlib
 
 import (
-	"fmt"
 	"strconv"
 )
 
@@ -58,7 +57,7 @@ func getIPIntValue(str string) int {
 	}
 	n, e := strconv.Atoi(str)
 	if e != nil {
-		fmt.Printf("GetIPIntValue(): %s\n", e)
+		//fmt.Printf("GetIPIntValue(): %s\n", e)
 		panic(e)
 	}
 	return n
@@ -71,7 +70,7 @@ func getIPFloatValue(str string) float64 {
 	}
 	n, e := strconv.ParseFloat(str, 64)
 	if e != nil {
-		fmt.Printf("GetIPFloatValue(): %s\n", e)
+		//fmt.Printf("GetIPFloatValue(): %s\n", e)
 		panic(e)
 	}
 	return n
@@ -146,6 +145,8 @@ func NewInputParams(ip map[string]string) InputParams {
 	rip.AftataxContrib = getIPIntValue(ip["eT_Aftatax_Contrib"])
 	rip.AftataxContribStart = getIPIntValue(ip["eT_Aftatax_ContribStartAge"])
 	rip.AftataxContribEnd = getIPIntValue(ip["eT_Aftatax_ContribEndAge"])
+
+	//fmt.Printf("\n&&&&\n%v\n&&&&\n", rip)
 
 	return rip
 }

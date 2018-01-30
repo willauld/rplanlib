@@ -384,6 +384,7 @@ func TestNewInputParams(t *testing.T) {
 		startPlan    int
 		endPlan      int
 		numyr        int
+		accmap       map[string]int
 	}{
 		{ // case 0
 			ip: map[string]string{
@@ -429,6 +430,7 @@ func TestNewInputParams(t *testing.T) {
 			startPlan:    66,
 			endPlan:      103,
 			numyr:        37,
+			accmap:       map[string]int{"IRA": 2, "Roth": 0, "Aftatax": 1},
 		},
 		{ // case 1 // switch retirees
 			ip: map[string]string{
@@ -445,7 +447,7 @@ func TestNewInputParams(t *testing.T) {
 				"eT_SS_Start1":               "70",
 				"eT_SS_Start2":               "66",
 				"eT_TDRA1":                   "200", // 200k
-				"eT_TDRA2":                   "100", // 100k
+				"eT_TDRA2":                   "",
 				"eT_TDRA_Rate1":              "",
 				"eT_TDRA_Rate2":              "",
 				"eT_TDRA_Contrib1":           "",
@@ -474,6 +476,7 @@ func TestNewInputParams(t *testing.T) {
 			startPlan:    64,
 			endPlan:      101,
 			numyr:        37,
+			accmap:       map[string]int{"IRA": 1, "Roth": 0, "Aftatax": 1},
 		},
 		{ // case 2 // switch retirees
 			ip: map[string]string{
@@ -499,7 +502,7 @@ func TestNewInputParams(t *testing.T) {
 				"eT_TDRA_ContribStartAge2":   "",
 				"eT_TDRA_ContribEndAge1":     "",
 				"eT_TDRA_ContribEndAge2":     "",
-				"eT_Roth1":                   "",
+				"eT_Roth1":                   "10", // 10K
 				"eT_Roth2":                   "",
 				"eT_Roth_Rate1":              "",
 				"eT_Roth_Rate2":              "",
@@ -509,7 +512,7 @@ func TestNewInputParams(t *testing.T) {
 				"eT_Roth_ContribStartAge2":   "",
 				"eT_Roth_ContribEndAge1":     "",
 				"eT_Roth_ContribEndAge2":     "",
-				"eT_Aftatax":                 "50", // 50k
+				"eT_Aftatax":                 "",
 				"eT_Aftatax_Rate":            "7.25",
 				"eT_Aftatax_Contrib":         "",
 				"eT_Aftatax_ContribStartAge": "",
@@ -519,6 +522,7 @@ func TestNewInputParams(t *testing.T) {
 			startPlan:    65,
 			endPlan:      98,
 			numyr:        33,
+			accmap:       map[string]int{"IRA": 2, "Roth": 1, "Aftatax": 0},
 		},
 	}
 	for i, elem := range tests {
@@ -534,6 +538,15 @@ func TestNewInputParams(t *testing.T) {
 		}
 		if modelip.numyr != elem.numyr {
 			t.Errorf("NewInputParams case %d: Failed - numyr Expected %v but found %v\n", i, elem.numyr, modelip.numyr)
+		}
+		if modelip.accmap["IRA"] != elem.accmap["IRA"] {
+			t.Errorf("NewInputParams case %d: Failed - IRA accounts Expected %v but found %v\n", i, elem.accmap["IRA"], modelip.accmap["IRA"])
+		}
+		if modelip.accmap["Roth"] != elem.accmap["Roth"] {
+			t.Errorf("NewInputParams case %d: Failed - Roth accounts Expected %v but found %v\n", i, elem.accmap["Roth"], modelip.accmap["Roth"])
+		}
+		if modelip.accmap["Aftatax"] != elem.accmap["Aftatax"] {
+			t.Errorf("NewInputParams case %d: Failed - Aftatax accounts Expected %v but found %v\n", i, elem.accmap["Aftatax"], modelip.accmap["Aftatax"])
 		}
 	}
 }
@@ -1062,13 +1075,13 @@ func TestPrintConstraint(t *testing.T) { /* TODO:FIXME:IMPLEMENTME */ }
 func TestPrintModelRow(t *testing.T) {
 	/*
 		tests := []struct {
-			row []float64
+			row             []float64
 			suppressNewline bool
 		}{
 			{},
 		}
 		for i, elem := range tests {
-			ms.printModelRow(elem.row, elem.suppressNewline)
+			//			ms.printModelRow(elem.row, elem.suppressNewline)
 		}
 	*/
 }
@@ -1084,22 +1097,22 @@ func TestPrintModelRow(t *testing.T) {
 			ip: map[string]string{
 				"setName":                    "",
 				"filingStatus":               "",
-				"eT_Age1 INTEGER":            "",
-				"eT_Age2 INTEGER":            "",
-				"eT_RetireAge1 INTEGER":      "",
-				"eT_RetireAge2 INTEGER":      "",
-				"eT_PlanThroughAge1 INTEGER": "",
-				"eT_PlanThroughAge2 INTEGER": "",
-				"eT_PIA1 INTEGER":            "",
-				"eT_PIA2 INTEGER":            "",
-				"eT_SS_Start1 INTEGER":       "",
-				"eT_SS_Start2 INTEGER":       "",
-				"eT_TDRA1 INTEGER":           "",
-				"eT_TDRA2 INTEGER":           "",
-				"eT_TDRA_Rate1 REAL":         "",
-				"eT_TDRA_Rate2 REAL":         "",
-				"eT_TDRA_Contrib1 INTEGER":   "",
-				"eT_TDRA_Contrib2 INTEGER":   "",
+				"eT_Age1":            "",
+				"eT_Age2":            "",
+				"eT_RetireAge1":      "",
+				"eT_RetireAge2":      "",
+				"eT_PlanThroughAge1": "",
+				"eT_PlanThroughAge2": "",
+				"eT_PIA1":            "",
+				"eT_PIA2":            "",
+				"eT_SS_Start1":       "",
+				"eT_SS_Start2":       "",
+				"eT_TDRA1":           "",
+				"eT_TDRA2":           "",
+				"eT_TDRA_Rate1":         "",
+				"eT_TDRA_Rate2":         "",
+				"eT_TDRA_Contrib1":   "",
+				"eT_TDRA_Contrib2":   "",
 				"eT_TDRA_ContribStartAge1":   "",
 				"eT_TDRA_ContribStartAge2":   "",
 				"eT_TDRA_ContribEndAge1":     "",

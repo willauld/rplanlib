@@ -48,6 +48,7 @@ type InputParams struct {
 	startPlan    int
 	endPlan      int
 	numyr        int
+	accmap       map[string]int
 }
 
 //TODO: TESTME
@@ -84,6 +85,7 @@ func NewInputParams(ip map[string]string) InputParams {
 
 	rip := InputParams{}
 
+	rip.accmap = map[string]int{"IRA": 0, "Roth": 0, "Aftatax": 0}
 	rip.filingStatus = ip["filingStatus"]
 	rip.myKey1 = "retiree1"
 	rip.myKey2 = "retiree2"
@@ -128,6 +130,12 @@ func NewInputParams(ip map[string]string) InputParams {
 	rip.TDRAContribStart2 = getIPIntValue(ip["eT_TDRA_ContribStartAge2"])
 	rip.TDRAContribEnd1 = getIPIntValue(ip["eT_TDRA_ContribEndAge1"])
 	rip.TDRAContribEnd2 = getIPIntValue(ip["eT_TDRA_ContribEndAge2"])
+	if rip.TDRA1 > 0 {
+		rip.accmap["IRA"]++
+	}
+	if rip.TDRA2 > 0 {
+		rip.accmap["IRA"]++
+	}
 
 	rip.Roth1 = getIPIntValue(ip["eT_Roth1"])
 	rip.Roth2 = getIPIntValue(ip["eT_Roth2"])
@@ -139,12 +147,21 @@ func NewInputParams(ip map[string]string) InputParams {
 	rip.RothContribStart2 = getIPIntValue(ip["eT_Roth_ContribStartAge2"])
 	rip.RothContribEnd1 = getIPIntValue(ip["eT_Roth_ContribEndAge1"])
 	rip.RothContribEnd2 = getIPIntValue(ip["eT_Roth_ContribEndAge2"])
+	if rip.Roth1 > 0 {
+		rip.accmap["Roth"]++
+	}
+	if rip.Roth2 > 0 {
+		rip.accmap["Roth"]++
+	}
 
 	rip.Aftatax = getIPIntValue(ip["eT_Aftatax"])
 	rip.AftataxRate = getIPFloatValue(ip["eT_Aftatax_Rate"])
 	rip.AftataxContrib = getIPIntValue(ip["eT_Aftatax_Contrib"])
 	rip.AftataxContribStart = getIPIntValue(ip["eT_Aftatax_ContribStartAge"])
 	rip.AftataxContribEnd = getIPIntValue(ip["eT_Aftatax_ContribEndAge"])
+	if rip.Aftatax > 0 {
+		rip.accmap["Aftatax"]++
+	}
 
 	//fmt.Printf("\n&&&&\n%v\n&&&&\n", rip)
 

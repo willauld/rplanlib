@@ -1,9 +1,9 @@
 package rplanlib
 
 import (
-	"bufio"
 	"bytes"
 	"fmt"
+	"io"
 	"math"
 	"os"
 	"testing"
@@ -1187,47 +1187,45 @@ func TestPrintModelRow(t *testing.T) {
 */
 
 func TestRedirectOutput(t *testing.T) {
-	c, str, err := RedirectOutput()
+	mychan := make(chan string)
+	oldout, w, err := RedirectStdout(mychan)
 	if err != nil {
-		fmt.Printf("RedirectOutput: %s\n", err)
+		t.Errorf("RedirectStdout: %s\n", err)
+		return
 	}
-	// Should be normal again
-	fmt.Printf("\nNormal?\n")
-	fmt.Printf("buf: %s\n", str)
-	fmt.Printf("loopc: %d\n", c)
+	outstr := "This will be captured for comparisons later\nAnd this too\n"
+	fmt.Printf("%s", outstr)
+	str := RestoreStdout(mychan, oldout, w)
+	if str != outstr {
+		t.Errorf("Capured output fails: expected '%s', found '%s'", outstr, str)
+	}
 }
 
-func RedirectOutput( /*id string*/ ) (int, string, error) {
-	var buf bytes.Buffer
+func RedirectStdout(mechan chan string) (*os.File, *os.File, error) {
 	oldStdout := os.Stdout
-	readFile, writeFile, err := os.Pipe()
+	readPipe, writePipe, err := os.Pipe()
 	if err != nil {
-		return 0, "", err
+		return os.Stdout, nil, err
 	}
-
-	os.Stdout = writeFile
-
-	loopc := 0
-
+	os.Stdout = writePipe
+	//mechan := make(chan string)
 	go func() {
-		scanner := bufio.NewScanner(readFile)
-		for scanner.Scan() {
-			loopc++
-			line := scanner.Text()
-			//?  _, err := io.Copy(&buf, r)
-			fmt.Fprintf(&buf, "%s", line)
-
-			// Log the stdout line to my event logger
-			//event.Log(event.Event{Id: id, Msg: line})
+		var buf bytes.Buffer
+		_, err := io.Copy(&buf, readPipe)
+		readPipe.Close()
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "func() copyPipe: %v\n", err)
+			return
 		}
-		readFile.Close()
+		mechan <- buf.String()
 	}()
+	return oldStdout, writePipe, nil
+}
 
-	fmt.Printf("This will be logged to our event logger\n")
-	fmt.Printf("And this too\n")
-
+func RestoreStdout(mechan chan string, oldStdout *os.File, writePipe *os.File) string {
 	// Reset the output again
-	writeFile.Close()
+	writePipe.Close()
 	os.Stdout = oldStdout
-	return loopc, buf.String(), nil
+	str := <-mechan
+	return str
 }

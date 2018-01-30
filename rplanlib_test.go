@@ -1,8 +1,11 @@
 package rplanlib
 
 import (
+	"bufio"
+	"bytes"
 	"fmt"
 	"math"
+	"os"
 	"testing"
 )
 
@@ -545,7 +548,7 @@ func TestNewInputParams(t *testing.T) {
 		if modelip.accmap["Roth"] != elem.accmap["Roth"] {
 			t.Errorf("NewInputParams case %d: Failed - Roth accounts Expected %v but found %v\n", i, elem.accmap["Roth"], modelip.accmap["Roth"])
 		}
-		if modelip.accmap["Aftatax"] != elem.accmap["Aftatax"] {
+		if modelip.accmap["Aftatax"] != elem.accmap["aftertax"] {
 			t.Errorf("NewInputParams case %d: Failed - Aftatax accounts Expected %v but found %v\n", i, elem.accmap["Aftatax"], modelip.accmap["Aftatax"])
 		}
 	}
@@ -998,10 +1001,6 @@ func TestNewModelSpecs(t *testing.T) {
 		ti := NewTaxInfo(ip.filingStatus)
 		taxbins := len(*ti.Taxtable)
 		cgbins := len(*ti.Capgainstable)
-		accnum := 0
-		for _, acc := range elem.accmap { //TODO FIXME accmap should come from ImputParams
-			accnum += acc
-		}
 		vindx := NewVectorVarIndex(ip.numyr, taxbins, cgbins, elem.accmap)
 		ms := NewModelSpecs(vindx, ti, ip, elem.verbose,
 			elem.allowDeposits)
@@ -1034,10 +1033,6 @@ func TestBuildModel(t *testing.T) {
 		ip := NewInputParams(elem.ip)
 		taxbins := len(*ti.Taxtable)
 		cgbins := len(*ti.Capgainstable)
-		accnum := 0
-		for _, acc := range elem.accmap {
-			accnum += acc
-		}
 		vindx := NewVectorVarIndex(elem.years, taxbins,
 			cgbins, elem.accmap)
 		ms := NewModelSpecs(vindx, ti, ip, elem.verbose,
@@ -1073,17 +1068,73 @@ func TestPrintModelMatrix(t *testing.T) { /* TODO:FIXME:IMPLEMENTME */ }
 func TestPrintConstraint(t *testing.T) { /* TODO:FIXME:IMPLEMENTME */ }
 
 func TestPrintModelRow(t *testing.T) {
-	/*
-		tests := []struct {
-			row             []float64
-			suppressNewline bool
-		}{
-			{},
+	tests := []struct {
+		ip              map[string]string
+		row             []float64
+		suppressNewline bool
+	}{
+		{ // Case 0
+			ip: map[string]string{
+				"setName":                    "activeParams",
+				"filingStatus":               "single",
+				"eT_Age1":                    "60",
+				"eT_Age2":                    "",
+				"eT_RetireAge1":              "65",
+				"eT_RetireAge2":              "",
+				"eT_PlanThroughAge1":         "100",
+				"eT_PlanThroughAge2":         "",
+				"eT_PIA1":                    "20", // 20k
+				"eT_PIA2":                    "",
+				"eT_SS_Start1":               "70",
+				"eT_SS_Start2":               "",
+				"eT_TDRA1":                   "10", // 10k
+				"eT_TDRA2":                   "",
+				"eT_TDRA_Rate1":              "",
+				"eT_TDRA_Rate2":              "",
+				"eT_TDRA_Contrib1":           "",
+				"eT_TDRA_Contrib2":           "",
+				"eT_TDRA_ContribStartAge1":   "",
+				"eT_TDRA_ContribStartAge2":   "",
+				"eT_TDRA_ContribEndAge1":     "",
+				"eT_TDRA_ContribEndAge2":     "",
+				"eT_Roth1":                   "5", // 5k
+				"eT_Roth2":                   "",
+				"eT_Roth_Rate1":              "",
+				"eT_Roth_Rate2":              "",
+				"eT_Roth_Contrib1":           "",
+				"eT_Roth_Contrib2":           "",
+				"eT_Roth_ContribStartAge1":   "",
+				"eT_Roth_ContribStartAge2":   "",
+				"eT_Roth_ContribEndAge1":     "",
+				"eT_Roth_ContribEndAge2":     "",
+				"eT_Aftatax":                 "15", // 15k
+				"eT_Aftatax_Rate":            "",
+				"eT_Aftatax_Contrib":         "",
+				"eT_Aftatax_ContribStartAge": "",
+				"eT_Aftatax_ContribEndAge":   "",
+			},
+			row:             []float64{},
+			suppressNewline: false,
+		},
+	}
+	for i, elem := range tests {
+		ip := NewInputParams(elem.ip)
+		ti := NewTaxInfo(ip.filingStatus)
+		taxbins := len(*ti.Taxtable)
+		cgbins := len(*ti.Capgainstable)
+		vindx := NewVectorVarIndex(ip.numyr, taxbins, cgbins, ip.accmap)
+		row := make([]float64, vindx.Vsize)
+		ms := ModelSpecs{
+			ip:     ip,
+			vindx:  vindx,
+			ti:     ti,
+			numyr:  ip.numyr,
+			accmap: ip.accmap,
 		}
-		for i, elem := range tests {
-			//			ms.printModelRow(elem.row, elem.suppressNewline)
-		}
-	*/
+		fmt.Printf("Vsize: %d\n", vindx.Vsize)
+		ms.printModelRow(row, elem.suppressNewline)
+		fmt.Printf("Case %d\n", i)
+	}
 }
 
 /*
@@ -1134,3 +1185,49 @@ func TestPrintModelRow(t *testing.T) {
 				"eT_Aftatax_ContribEndAge":   "",
 			},
 */
+
+func TestRedirectOutput(t *testing.T) {
+	c, str, err := RedirectOutput()
+	if err != nil {
+		fmt.Printf("RedirectOutput: %s\n", err)
+	}
+	// Should be normal again
+	fmt.Printf("\nNormal?\n")
+	fmt.Printf("buf: %s\n", str)
+	fmt.Printf("loopc: %d\n", c)
+}
+
+func RedirectOutput( /*id string*/ ) (int, string, error) {
+	var buf bytes.Buffer
+	oldStdout := os.Stdout
+	readFile, writeFile, err := os.Pipe()
+	if err != nil {
+		return 0, "", err
+	}
+
+	os.Stdout = writeFile
+
+	loopc := 0
+
+	go func() {
+		scanner := bufio.NewScanner(readFile)
+		for scanner.Scan() {
+			loopc++
+			line := scanner.Text()
+			//?  _, err := io.Copy(&buf, r)
+			fmt.Fprintf(&buf, "%s", line)
+
+			// Log the stdout line to my event logger
+			//event.Log(event.Event{Id: id, Msg: line})
+		}
+		readFile.Close()
+	}()
+
+	fmt.Printf("This will be logged to our event logger\n")
+	fmt.Printf("And this too\n")
+
+	// Reset the output again
+	writeFile.Close()
+	os.Stdout = oldStdout
+	return loopc, buf.String(), nil
+}

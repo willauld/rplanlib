@@ -85,7 +85,7 @@ func NewInputParams(ip map[string]string) InputParams {
 
 	rip := InputParams{}
 
-	rip.accmap = map[string]int{"IRA": 0, "Roth": 0, "Aftatax": 0}
+	rip.accmap = map[string]int{"IRA": 0, "Roth": 0, "aftertax": 0}
 	rip.filingStatus = ip["filingStatus"]
 	rip.myKey1 = "retiree1"
 	rip.myKey2 = "retiree2"
@@ -160,7 +160,7 @@ func NewInputParams(ip map[string]string) InputParams {
 	rip.AftataxContribStart = getIPIntValue(ip["eT_Aftatax_ContribStartAge"])
 	rip.AftataxContribEnd = getIPIntValue(ip["eT_Aftatax_ContribEndAge"])
 	if rip.Aftatax > 0 {
-		rip.accmap["Aftatax"]++
+		rip.accmap["aftertax"]++
 	}
 
 	//fmt.Printf("\n&&&&\n%v\n&&&&\n", rip)

@@ -34,6 +34,7 @@ type ModelSpecs struct {
 	prePlanYears int    // years before plan starts
 	maximize     string // "Spending" or "PlusEstate"
 	accounttable []account
+	numacc       int
 	accmap       map[string]int
 	retirees     []retiree
 
@@ -70,7 +71,7 @@ func checkStrconvError(e error) { // TODO: should I remove this?
 	}
 }
 
-// mergeVectors sums two vectors of equal lenth returning a third vector
+// mergeVectors sums two vectors of equal length returning a third vector
 func mergeVectors(v1, v2 []float64) ([]float64, error) {
 	if len(v1) != len(v2) {
 		err := fmt.Errorf("mergeVectors: Can not merge, lengths do not match, %d vs %d", len(v1), len(v2))
@@ -130,9 +131,10 @@ func NewModelSpecs(vindx VectorVarIndex,
 	allowDeposits bool) ModelSpecs {
 
 	ms := ModelSpecs{
-		ip:    ip,
-		vindx: vindx,
-		ti:    ti,
+		ip:     ip,
+		accmap: ip.accmap,
+		vindx:  vindx,
+		ti:     ti,
 		allowTdraRothraDeposits: allowDeposits,
 		maximize:                "Spending", // or "PlusEstate"
 		iRate:                   1.025,
@@ -161,14 +163,13 @@ func NewModelSpecs(vindx VectorVarIndex,
 	}
 	ms.retirees = retirees
 	ms.numyr = ip.numyr
+	ms.numacc = 0
+	for _, n := range ms.accmap {
+		ms.numacc += n
+	}
+	//fmt.Printf("NewModelSpec: numacc: %d, accmap: %v\n", ms.numacc, ms.accmap)
 
 	//accounttable: []map[string]string
-
-	//accmap: map[string]int
-
-	taxbins := len(*ti.Taxtable)
-	cgbins := len(*ti.Capgainstable)
-	ms.vindx = NewVectorVarIndex(ms.numyr, taxbins, cgbins, ms.accmap)
 
 	//income: []float64 // TODO add real income vector, dummy for now
 	income1 := 0
@@ -682,7 +683,7 @@ func (ms ModelSpecs) printModelMatrix(c []float64, A [][]float64, b []float64, s
 		fmt.Printf("c: ")
 		ms.printModelRow(c, false)
 		fmt.Printf("\n")
-		fmt.Printf("B? i: A_ub[i]: b[i]")
+		fmt.Printf("B? i: A_ub[i]: b[i]\n")
 		for constraint := 0; constraint < len(A); constraint++ {
 			if s == nil || s[constraint] > 0 {
 				fmt.Printf("  ")
@@ -693,7 +694,7 @@ func (ms ModelSpecs) printModelMatrix(c []float64, A [][]float64, b []float64, s
 			ms.printConstraint(A[constraint], b[constraint])
 		}
 	} else {
-		fmt.Printf(" i: A_ub[i]: b[i]")
+		fmt.Printf(" i: A_ub[i]: b[i]\n")
 		j := 0
 		for constraint := 0; constraint < len(A); constraint++ {
 			if s[constraint] > 0 {
@@ -709,50 +710,55 @@ func (ms ModelSpecs) printModelMatrix(c []float64, A [][]float64, b []float64, s
 
 func (ms ModelSpecs) printConstraint(row []float64, b float64) {
 	ms.printModelRow(row, true)
-	fmt.Printf("<= b[]: %6.2f", b)
+	fmt.Printf("<= b[]: %6.2f\n", b)
 }
 
 func (ms ModelSpecs) printModelRow(row []float64, suppressNewline bool) {
-	for i := 0; i < ms.numyr; i++ {
+	if ms.numacc < 0 || ms.numacc > 5 {
+		e := fmt.Errorf("PrintModelRow: number of accounts is out of bounds, should be between [0, 5] but is %d", ms.numacc)
+		fmt.Printf("%s\n", e)
+		return
+	}
+	for i := 0; i < ms.numyr; i++ { // x[]
 		for k := 0; k < len(*ms.ti.Taxtable); k++ {
 			if row[ms.vindx.X(i, k)] != 0 {
-				fmt.Printf("x[%d,%d]: %6.3f", i, k, row[ms.vindx.X(i, k)])
+				fmt.Printf("x[%d,%d]=%6.3f, ", i, k, row[ms.vindx.X(i, k)])
 			}
 		}
 	}
 	if ms.accmap["aftertax"] > 0 {
-		for i := 0; i < ms.numyr; i++ {
+		for i := 0; i < ms.numyr; i++ { // y[]
 			for l := 0; l < len(*ms.ti.Capgainstable); l++ {
 				if row[ms.vindx.Y(i, l)] != 0 {
-					fmt.Printf("y[%d,%d]: %6.3f ", i, l, row[ms.vindx.Y(i, l)])
+					fmt.Printf("y[%d,%d]=%6.3f, ", i, l, row[ms.vindx.Y(i, l)])
 				}
 			}
 		}
 	}
-	for i := 0; i < ms.numyr; i++ {
-		for j := 0; j < len(ms.accounttable); j++ {
+	for i := 0; i < ms.numyr; i++ { // w[]
+		for j := 0; j < ms.numacc; j++ {
 			if row[ms.vindx.W(i, j)] != 0 {
-				fmt.Printf("w[%d,%d]: %6.3f ", i, j, row[ms.vindx.W(i, j)])
+				fmt.Printf("w[%d,%d]=%6.3f, ", i, j, row[ms.vindx.W(i, j)])
 			}
 		}
 	}
 	for i := 0; i < ms.numyr+1; i++ { // b[] has an extra year
-		for j := 0; j < len(ms.accounttable); j++ {
+		for j := 0; j < ms.numacc; j++ {
 			if row[ms.vindx.B(i, j)] != 0 {
-				fmt.Printf("b[%d,%d]: %6.3f ", i, j, row[ms.vindx.B(i, j)])
+				fmt.Printf("b[%d,%d]=%6.3f, ", i, j, row[ms.vindx.B(i, j)])
 			}
 		}
 	}
-	for i := 0; i < ms.numyr; i++ {
+	for i := 0; i < ms.numyr; i++ { // s[]
 		if row[ms.vindx.S(i)] != 0 {
-			fmt.Printf("s[%d]: %6.3f ", i, row[ms.vindx.S(i)])
+			fmt.Printf("s[%d]=%6.3f, ", i, row[ms.vindx.S(i)])
 		}
 	}
 	if ms.accmap["aftertax"] > 0 {
-		for i := 0; i < ms.numyr; i++ {
-			for j := 0; j < len(ms.accounttable); j++ {
+		for i := 0; i < ms.numyr; i++ { // D[]
+			for j := 0; j < ms.numacc; j++ {
 				if row[ms.vindx.D(i, j)] != 0 {
-					fmt.Printf("D[%d,%d]: %6.3f ", i, j, row[ms.vindx.D(i, j)])
+					fmt.Printf("D[%d,%d]=%6.3f, ", i, j, row[ms.vindx.D(i, j)])
 				}
 			}
 		}

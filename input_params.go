@@ -4,6 +4,7 @@ import (
 	"strconv"
 )
 
+// InputParams are the model params constructed from driver program string input
 type InputParams struct {
 	filingStatus        string
 	myKey1              string
@@ -85,7 +86,7 @@ func NewInputParams(ip map[string]string) InputParams {
 
 	rip := InputParams{}
 
-	rip.accmap = map[string]int{"IRA": 0, "Roth": 0, "aftertax": 0}
+	rip.accmap = map[string]int{"IRA": 0, "roth": 0, "aftertax": 0}
 	rip.filingStatus = ip["filingStatus"]
 	rip.myKey1 = "retiree1"
 	rip.myKey2 = "retiree2"
@@ -148,10 +149,10 @@ func NewInputParams(ip map[string]string) InputParams {
 	rip.RothContribEnd1 = getIPIntValue(ip["eT_Roth_ContribEndAge1"])
 	rip.RothContribEnd2 = getIPIntValue(ip["eT_Roth_ContribEndAge2"])
 	if rip.Roth1 > 0 {
-		rip.accmap["Roth"]++
+		rip.accmap["roth"]++
 	}
 	if rip.Roth2 > 0 {
-		rip.accmap["Roth"]++
+		rip.accmap["roth"]++
 	}
 
 	rip.Aftatax = getIPIntValue(ip["eT_Aftatax"])

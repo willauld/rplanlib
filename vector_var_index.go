@@ -7,6 +7,7 @@ func checkIndexSequence(years, taxbins, cgbins int, accmap map[string]int, varin
 	for _, acc := range accmap {
 		accounts += acc
 	}
+	//fmt.Printf("#account from accmap is %d\n", accounts)
 	// varindex.?() functions are laid out to index a vector of variables
 	// laid out in the order x(i,k), y(i,l), w(i,j), b(i,j), s(i), D(i,j)
 	passOk := true
@@ -101,12 +102,41 @@ type VectorVarIndex struct {
 
 // NewVectorVarIndex creates an object for index translation
 func NewVectorVarIndex(iyears, itaxbins, icgbins int,
-	iaccmap map[string]int) VectorVarIndex {
+	iaccmap map[string]int) (VectorVarIndex, error) {
+
+	if iyears < 1 || iyears > 100 {
+		e := fmt.Errorf("NewVectorVarIndex: invalid value for year, %d", iyears)
+		return VectorVarIndex{}, e
+	}
+	if itaxbins < 0 {
+		e := fmt.Errorf("NewVectorVarIntex: invalid value, taxbins < 0")
+		return VectorVarIndex{}, e
+	}
+	if icgbins < 0 {
+		e := fmt.Errorf("NewVectorVarIndex: invalid value, cgbins < 0")
+		return VectorVarIndex{}, e
+	}
+	if len(iaccmap) != 3 {
+		e := fmt.Errorf("NewVectorVarIndex: invalid value, accmap length != 3 but rather %d, accmap: %v", len(iaccmap), iaccmap)
+		return VectorVarIndex{}, e
+	}
+	//
+	// If after the following 3 asignments len(iaccmap)==3 then it
+	// has the correct key values
+	//
+	iaccmap["IRA"] = iaccmap["IRA"]
+	iaccmap["roth"] = iaccmap["roth"]
+	iaccmap["aftertax"] = iaccmap["aftertax"]
+	if len(iaccmap) != 3 {
+		e := fmt.Errorf("NewVectorVarIndex: accmap has invalid key value: %v", iaccmap)
+		return VectorVarIndex{}, e
+	}
 
 	iaccounts := 0
 	for _, n := range iaccmap {
 		iaccounts += n
 	}
+	//fmt.Printf("iaccounts: %d, iaccmap: %v\n", iaccounts, iaccmap)
 	ycount := 0
 	if iaccmap["aftertax"] > 0 { // no cgbins if no aftertax account
 		ycount = iyears * icgbins
@@ -144,7 +174,7 @@ func NewVectorVarIndex(iyears, itaxbins, icgbins int,
 		Bstart: bstart,
 		Sstart: sstart,
 		Dstart: dstart,
-	}
+	}, nil
 }
 
 // X (i,k) returns the variable index in a variable vector
@@ -196,32 +226,32 @@ func (v VectorVarIndex) Varstr(indx int) string {
 
 	//assert indx < v.Vsize
 	if indx < v.Xcount {
-		a = indx // v.taxbins
+		a = indx / v.Taxbins
 		b = indx % v.Taxbins
 		return fmt.Sprintf("x[%d,%d]", a, b) // add actual values for i,j
 	} else if indx < v.Xcount+v.Ycount {
 		c = indx - v.Xcount
-		a = c // v.Cgbins
+		a = c / v.Cgbins
 		b = c % v.Cgbins
 		return fmt.Sprintf("y[%d,%d]", a, b) // add actual values for i,j
 	} else if indx < v.Xcount+v.Ycount+v.Wcount {
 		c = indx - (v.Xcount + v.Ycount)
-		a = c // v.Accounts
+		a = c / v.Accounts
 		b = c % v.Accounts
 		return fmt.Sprintf("w[%d,%d]", a, b) // add actual values for i,j
 	} else if indx < v.Xcount+v.Ycount+v.Wcount+v.Bcount {
 		c = indx - (v.Xcount + v.Ycount + v.Wcount)
-		a = c // v.Accounts
+		a = c / v.Accounts
 		b = c % v.Accounts
 		return fmt.Sprintf("b[%d,%d]", a, b) // add actual values for i,j
 	} else if indx < v.Xcount+v.Ycount+v.Wcount+v.Bcount+v.Scount {
 		c = indx - (v.Xcount + v.Ycount + v.Wcount + v.Bcount)
-		//a = c // v.Years
+		//a = c / v.Years
 		//b = c % v.Years
 		return fmt.Sprintf("s[%d]", c) // add actual values for i,j
 	} else if indx < v.Xcount+v.Ycount+v.Wcount+v.Bcount+v.Scount+v.Dcount {
 		c = indx - (v.Xcount + v.Ycount + v.Wcount + v.Bcount + v.Scount)
-		a = c // v.Accounts
+		a = c / v.Accounts
 		b = c % v.Accounts
 		return fmt.Sprintf("D[%d,%d]", a, b) // add actual values for i,j
 	} else {

@@ -1100,26 +1100,155 @@ func TestBuildModel(t *testing.T) {
 }
 
 func TestAccountOwnerAge(t *testing.T) {
-	/*
-			tests := []struct {
-			}{
-				{},
-			}
-			for i, elem := range tests {
-		func (ms ModelSpecs) accountOwnerAge(year int, acc account) int {
-			}
-	*/
+	tests := []struct {
+		ms    ModelSpecs
+		index int
+		year  int
+	}{
+		{ // case 0
+			ms: ModelSpecs{
+				retirees: []retiree{
+					{ // retireeindx == 0
+						age:        56,
+						ageAtStart: 57,
+						throughAge: 100,
+						mykey:      "retiree1",
+						definedContributionPlan: false,
+						dcpBuckets:              nil,
+					},
+					{ // retireeindx == 1
+						age:        54,
+						ageAtStart: 55,
+						throughAge: 100,
+						mykey:      "retiree2",
+						definedContributionPlan: false,
+						dcpBuckets:              nil,
+					},
+				},
+				accounttable: []account{
+					{
+						bal:           30,
+						basis:         0,
+						estateTax:     0.85,
+						contributions: []float64{},
+						rRate:         1.06,
+						acctype:       "IRA",
+						mykey:         "retiree2",
+					},
+				},
+			},
+			index: 1,
+			year:  10,
+		},
+		{ // case 1
+			ms: ModelSpecs{
+				retirees: []retiree{
+					{ // retireeindx == 0
+						age:        56,
+						ageAtStart: 57,
+						throughAge: 100,
+						mykey:      "retiree1",
+						definedContributionPlan: false,
+						dcpBuckets:              nil,
+					},
+					{ // retireeindx == 1
+						age:        54,
+						ageAtStart: 55,
+						throughAge: 100,
+						mykey:      "retiree2",
+						definedContributionPlan: false,
+						dcpBuckets:              nil,
+					},
+				},
+				accounttable: []account{
+					{
+						bal:           30,
+						basis:         0,
+						estateTax:     0.85,
+						contributions: []float64{},
+						rRate:         1.06,
+						acctype:       "IRA",
+						mykey:         "retiree2",
+					},
+				},
+			},
+			index: 1,
+			year:  7,
+		},
+	}
+	for i, elem := range tests {
+		ownerAge := elem.ms.accountOwnerAge(elem.year, elem.ms.accounttable[0])
+		calcage := elem.ms.retirees[elem.index].ageAtStart + elem.year
+		if ownerAge != calcage {
+			t.Errorf("AccountOwnerAge case %d: age does not match, expected %d, found %d", i, calcage, ownerAge)
+		}
+	}
 }
 
-func TestMatchRetiree(t *testing.T) { /* TODO:FIXME:IMPLEMENTME */
-	/*
-		tests := []struct {
-		}{
-			{},
+func TestMatchRetiree(t *testing.T) {
+	tests := []struct {
+		ms  ModelSpecs
+		key string
+		age int
+	}{
+		{ // case 0
+			ms: ModelSpecs{
+				retirees: []retiree{
+					{ // retireeindx == 0
+						age:        56,
+						ageAtStart: 57,
+						throughAge: 100,
+						mykey:      "retiree1",
+						definedContributionPlan: false,
+						dcpBuckets:              nil,
+					},
+					{ // retireeindx == 1
+						age:        54,
+						ageAtStart: 55,
+						throughAge: 100,
+						mykey:      "retiree2",
+						definedContributionPlan: false,
+						dcpBuckets:              nil,
+					},
+				},
+			},
+			key: "retiree2",
+			age: 54,
+		},
+		{ // case 1
+			ms: ModelSpecs{
+				retirees: []retiree{
+					{ // retireeindx == 0
+						age:        56,
+						ageAtStart: 57,
+						throughAge: 100,
+						mykey:      "retiree1",
+						definedContributionPlan: false,
+						dcpBuckets:              nil,
+					},
+					{ // retireeindx == 1
+						age:        54,
+						ageAtStart: 55,
+						throughAge: 100,
+						mykey:      "retiree2",
+						definedContributionPlan: false,
+						dcpBuckets:              nil,
+					},
+				},
+			},
+			key: "retiree1",
+			age: 56,
+		},
+	}
+	for i, elem := range tests {
+		r := elem.ms.matchRetiree(elem.key)
+		if r.mykey != elem.key {
+			t.Errorf("MatchRetiree case %d: key does not match, expected %s, found %s", i, elem.key, r.mykey)
 		}
-		for i, elem := range tests {
+		if r.age != elem.age {
+			t.Errorf("MatchRetiree case %d: age does not match, expected %d, found %d", i, elem.age, r.age)
 		}
-	*/
+	}
 }
 
 func TestCgTaxableFraction(t *testing.T) { /* TODO:FIXME:IMPLEMENTME */

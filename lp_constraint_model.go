@@ -637,8 +637,8 @@ func (ms ModelSpecs) BuildModel() ([]float64, [][]float64, []float64) {
 	return c, A, b
 }
 
-// TODO: FIXME NEED UNIT TEST FOR THIS FUNCTION
 // accountOwnerAge finds the age of the retiree who owns the account
+// Only valid in plan years
 func (ms ModelSpecs) accountOwnerAge(year int, acc account) int {
 	age := 0
 	retireekey := acc.mykey
@@ -649,7 +649,6 @@ func (ms ModelSpecs) accountOwnerAge(year int, acc account) int {
 	return age
 }
 
-// TODO: FIXME NEED UNIT TEST FOR THIS FUNCTION
 // matchRetiree searches retirees by key returning nil if not found
 func (ms ModelSpecs) matchRetiree(retireekey string) *retiree {
 	for _, v := range ms.retirees {

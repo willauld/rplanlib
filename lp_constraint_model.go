@@ -660,15 +660,15 @@ func (ms ModelSpecs) matchRetiree(retireekey string) *retiree {
 	return nil
 }
 
-// TODO: FIXME NEED UNIT TEST FOR THIS FUNCTION
 // cgTaxableFraction estimates the portion of capital gains not from basis
 func (ms ModelSpecs) cgTaxableFraction(year int) float64 {
+	// applies only in Plan years
 	f := 1.0
 	if ms.accmap["aftertax"] > 0 {
 		for _, v := range ms.accounttable {
 			if v.acctype == "aftertax" {
 				if v.bal > 0 {
-					f = 1 - (v.basis / (v.bal * math.Pow(v.rRate, float64(year)))) //TODO year or from base age????
+					f = 1 - (v.basis / (v.bal * math.Pow(v.rRate, float64(year+ms.prePlanYears))))
 				}
 				break // should be the last entry anyway but...
 			}

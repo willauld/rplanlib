@@ -1252,13 +1252,113 @@ func TestMatchRetiree(t *testing.T) {
 }
 
 func TestCgTaxableFraction(t *testing.T) { /* TODO:FIXME:IMPLEMENTME */
+	tests := []struct {
+		ms      ModelSpecs
+		expectf float64
+		year    int
+	}{
+		{ // case 0
+			ms: ModelSpecs{
+				retirees: []retiree{
+					{ // retireeindx == 0
+						age:        56,
+						ageAtStart: 57,
+						throughAge: 100,
+						mykey:      "retiree1",
+						definedContributionPlan: false,
+						dcpBuckets:              nil,
+					},
+					{ // retireeindx == 1
+						age:        54,
+						ageAtStart: 55,
+						throughAge: 100,
+						mykey:      "retiree2",
+						definedContributionPlan: false,
+						dcpBuckets:              nil,
+					},
+				},
+				accounttable: []account{
+					{
+						bal:           30,
+						basis:         20,
+						estateTax:     0.85,
+						contributions: []float64{},
+						rRate:         1.06,
+						acctype:       "IRA",
+						mykey:         "retiree2",
+					},
+				},
+				accmap: map[string]int{
+					"IRA":      1,
+					"roth":     0,
+					"aftertax": 0,
+				},
+			},
+			expectf: 1, //no aftertax account
+			year:    10,
+		},
+		{ // case 1
+			ms: ModelSpecs{
+				retirees: []retiree{
+					{ // retireeindx == 0
+						age:        56,
+						ageAtStart: 57,
+						throughAge: 100,
+						mykey:      "retiree1",
+						definedContributionPlan: false,
+						dcpBuckets:              nil,
+					},
+					{ // retireeindx == 1
+						age:        54,
+						ageAtStart: 55,
+						throughAge: 100,
+						mykey:      "retiree2",
+						definedContributionPlan: false,
+						dcpBuckets:              nil,
+					},
+				},
+				accounttable: []account{
+					{
+						bal:           30,
+						basis:         10,
+						estateTax:     0.85,
+						contributions: []float64{},
+						rRate:         1.06,
+						acctype:       "IRA",
+						mykey:         "retiree2",
+					},
+					{
+						bal:           30,
+						basis:         10,
+						estateTax:     0.85,
+						contributions: []float64{},
+						rRate:         1.06,
+						acctype:       "aftertax",
+						mykey:         "retiree2",
+					},
+				},
+				accmap: map[string]int{
+					"IRA":      1,
+					"roth":     0,
+					"aftertax": 1,
+				},
+			},
+			expectf: -1, //no aftertax account
+			year:    7,
+		},
+	}
+	for i, elem := range tests {
+		f := elem.ms.cgTaxableFraction(elem.year)
+		fprime := elem.expectf
+		if elem.expectf < 0 {
+			fprime = 1 - (elem.ms.accounttable[0].basis / (elem.ms.accounttable[0].bal * math.Pow(elem.ms.accounttable[0].rRate, float64(elem.year+elem.ms.prePlanYears))))
+		}
+		if f != fprime {
+			t.Errorf("cgTaxableFraction case %d: expected %f, found %f", i, fprime, f)
+		}
+	}
 	/*
-		tests := []struct {
-		}{
-			{},
-		}
-		for i, elem := range tests {
-		}
+		func (ms ModelSpecs) cgTaxableFraction(year int) float64 {
 	*/
 }
 

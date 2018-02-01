@@ -40,6 +40,7 @@ type InputParams struct {
 	RothContribEnd1     int
 	RothContribEnd2     int
 	Aftatax             int
+	AftataxBasis        int // TODO Add to Mobile
 	AftataxRate         float64
 	AftataxContrib      int
 	AftataxContribStart int

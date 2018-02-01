@@ -677,28 +677,30 @@ func (ms ModelSpecs) cgTaxableFraction(year int) float64 {
 	return f
 }
 
+// TODO: FIXME: Create UNIT tests: last two parameters need s vector (s is output from simplex run)
+// printModelMatrix prints to object function (cx) and constraint matrix (Ax<=b)
 func (ms ModelSpecs) printModelMatrix(c []float64, A [][]float64, b []float64, s []float64, nonBindingOnly bool) {
 	if !nonBindingOnly {
 		fmt.Printf("c: ")
 		ms.printModelRow(c, false)
 		fmt.Printf("\n")
-		fmt.Printf("B? i: A_ub[i]: b[i]\n")
+		fmt.Printf("B?  i: A_ub[i]: b[i]\n")
 		for constraint := 0; constraint < len(A); constraint++ {
 			if s == nil || s[constraint] > 0 {
 				fmt.Printf("  ")
 			} else {
 				fmt.Printf("B ")
 			}
-			fmt.Printf("%d: ", constraint)
+			fmt.Printf("%3d: ", constraint)
 			ms.printConstraint(A[constraint], b[constraint])
 		}
 	} else {
-		fmt.Printf(" i: A_ub[i]: b[i]\n")
+		fmt.Printf("  i: A_ub[i]: b[i]\n")
 		j := 0
 		for constraint := 0; constraint < len(A); constraint++ {
 			if s[constraint] > 0 {
 				j++
-				fmt.Printf("%d: ", constraint)
+				fmt.Printf("%3d: ", constraint)
 				ms.printConstraint(A[constraint], b[constraint])
 			}
 		}

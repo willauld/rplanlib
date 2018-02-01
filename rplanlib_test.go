@@ -1082,8 +1082,12 @@ func TestBuildModel(t *testing.T) {
 		ms := NewModelSpecs(vindx, ti, ip, elem.verbose,
 			elem.allowDeposits)
 		/**/
-		c, A, b := ms.BuildModel()
-		ms.printModelMatrix(c, A, b, nil, false)
+		c, A, b, notes := ms.BuildModel()
+
+		fmt.Printf("Notes: %v\n", notes)
+		ms.printModelMatrix(c, A, b, notes, nil, false)
+
+		fmt.Printf("Notes: %v\n", notes)
 		/**/
 		if ms.iRate != elem.iRate {
 			t.Errorf("BuildModel case %d: iRate expected %f, found %f", i, elem.iRate, ms.iRate)
@@ -1348,9 +1352,6 @@ func TestCgTaxableFraction(t *testing.T) { /* TODO:FIXME:IMPLEMENTME */
 			t.Errorf("cgTaxableFraction case %d: expected %f, found %f", i, fprime, f)
 		}
 	}
-	/*
-		func (ms ModelSpecs) cgTaxableFraction(year int) float64 {
-	*/
 }
 
 func TestPrintModelMatrix(t *testing.T) {
@@ -1522,7 +1523,7 @@ func TestPrintModelMatrix(t *testing.T) {
 		fmt.Printf("b[0]: %v\n", b[0])
 		fmt.Printf("Row1: %v\n", row1)
 		fmt.Printf("b[1]: %v\n", b[1])
-		ms.printModelMatrix(c, A, b, nil, false) // TODO add cases with varying parameters 4 and 5
+		ms.printModelMatrix(c, A, b, nil, nil, false) // TODO add cases with varying parameters 4 and 5
 
 		str := RestoreStdout(mychan, oldout, w)
 		strn := stripWhitespace(str)

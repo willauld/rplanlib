@@ -3,6 +3,7 @@ package rplanlib
 import (
 	"fmt"
 	"math"
+	"os"
 )
 
 type retiree struct {
@@ -51,6 +52,8 @@ type ModelSpecs struct {
 
 	min float64
 	max float64
+
+	verbose bool
 }
 
 func intMax(a, b int) int {
@@ -141,6 +144,7 @@ func NewModelSpecs(vindx VectorVarIndex,
 		rRate:                   1.06,
 		min:                     -1,
 		max:                     -1,
+		verbose:                 verbose,
 	}
 
 	retirees := []retiree{
@@ -232,7 +236,10 @@ func NewModelSpecs(vindx VectorVarIndex,
 		a.acctype = "aftertax"
 		a.mykey = "" // need to make this definable for pc versions
 		ms.accounttable = append(ms.accounttable, a)
-
+	}
+	if len(ms.accounttable) != ms.numacc {
+		e := fmt.Errorf("NewModelSpecs: len(accounttable): %d not equal to numacc: %d", len(ms.accounttable), ms.numacc)
+		panic(e)
 	}
 
 	//income: []float64 // TODO add real income vector, dummy for now
@@ -303,16 +310,22 @@ func NewModelSpecs(vindx VectorVarIndex,
 	return ms
 }
 
+type modelNote struct {
+	index int
+	note  string
+}
+
 // BuildModel for:
 // Minimize: c^T * x
 // Subject to: A_ub * x <= b_ub
 // all vars positive
-func (ms ModelSpecs) BuildModel() ([]float64, [][]float64, []float64) {
+func (ms ModelSpecs) BuildModel() ([]float64, [][]float64, []float64, []modelNote) {
 
 	nvars := ms.vindx.Vsize
 	A := make([][]float64, 0)
 	b := make([]float64, 0)
 	c := make([]float64, nvars)
+	notes := make([]modelNote, 0)
 
 	//
 	// Add objective function (S1') becomes (R1') if PlusEstate is added
@@ -340,8 +353,10 @@ func (ms ModelSpecs) BuildModel() ([]float64, [][]float64, []float64) {
 			c[ms.vindx.B(ms.numyr, j)] = -1 * estateTax // account discount rate
 		}
 		print("\nConstructing Spending + Estate Model:\n")
+		notes = append(notes, modelNote{-1, "Objective function R1':"})
 	} else {
 		print("\nConstructing Spending Model:\n")
+
 		startamount := 0.0
 		for j := 0; j < len(ms.accounttable); j++ {
 			startamount += ms.accounttable[j].bal
@@ -351,10 +366,12 @@ func (ms ModelSpecs) BuildModel() ([]float64, [][]float64, []float64) {
 			estateTax := ms.ti.AccountEstateTax[ms.accounttable[j].mykey]
 			c[ms.vindx.B(ms.numyr, j)] = -1 * balancer * estateTax // balance and discount rate
 		}
+		notes = append(notes, modelNote{-1, "Objective function S1':"})
 	}
 	//
 	// Add constraint (2')
 	//
+	notes = append(notes, modelNote{len(A), "Constraints 2':"})
 	for year := 0; year < ms.numyr; year++ {
 		row := make([]float64, nvars)
 		for j := 0; j < len(ms.accounttable); j++ {
@@ -384,6 +401,7 @@ func (ms ModelSpecs) BuildModel() ([]float64, [][]float64, []float64) {
 	//
 	// Add constraint (3a')
 	//
+	notes = append(notes, modelNote{len(A), "Constraints 3a':"})
 	for year := 0; year < ms.numyr-1; year++ {
 		row := make([]float64, nvars)
 		row[ms.vindx.S(year+1)] = 1
@@ -394,6 +412,7 @@ func (ms ModelSpecs) BuildModel() ([]float64, [][]float64, []float64) {
 	//
 	// Add constraint (3b')
 	//
+	notes = append(notes, modelNote{len(A), "Constraints 3b':"})
 	for year := 0; year < ms.numyr-1; year++ {
 		row := make([]float64, nvars)
 		row[ms.vindx.S(year)] = ms.iRate
@@ -404,6 +423,7 @@ func (ms ModelSpecs) BuildModel() ([]float64, [][]float64, []float64) {
 	//
 	// Add constrant (4') rows - not needed if [desired.income] is not defined in input
 	//
+	notes = append(notes, modelNote{len(A), "Constraints 4':"})
 	if ms.min != 0 {
 		for year := 0; year < 1; year++ { // Only needs setting at the beginning
 			row := make([]float64, nvars)
@@ -417,6 +437,7 @@ func (ms ModelSpecs) BuildModel() ([]float64, [][]float64, []float64) {
 	// Add constraints for (5') rows - not added if [max.income] is
 	// not defined in input
 	//
+	notes = append(notes, modelNote{len(A), "Constraints 5':"})
 	if ms.max != 0 {
 		for year := 0; year < 1; year++ { // Only needs to be set at the beginning
 			row := make([]float64, nvars)
@@ -429,6 +450,7 @@ func (ms ModelSpecs) BuildModel() ([]float64, [][]float64, []float64) {
 	//
 	// Add constaints for (6') rows
 	//
+	notes = append(notes, modelNote{len(A), "Constraints 6':"})
 	for year := 0; year < ms.numyr; year++ {
 		row := make([]float64, nvars)
 		for j := 0; j < len(ms.accounttable); j++ {
@@ -447,6 +469,7 @@ func (ms ModelSpecs) BuildModel() ([]float64, [][]float64, []float64) {
 	//
 	// Add constaints for (7') rows
 	//
+	notes = append(notes, modelNote{len(A), "Constraints 7':"})
 	for year := 0; year < ms.numyr; year++ {
 		// TODO this is not needed when there is only one retiree
 		for _, v := range ms.retirees {
@@ -467,6 +490,7 @@ func (ms ModelSpecs) BuildModel() ([]float64, [][]float64, []float64) {
 	//
 	// Add constaints for (8') rows
 	//
+	notes = append(notes, modelNote{len(A), "Constraints 8':"})
 	for year := 0; year < ms.numyr; year++ {
 		for j := 0; j < len(ms.accounttable); j++ {
 			v := ms.accounttable[j].contributions
@@ -483,6 +507,7 @@ func (ms ModelSpecs) BuildModel() ([]float64, [][]float64, []float64) {
 	//
 	// Add constaints for (9') rows
 	//
+	notes = append(notes, modelNote{len(A), "Constraints 9':"})
 	for year := 0; year < ms.numyr; year++ {
 		for j := 0; j < intMin(2, len(ms.accounttable)); j++ {
 			// at most the first two accounts are type IRA w/
@@ -501,6 +526,7 @@ func (ms ModelSpecs) BuildModel() ([]float64, [][]float64, []float64) {
 	//
 	// Add constaints for (N') rows
 	//
+	notes = append(notes, modelNote{len(A), "Constraints N':"})
 	if !ms.allowTdraRothraDeposits {
 		for year := 0; year < ms.numyr; year++ {
 			for j := 0; j < len(ms.accounttable); j++ {
@@ -521,6 +547,7 @@ func (ms ModelSpecs) BuildModel() ([]float64, [][]float64, []float64) {
 	//
 	// Add constaints for (10') rows
 	//
+	notes = append(notes, modelNote{len(A), "Constraints 10':"})
 	for year := 0; year < ms.numyr; year++ {
 		for j := 0; j < intMin(2, len(ms.accounttable)); j++ {
 			// at most the first two accounts are type IRA
@@ -541,6 +568,7 @@ func (ms ModelSpecs) BuildModel() ([]float64, [][]float64, []float64) {
 	//
 	// Add constraints for (11')
 	//
+	notes = append(notes, modelNote{len(A), "Constraints 11':"})
 	for year := 0; year < ms.numyr; year++ {
 		adjInf := math.Pow(ms.iRate, float64(ms.prePlanYears+year))
 		row := make([]float64, nvars)
@@ -560,6 +588,7 @@ func (ms ModelSpecs) BuildModel() ([]float64, [][]float64, []float64) {
 	//
 	// Add constraints for (12')
 	//
+	notes = append(notes, modelNote{len(A), "Constraints 12':"})
 	for year := 0; year < ms.numyr; year++ {
 		for k := 0; k < len(*ms.ti.Taxtable)-1; k++ {
 			row := make([]float64, nvars)
@@ -571,6 +600,7 @@ func (ms ModelSpecs) BuildModel() ([]float64, [][]float64, []float64) {
 	//
 	// Add constraints for (13a')
 	//
+	notes = append(notes, modelNote{len(A), "Constraints 13a':"})
 	if ms.ip.accmap["aftertax"] > 0 {
 		for year := 0; year < ms.numyr; year++ {
 			f := ms.cgTaxableFraction(year)
@@ -592,6 +622,7 @@ func (ms ModelSpecs) BuildModel() ([]float64, [][]float64, []float64) {
 	//
 	// Add constraints for (13b')
 	//
+	notes = append(notes, modelNote{len(A), "Constraints 13b':"})
 	if ms.ip.accmap["aftertax"] > 0 {
 		for year := 0; year < ms.numyr; year++ {
 			f := ms.cgTaxableFraction(year)
@@ -613,6 +644,7 @@ func (ms ModelSpecs) BuildModel() ([]float64, [][]float64, []float64) {
 	//
 	// Add constraints for (14')
 	//
+	notes = append(notes, modelNote{len(A), "Constraints 14':"})
 	if ms.ip.accmap["aftertax"] > 0 {
 		for year := 0; year < ms.numyr; year++ {
 			adjInf := math.Pow(ms.iRate, float64(ms.prePlanYears+year))
@@ -633,6 +665,7 @@ func (ms ModelSpecs) BuildModel() ([]float64, [][]float64, []float64) {
 	//
 	// Add constraints for (15a')
 	//
+	notes = append(notes, modelNote{len(A), "Constraints 15a':"})
 	for year := 0; year < ms.numyr; year++ {
 		for j := 0; j < len(ms.accounttable); j++ {
 			//j = len(ms.accounttable)-1 // nl the last account, the investment account
@@ -654,6 +687,7 @@ func (ms ModelSpecs) BuildModel() ([]float64, [][]float64, []float64) {
 	//
 	// Add constraints for (15b')
 	//
+	notes = append(notes, modelNote{len(A), "Constraints 15b':"})
 	for year := 0; year < ms.numyr; year++ {
 		for j := 0; j < len(ms.accounttable); j++ {
 			//j = len(ms.accounttable)-1 // nl the last account, the investment account
@@ -675,6 +709,7 @@ func (ms ModelSpecs) BuildModel() ([]float64, [][]float64, []float64) {
 	// Constraint for (16a')
 	//   Set the begining b[1,j] balances
 	//
+	notes = append(notes, modelNote{len(A), "Constraints 16a':"})
 	for j := 0; j < len(ms.accounttable); j++ {
 		row := make([]float64, nvars)
 		row[ms.vindx.B(0, j)] = 1
@@ -685,6 +720,7 @@ func (ms ModelSpecs) BuildModel() ([]float64, [][]float64, []float64) {
 	// Constraint for (16b')
 	//   Set the begining b[1,j] balances
 	//
+	notes = append(notes, modelNote{len(A), "Constraints 16b':"})
 	for j := 0; j < len(ms.accounttable); j++ {
 		row := make([]float64, nvars)
 		row[ms.vindx.B(0, j)] = -1
@@ -694,15 +730,14 @@ func (ms ModelSpecs) BuildModel() ([]float64, [][]float64, []float64) {
 	//
 	// Constrant for (17') is default for sycpy so no code is needed
 	//
-	/*
-	   if ms.verbose{
-	       print("Num vars: ", len(c))
-	       print("Num contraints: ", len(b))
-	       print()
-	   }
-	*/
+	notes = append(notes, modelNote{len(A), "Constraints 17':"})
+	if ms.verbose {
+		fmt.Printf("Num vars: %d\n", len(c))
+		fmt.Printf("Num contraints: %d\n", len(b))
+		fmt.Printf("\n")
+	}
 
-	return c, A, b
+	return c, A, b, notes
 }
 
 // accountOwnerAge finds the age of the retiree who owns the account
@@ -747,13 +782,45 @@ func (ms ModelSpecs) cgTaxableFraction(year int) float64 {
 
 // TODO: FIXME: Create UNIT tests: last two parameters need s vector (s is output from simplex run)
 // printModelMatrix prints to object function (cx) and constraint matrix (Ax<=b)
-func (ms ModelSpecs) printModelMatrix(c []float64, A [][]float64, b []float64, s []float64, nonBindingOnly bool) {
+func (ms ModelSpecs) printModelMatrix(c []float64, A [][]float64, b []float64, notes []modelNote, s []float64, nonBindingOnly bool) {
+	note := ""
+	notesIndex := 0
+	nextModelIndex := len(A) + 1 // beyond the end of A
+	if notes != nil {
+		nextModelIndex = notes[notesIndex].index
+		note = notes[notesIndex].note
+		notesIndex++
+	}
+	if nextModelIndex < 0 { // Object function index -1
+		from := nextModelIndex
+		nextModelIndex = notes[notesIndex].index
+		to := nextModelIndex - 1
+		fmt.Printf("\n##== [%d-%d]: %s ==##\n", from, to, note)
+		note = notes[notesIndex].note
+		notesIndex++
+	}
+	fmt.Printf("c: ")
+	ms.printModelRow(c, false)
+	fmt.Printf("\n")
 	if !nonBindingOnly {
-		fmt.Printf("c: ")
-		ms.printModelRow(c, false)
-		fmt.Printf("\n")
 		fmt.Printf("B?  i: A_ub[i]: b[i]\n")
 		for constraint := 0; constraint < len(A); constraint++ {
+			if nextModelIndex == constraint {
+				from := nextModelIndex
+				nextModelIndex = notes[notesIndex].index
+				to := nextModelIndex - 1
+				for to < from {
+					fmt.Printf("\n##== [%d-%d]: %s ==##\n", from, to, note)
+					note = notes[notesIndex].note
+					notesIndex++
+					from = nextModelIndex
+					nextModelIndex = notes[notesIndex].index
+					to = nextModelIndex - 1
+				}
+				fmt.Printf("\n##== [%d-%d]: %s ==##\n", from, to, note)
+				note = notes[notesIndex].note
+				notesIndex++
+			}
 			if s == nil || s[constraint] > 0 {
 				fmt.Printf("  ")
 			} else {
@@ -761,11 +828,30 @@ func (ms ModelSpecs) printModelMatrix(c []float64, A [][]float64, b []float64, s
 			}
 			fmt.Printf("%3d: ", constraint)
 			ms.printConstraint(A[constraint], b[constraint])
+			if constraint > 1300 {
+				os.Exit(1)
+			}
 		}
 	} else {
 		fmt.Printf("  i: A_ub[i]: b[i]\n")
 		j := 0
 		for constraint := 0; constraint < len(A); constraint++ {
+			if nextModelIndex == constraint {
+				from := nextModelIndex
+				nextModelIndex = notes[notesIndex].index
+				to := nextModelIndex - 1
+				for to < from {
+					fmt.Printf("\n##== [%d-%d]: %s ==##\n", from, to, note)
+					note = notes[notesIndex].note
+					notesIndex++
+					from = nextModelIndex
+					nextModelIndex = notes[notesIndex].index
+					to = nextModelIndex - 1
+				}
+				fmt.Printf("\n##== [%d-%d]: %s ==##\n", from, to, note)
+				note = notes[notesIndex].note
+				notesIndex++
+			}
 			if s[constraint] > 0 {
 				j++
 				fmt.Printf("%3d: ", constraint)

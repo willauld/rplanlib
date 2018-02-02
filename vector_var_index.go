@@ -1,13 +1,15 @@
 package rplanlib
 
-import "fmt"
+import (
+	"fmt"
+	"os"
+)
 
 func checkIndexSequence(years, taxbins, cgbins int, accmap map[string]int, varindex VectorVarIndex) bool {
 	accounts := 0
 	for _, acc := range accmap {
 		accounts += acc
 	}
-	//fmt.Printf("#account from accmap is %d\n", accounts)
 	// varindex.?() functions are laid out to index a vector of variables
 	// laid out in the order x(i,k), y(i,l), w(i,j), b(i,j), s(i), D(i,j)
 	passOk := true
@@ -17,7 +19,7 @@ func checkIndexSequence(years, taxbins, cgbins int, accmap map[string]int, varin
 		for k := 0; k < taxbins; k++ {
 			if varindex.X(i, k) != ky {
 				passOk = false
-				fmt.Printf("varindex.x(%d,%d) is %d not %d as it should be",
+				fmt.Fprintf(varindex.errfile, "varindex.x(%d,%d) is %d not %d as it should be",
 					i, k, varindex.X(i, k), ky)
 			}
 			ky++
@@ -28,7 +30,7 @@ func checkIndexSequence(years, taxbins, cgbins int, accmap map[string]int, varin
 			for l := 0; l < cgbins; l++ {
 				if varindex.Y(i, l) != ky {
 					passOk = false
-					fmt.Printf("varindex.y(%d,%d) is %d not %d as it should be",
+					fmt.Fprintf(varindex.errfile, "varindex.y(%d,%d) is %d not %d as it should be",
 						i, l, varindex.Y(i, l), ky)
 				}
 				ky++
@@ -39,7 +41,7 @@ func checkIndexSequence(years, taxbins, cgbins int, accmap map[string]int, varin
 		for j := 0; j < accounts; j++ {
 			if varindex.W(i, j) != ky {
 				passOk = false
-				fmt.Printf("varindex.w(%d,%d) is %d not %d as it should be",
+				fmt.Fprintf(varindex.errfile, "varindex.w(%d,%d) is %d not %d as it should be",
 					i, j, varindex.W(i, j), ky)
 			}
 			ky++
@@ -49,7 +51,7 @@ func checkIndexSequence(years, taxbins, cgbins int, accmap map[string]int, varin
 		for j := 0; j < accounts; j++ {
 			if varindex.B(i, j) != ky {
 				passOk = false
-				fmt.Printf("varindex.b(%d,%d) is %d not %d as it should be",
+				fmt.Fprintf(varindex.errfile, "varindex.b(%d,%d) is %d not %d as it should be",
 					i, j, varindex.B(i, j), ky)
 			}
 			ky++
@@ -58,7 +60,7 @@ func checkIndexSequence(years, taxbins, cgbins int, accmap map[string]int, varin
 	for i := 0; i < years; i++ {
 		if varindex.S(i) != ky {
 			passOk = false
-			fmt.Printf("varindex.s(%d) is %d not %d as it should be",
+			fmt.Fprintf(varindex.errfile, "varindex.s(%d) is %d not %d as it should be",
 				i, varindex.S(i), ky)
 		}
 		ky++
@@ -68,7 +70,7 @@ func checkIndexSequence(years, taxbins, cgbins int, accmap map[string]int, varin
 			for j := 0; j < accounts; j++ {
 				if varindex.D(i, j) != ky {
 					passOk = false
-					fmt.Printf("varindex.D(%d,%d) is %d not %d as it should be",
+					fmt.Fprintf(varindex.errfile, "varindex.D(%d,%d) is %d not %d as it should be",
 						i, j, varindex.D(i, j), ky)
 				}
 				ky++
@@ -98,11 +100,12 @@ type VectorVarIndex struct {
 	Bstart   int
 	Sstart   int
 	Dstart   int
+	errfile  *os.File
 }
 
 // NewVectorVarIndex creates an object for index translation
 func NewVectorVarIndex(iyears, itaxbins, icgbins int,
-	iaccmap map[string]int) (VectorVarIndex, error) {
+	iaccmap map[string]int, errfile *os.File) (VectorVarIndex, error) {
 
 	if iyears < 1 || iyears > 100 {
 		e := fmt.Errorf("NewVectorVarIndex: invalid value for year, %d", iyears)
@@ -174,6 +177,8 @@ func NewVectorVarIndex(iyears, itaxbins, icgbins int,
 		Bstart: bstart,
 		Sstart: sstart,
 		Dstart: dstart,
+
+		errfile: errfile,
 	}, nil
 }
 
@@ -255,7 +260,7 @@ func (v VectorVarIndex) Varstr(indx int) string {
 		b = c % v.Accounts
 		return fmt.Sprintf("D[%d,%d]", a, b) // add actual values for i,j
 	} else {
-		fmt.Printf("\nError -- varstr() corupted\n")
+		fmt.Fprintf(v.errfile, "\nError -- varstr() corupted\n")
 	}
 	return "don't know"
 }

@@ -37,7 +37,7 @@ func TestVectorVarIndex(t *testing.T) {
 	}
 	for i, elem := range tests {
 		vvindex, err := NewVectorVarIndex(elem.years, elem.taxbins,
-			elem.cgbins, elem.accmap)
+			elem.cgbins, elem.accmap, os.Stdout)
 		if err != nil {
 			t.Errorf("VectorVarIndex case %d: %s", i, err)
 			continue
@@ -1003,15 +1003,15 @@ func TestNewModelSpecs(t *testing.T) {
 		ti := NewTaxInfo(ip.filingStatus)
 		taxbins := len(*ti.Taxtable)
 		cgbins := len(*ti.Capgainstable)
-		vindx, err := NewVectorVarIndex(ip.numyr, taxbins, cgbins, ip.accmap)
+		vindx, err := NewVectorVarIndex(ip.numyr, taxbins, cgbins, ip.accmap, os.Stdout)
 		if err != nil {
-			t.Errorf("NewModelSpecs case %d: %s", i, err)
+			t.Errorf("TestNewModelSpecs case %d: %s", i, err)
 			continue
 		}
 		ms := NewModelSpecs(vindx, ti, ip, elem.verbose,
-			elem.allowDeposits)
+			elem.allowDeposits, os.Stderr, os.Stdout)
 		if ms.iRate != elem.iRate {
-			t.Errorf("NewModelSpecs case %d: iRate expected %f, found %f", i, elem.iRate, ms.iRate)
+			t.Errorf("TestNewModelSpecs case %d: iRate expected %f, found %f", i, elem.iRate, ms.iRate)
 		}
 	}
 }
@@ -1074,13 +1074,13 @@ func TestBuildModel(t *testing.T) {
 		taxbins := len(*ti.Taxtable)
 		cgbins := len(*ti.Capgainstable)
 		vindx, err := NewVectorVarIndex(ip.numyr, taxbins,
-			cgbins, ip.accmap)
+			cgbins, ip.accmap, os.Stdout)
 		if err != nil {
 			t.Errorf("BuildModel case %d: %s", i, err)
 			continue
 		}
 		ms := NewModelSpecs(vindx, ti, ip, elem.verbose,
-			elem.allowDeposits)
+			elem.allowDeposits, os.Stderr, os.Stdout)
 		/**/
 		c, A, b, notes := ms.BuildModel()
 
@@ -1452,7 +1452,7 @@ func TestPrintModelMatrix(t *testing.T) {
 		ti := NewTaxInfo(ip.filingStatus)
 		taxbins := len(*ti.Taxtable)
 		cgbins := len(*ti.Capgainstable)
-		vindx, err := NewVectorVarIndex(ip.numyr, taxbins, cgbins, ip.accmap)
+		vindx, err := NewVectorVarIndex(ip.numyr, taxbins, cgbins, ip.accmap, os.Stdout)
 		if err != nil {
 			t.Errorf("PrintConstraint case %d: %s", i, err)
 			continue
@@ -1462,11 +1462,13 @@ func TestPrintModelMatrix(t *testing.T) {
 			numaccounts += acc
 		}
 		ms := ModelSpecs{
-			ip:     ip,
-			vindx:  vindx,
-			ti:     ti,
-			numyr:  ip.numyr,
-			numacc: numaccounts,
+			ip:      ip,
+			vindx:   vindx,
+			ti:      ti,
+			numyr:   ip.numyr,
+			numacc:  numaccounts,
+			logfile: os.Stdout,
+			errfile: os.Stderr,
 		}
 
 		c := make([]float64, vindx.Vsize)
@@ -1511,25 +1513,25 @@ func TestPrintModelMatrix(t *testing.T) {
 		//fmt.Printf("Vsize: %d\n", vindx.Vsize)
 
 		mychan := make(chan string)
-		oldout, w, err := RedirectStdout(mychan)
+		oldout, w, err := ms.RedirectModelSpecsLog(mychan)
 		if err != nil {
 			t.Errorf("RedirectStdout: %s\n", err)
 			return // should this be continue?
 		}
 		A[0] = row0
 		A[1] = row1
-		fmt.Printf("c: %v\n", c)
-		fmt.Printf("Row0: %v\n", row0)
-		fmt.Printf("b[0]: %v\n", b[0])
-		fmt.Printf("Row1: %v\n", row1)
-		fmt.Printf("b[1]: %v\n", b[1])
+		fmt.Fprintf(ms.logfile, "c: %v\n", c)
+		fmt.Fprintf(ms.logfile, "Row0: %v\n", row0)
+		fmt.Fprintf(ms.logfile, "b[0]: %v\n", b[0])
+		fmt.Fprintf(ms.logfile, "Row1: %v\n", row1)
+		fmt.Fprintf(ms.logfile, "b[1]: %v\n", b[1])
 		ms.printModelMatrix(c, A, b, nil, nil, false) // TODO add cases with varying parameters 4 and 5
 
-		str := RestoreStdout(mychan, oldout, w)
+		str := ms.RestoreModelSpecsLog(mychan, oldout, w)
 		strn := stripWhitespace(str)
 		strexpect := stripWhitespace(elem.expectstr)
 		if strn != strexpect {
-			t.Errorf("PrintModelMatrix Case %d: expected '%s', found '%s'", i, elem.expectstr, str)
+			t.Errorf("PrintModelMatrix Case %d: expected:\n\t'%s',\nfound:\n\t'%s'", i, elem.expectstr, str)
 		}
 	}
 }
@@ -1635,7 +1637,7 @@ func TestPrintConstraint(t *testing.T) {
 		ti := NewTaxInfo(ip.filingStatus)
 		taxbins := len(*ti.Taxtable)
 		cgbins := len(*ti.Capgainstable)
-		vindx, err := NewVectorVarIndex(ip.numyr, taxbins, cgbins, ip.accmap)
+		vindx, err := NewVectorVarIndex(ip.numyr, taxbins, cgbins, ip.accmap, os.Stdout)
 		if err != nil {
 			t.Errorf("PrintConstraint case %d: %s", i, err)
 			continue
@@ -1645,11 +1647,13 @@ func TestPrintConstraint(t *testing.T) {
 			numaccounts += acc
 		}
 		ms := ModelSpecs{
-			ip:     ip,
-			vindx:  vindx,
-			ti:     ti,
-			numyr:  ip.numyr,
-			numacc: numaccounts,
+			ip:      ip,
+			vindx:   vindx,
+			ti:      ti,
+			numyr:   ip.numyr,
+			numacc:  numaccounts,
+			logfile: os.Stdout,
+			errfile: os.Stderr,
 		}
 
 		row := make([]float64, vindx.Vsize)
@@ -1670,20 +1674,22 @@ func TestPrintConstraint(t *testing.T) {
 		}
 
 		mychan := make(chan string)
-		oldout, w, err := RedirectStdout(mychan)
+		//oldout, w, err := RedirectStdout(mychan)
+		oldout, w, err := ms.RedirectModelSpecsLog(mychan)
 		if err != nil {
 			t.Errorf("RedirectStdout: %s\n", err)
 			return // should this be continue?
 		}
-		fmt.Printf("Row: %v\n", row)
-		fmt.Printf("b: %v\n", elem.b)
+		fmt.Fprintf(ms.logfile, "Row: %v\n", row)
+		fmt.Fprintf(ms.logfile, "b: %v\n", elem.b)
 		ms.printConstraint(row, elem.b)
 
-		str := RestoreStdout(mychan, oldout, w)
+		//str := RestoreStdout(mychan, oldout, w)
+		str := ms.RestoreModelSpecsLog(mychan, oldout, w)
 		strn := stripWhitespace(str)
 		strexpect := stripWhitespace(elem.expectstr)
 		if strn != strexpect {
-			t.Errorf("PrintConstraint Case %d: expected '%s', found '%s'", i, elem.expectstr, str)
+			t.Errorf("PrintConstraint Case %d: expected\n\t'%s',\nfound\n\t'%s'", i, elem.expectstr, str)
 		}
 	}
 }
@@ -1790,7 +1796,7 @@ func TestPrintModelRow(t *testing.T) {
 		ti := NewTaxInfo(ip.filingStatus)
 		taxbins := len(*ti.Taxtable)
 		cgbins := len(*ti.Capgainstable)
-		vindx, err := NewVectorVarIndex(ip.numyr, taxbins, cgbins, ip.accmap)
+		vindx, err := NewVectorVarIndex(ip.numyr, taxbins, cgbins, ip.accmap, os.Stdout)
 		if err != nil {
 			t.Errorf("PrintModelRow case %d: %s", i, err)
 			continue
@@ -1800,11 +1806,13 @@ func TestPrintModelRow(t *testing.T) {
 			numaccounts += acc
 		}
 		ms := ModelSpecs{
-			ip:     ip,
-			vindx:  vindx,
-			ti:     ti,
-			numyr:  ip.numyr,
-			numacc: numaccounts,
+			ip:      ip,
+			vindx:   vindx,
+			ti:      ti,
+			numyr:   ip.numyr,
+			numacc:  numaccounts,
+			logfile: os.Stdout,
+			errfile: os.Stderr,
 		}
 
 		row := make([]float64, vindx.Vsize)
@@ -1826,15 +1834,15 @@ func TestPrintModelRow(t *testing.T) {
 		//fmt.Printf("Vsize: %d\n", vindx.Vsize)
 
 		mychan := make(chan string)
-		oldout, w, err := RedirectStdout(mychan)
+		oldout, w, err := ms.RedirectModelSpecsLog(mychan)
 		if err != nil {
 			t.Errorf("RedirectStdout: %s\n", err)
 			return // should this be continue?
 		}
-		fmt.Printf("Row: %v\n", row)
+		fmt.Fprintf(ms.logfile, "Row: %v\n", row)
 		ms.printModelRow(row, elem.suppressNewline)
 
-		str := RestoreStdout(mychan, oldout, w)
+		str := ms.RestoreModelSpecsLog(mychan, oldout, w)
 		strn := stripWhitespace(str)
 		strexpect := stripWhitespace(elem.expectstr)
 		if strn != strexpect {
@@ -1932,6 +1940,34 @@ func RestoreStdout(mechan chan string, oldStdout *os.File, writePipe *os.File) s
 	// Reset the output again
 	writePipe.Close()
 	os.Stdout = oldStdout
+	str := <-mechan
+	return str
+}
+
+func (ms *ModelSpecs) RedirectModelSpecsLog(mechan chan string) (*os.File, *os.File, error) {
+	oldlog := ms.logfile
+	readPipe, writePipe, err := os.Pipe()
+	if err != nil {
+		return oldlog, nil, err
+	}
+	ms.logfile = writePipe
+	go func() {
+		var buf bytes.Buffer
+		_, err := io.Copy(&buf, readPipe)
+		readPipe.Close()
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "func() copyPipe: %v\n", err)
+			return
+		}
+		mechan <- buf.String()
+	}()
+	return oldlog, writePipe, nil
+}
+
+func (ms *ModelSpecs) RestoreModelSpecsLog(mechan chan string, oldlog *os.File, writePipe *os.File) string {
+	// Reset the output again
+	writePipe.Close()
+	ms.logfile = oldlog
 	str := <-mechan
 	return str
 }

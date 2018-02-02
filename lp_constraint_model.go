@@ -54,6 +54,8 @@ type ModelSpecs struct {
 	max float64
 
 	verbose bool
+	errfile *os.File
+	logfile *os.File
 }
 
 func intMax(a, b int) int {
@@ -70,7 +72,7 @@ func intMin(a, b int) int {
 }
 func checkStrconvError(e error) { // TODO: should I remove this?
 	if e != nil {
-		//fmt.Printf("checkStrconvError(): %s\n", e)
+		//fmt.Fprintf(ms.logfile, "checkStrconvError(): %s\n", e)
 		panic(e)
 	}
 }
@@ -132,7 +134,9 @@ func NewModelSpecs(vindx VectorVarIndex,
 	ti Taxinfo,
 	ip InputParams,
 	verbose bool,
-	allowDeposits bool) ModelSpecs {
+	allowDeposits bool,
+	errfile *os.File,
+	logfile *os.File) ModelSpecs {
 
 	ms := ModelSpecs{
 		ip:    ip,
@@ -145,6 +149,8 @@ func NewModelSpecs(vindx VectorVarIndex,
 		min:                     -1,
 		max:                     -1,
 		verbose:                 verbose,
+		errfile:                 errfile,
+		logfile:                 logfile,
 	}
 
 	retirees := []retiree{
@@ -171,7 +177,7 @@ func NewModelSpecs(vindx VectorVarIndex,
 	for _, n := range ms.ip.accmap {
 		ms.numacc += n
 	}
-	//fmt.Printf("NewModelSpec: numacc: %d, accmap: %v\n", ms.numacc, ms.ip.accmap)
+	//fmt.Fprintf(ms.logfile, "NewModelSpec: numacc: %d, accmap: %v\n", ms.numacc, ms.ip.accmap)
 
 	//build accounttable: []map[string]string
 	var err error
@@ -248,21 +254,21 @@ func NewModelSpecs(vindx VectorVarIndex,
 	incomeEnd1 := ip.endPlan
 	income, err := buildVector(income1, incomeStart1, incomeEnd1, ip.startPlan, ip.endPlan, ms.iRate, ip.age1)
 	if err != nil {
-		fmt.Printf("BuildVector Failed: %s\n", err)
+		fmt.Fprintf(errfile, "BuildVector Failed: %s\n", err)
 	}
 	ms.income = income
 
 	SS1, err := buildVector(ip.PIA1, ip.SSStart1, ip.endPlan, ip.startPlan, ip.endPlan, ms.iRate, ip.age1)
 	if err != nil {
-		fmt.Printf("BuildVector Failed: %s\n", err)
+		fmt.Fprintf(errfile, "BuildVector Failed: %s\n", err)
 	}
 	SS2, err := buildVector(ip.PIA2, ip.SSStart2, ip.endPlan, ip.startPlan, ip.endPlan, ms.iRate, ip.age1)
 	if err != nil {
-		fmt.Printf("BuildVector Failed: %s\n", err)
+		fmt.Fprintf(errfile, "BuildVector Failed: %s\n", err)
 	}
 	ms.SS, err = mergeVectors(SS1, SS2)
 	if err != nil {
-		fmt.Printf("mergeVector Failed: %s\n", err)
+		fmt.Fprintf(errfile, "mergeVector Failed: %s\n", err)
 	}
 
 	//expenses: []float64 // TODO add real income vector, dummy for now
@@ -271,7 +277,7 @@ func NewModelSpecs(vindx VectorVarIndex,
 	expEnd1 := ip.endPlan
 	expenses, err := buildVector(exp1, expStart1, expEnd1, ip.startPlan, ip.endPlan, ms.iRate, ip.age1)
 	if err != nil {
-		fmt.Printf("BuildVector Failed: %s\n", err)
+		fmt.Fprintf(errfile, "BuildVector Failed: %s\n", err)
 	}
 	ms.expenses = expenses
 
@@ -281,14 +287,14 @@ func NewModelSpecs(vindx VectorVarIndex,
 	taxEnd1 := ip.endPlan
 	taxed, err := buildVector(tax1, taxStart1, taxEnd1, ip.startPlan, ip.endPlan, ms.iRate, ip.age1)
 	if err != nil {
-		fmt.Printf("BuildVector Failed: %s\n", err)
+		fmt.Fprintf(errfile, "BuildVector Failed: %s\n", err)
 	}
 	ms.taxed = taxed
 
 	//asset_sale: []float64
 	assetSale, err := buildVector(0, ip.startPlan, ip.endPlan, ip.startPlan, ip.endPlan, ms.iRate, ip.age1)
 	if err != nil {
-		fmt.Printf("BuildVector Failed: %s\n", err)
+		fmt.Fprintf(errfile, "BuildVector Failed: %s\n", err)
 	}
 	ms.assetSale = assetSale
 
@@ -298,7 +304,7 @@ func NewModelSpecs(vindx VectorVarIndex,
 	cgtaxEnd1 := ip.endPlan
 	cgtaxed, err := buildVector(cgtax1, cgtaxStart1, cgtaxEnd1, ip.startPlan, ip.endPlan, ms.iRate, ip.age1)
 	if err != nil {
-		fmt.Printf("BuildVector Failed: %s\n", err)
+		fmt.Fprintf(errfile, "BuildVector Failed: %s\n", err)
 	}
 	ms.cgAssetTaxed = cgtaxed
 
@@ -352,10 +358,10 @@ func (ms ModelSpecs) BuildModel() ([]float64, [][]float64, []float64, []modelNot
 			estateTax := ms.ti.AccountEstateTax[ms.accounttable[j].mykey]
 			c[ms.vindx.B(ms.numyr, j)] = -1 * estateTax // account discount rate
 		}
-		print("\nConstructing Spending + Estate Model:\n")
+		fmt.Fprintf(ms.logfile, "\nConstructing Spending + Estate Model:\n")
 		notes = append(notes, modelNote{-1, "Objective function R1':"})
 	} else {
-		print("\nConstructing Spending Model:\n")
+		fmt.Fprintf(ms.logfile, "\nConstructing Spending Model:\n")
 
 		startamount := 0.0
 		for j := 0; j < len(ms.accounttable); j++ {
@@ -658,7 +664,6 @@ func (ms ModelSpecs) BuildModel() ([]float64, [][]float64, []float64, []modelNot
 				}
 				A = append(A, row)
 				b = append(b, (*ms.ti.Capgainstable)[l][1]*adjInf) // mcg[i,l] inflation adjusted
-				//printConstraint( row, ms.ti.Capgainstable[l][1]*adj_inf)
 			}
 		}
 	}
@@ -681,7 +686,6 @@ func (ms ModelSpecs) BuildModel() ([]float64, [][]float64, []float64, []modelNot
 				temp = ms.assetSale[year] * ms.accounttable[j].rRate //TODO test
 			}
 			b = append(b, temp)
-			//print("temp_a: ", temp, "rate", ms.accounttable[j].rate , "asset sell price: ", ms.assetSale[year]  )
 		}
 	}
 	//
@@ -702,7 +706,6 @@ func (ms ModelSpecs) BuildModel() ([]float64, [][]float64, []float64, []modelNot
 				temp = -1 * ms.assetSale[year] * ms.accounttable[j].rRate //TODO test
 			}
 			b = append(b, temp)
-			//print("temp_b: ", temp, "rate", ms.accounttable[j].rate , "asset sell price: ", ms.assetSale[year]  )
 		}
 	}
 	//
@@ -732,9 +735,9 @@ func (ms ModelSpecs) BuildModel() ([]float64, [][]float64, []float64, []modelNot
 	//
 	notes = append(notes, modelNote{len(A), "Constraints 17':"})
 	if ms.verbose {
-		fmt.Printf("Num vars: %d\n", len(c))
-		fmt.Printf("Num contraints: %d\n", len(b))
-		fmt.Printf("\n")
+		fmt.Fprintf(ms.logfile, "Num vars: %d\n", len(c))
+		fmt.Fprintf(ms.logfile, "Num contraints: %d\n", len(b))
+		fmt.Fprintf(ms.logfile, "\n")
 	}
 
 	return c, A, b, notes
@@ -755,7 +758,6 @@ func (ms ModelSpecs) accountOwnerAge(year int, acc account) int {
 // matchRetiree searches retirees by key returning nil if not found
 func (ms ModelSpecs) matchRetiree(retireekey string) *retiree {
 	for _, v := range ms.retirees {
-		//print("    retiree: ", v)
 		if v.mykey == retireekey {
 			return &v
 		}
@@ -795,45 +797,42 @@ func (ms ModelSpecs) printModelMatrix(c []float64, A [][]float64, b []float64, n
 		from := nextModelIndex
 		nextModelIndex = notes[notesIndex].index
 		to := nextModelIndex - 1
-		fmt.Printf("\n##== [%d-%d]: %s ==##\n", from, to, note)
+		fmt.Fprintf(ms.logfile, "\n##== [%d-%d]: %s ==##\n", from, to, note)
 		note = notes[notesIndex].note
 		notesIndex++
 	}
-	fmt.Printf("c: ")
+	fmt.Fprintf(ms.logfile, "c: ")
 	ms.printModelRow(c, false)
-	fmt.Printf("\n")
+	fmt.Fprintf(ms.logfile, "\n")
 	if !nonBindingOnly {
-		fmt.Printf("B?  i: A_ub[i]: b[i]\n")
+		fmt.Fprintf(ms.logfile, "B?  i: A_ub[i]: b[i]\n")
 		for constraint := 0; constraint < len(A); constraint++ {
 			if nextModelIndex == constraint {
 				from := nextModelIndex
 				nextModelIndex = notes[notesIndex].index
 				to := nextModelIndex - 1
 				for to < from {
-					fmt.Printf("\n##== [%d-%d]: %s ==##\n", from, to, note)
+					fmt.Fprintf(ms.logfile, "\n##== [%d-%d]: %s ==##\n", from, to, note)
 					note = notes[notesIndex].note
 					notesIndex++
 					from = nextModelIndex
 					nextModelIndex = notes[notesIndex].index
 					to = nextModelIndex - 1
 				}
-				fmt.Printf("\n##== [%d-%d]: %s ==##\n", from, to, note)
+				fmt.Fprintf(ms.logfile, "\n##== [%d-%d]: %s ==##\n", from, to, note)
 				note = notes[notesIndex].note
 				notesIndex++
 			}
 			if s == nil || s[constraint] > 0 {
-				fmt.Printf("  ")
+				fmt.Fprintf(ms.logfile, "  ")
 			} else {
-				fmt.Printf("B ")
+				fmt.Fprintf(ms.logfile, "B ")
 			}
-			fmt.Printf("%3d: ", constraint)
+			fmt.Fprintf(ms.logfile, "%3d: ", constraint)
 			ms.printConstraint(A[constraint], b[constraint])
-			if constraint > 1300 {
-				os.Exit(1)
-			}
 		}
 	} else {
-		fmt.Printf("  i: A_ub[i]: b[i]\n")
+		fmt.Fprintf(ms.logfile, "  i: A_ub[i]: b[i]\n")
 		j := 0
 		for constraint := 0; constraint < len(A); constraint++ {
 			if nextModelIndex == constraint {
@@ -841,43 +840,43 @@ func (ms ModelSpecs) printModelMatrix(c []float64, A [][]float64, b []float64, n
 				nextModelIndex = notes[notesIndex].index
 				to := nextModelIndex - 1
 				for to < from {
-					fmt.Printf("\n##== [%d-%d]: %s ==##\n", from, to, note)
+					fmt.Fprintf(ms.logfile, "\n##== [%d-%d]: %s ==##\n", from, to, note)
 					note = notes[notesIndex].note
 					notesIndex++
 					from = nextModelIndex
 					nextModelIndex = notes[notesIndex].index
 					to = nextModelIndex - 1
 				}
-				fmt.Printf("\n##== [%d-%d]: %s ==##\n", from, to, note)
+				fmt.Fprintf(ms.logfile, "\n##== [%d-%d]: %s ==##\n", from, to, note)
 				note = notes[notesIndex].note
 				notesIndex++
 			}
 			if s[constraint] > 0 {
 				j++
-				fmt.Printf("%3d: ", constraint)
+				fmt.Fprintf(ms.logfile, "%3d: ", constraint)
 				ms.printConstraint(A[constraint], b[constraint])
 			}
 		}
-		fmt.Printf("\n\n%d non-binding constrains printed\n", j)
+		fmt.Fprintf(ms.logfile, "\n\n%d non-binding constrains printed\n", j)
 	}
-	fmt.Printf("\n")
+	fmt.Fprintf(ms.logfile, "\n")
 }
 
 func (ms ModelSpecs) printConstraint(row []float64, b float64) {
 	ms.printModelRow(row, true)
-	fmt.Printf("<= b[]: %6.2f\n", b)
+	fmt.Fprintf(ms.logfile, "<= b[]: %6.2f\n", b)
 }
 
 func (ms ModelSpecs) printModelRow(row []float64, suppressNewline bool) {
 	if ms.numacc < 0 || ms.numacc > 5 {
 		e := fmt.Errorf("PrintModelRow: number of accounts is out of bounds, should be between [0, 5] but is %d", ms.numacc)
-		fmt.Printf("%s\n", e)
+		fmt.Fprintf(ms.logfile, "%s\n", e)
 		return
 	}
 	for i := 0; i < ms.numyr; i++ { // x[]
 		for k := 0; k < len(*ms.ti.Taxtable); k++ {
 			if row[ms.vindx.X(i, k)] != 0 {
-				fmt.Printf("x[%d,%d]=%6.3f, ", i, k, row[ms.vindx.X(i, k)])
+				fmt.Fprintf(ms.logfile, "x[%d,%d]=%6.3f, ", i, k, row[ms.vindx.X(i, k)])
 			}
 		}
 	}
@@ -885,7 +884,7 @@ func (ms ModelSpecs) printModelRow(row []float64, suppressNewline bool) {
 		for i := 0; i < ms.numyr; i++ { // y[]
 			for l := 0; l < len(*ms.ti.Capgainstable); l++ {
 				if row[ms.vindx.Y(i, l)] != 0 {
-					fmt.Printf("y[%d,%d]=%6.3f, ", i, l, row[ms.vindx.Y(i, l)])
+					fmt.Fprintf(ms.logfile, "y[%d,%d]=%6.3f, ", i, l, row[ms.vindx.Y(i, l)])
 				}
 			}
 		}
@@ -893,32 +892,32 @@ func (ms ModelSpecs) printModelRow(row []float64, suppressNewline bool) {
 	for i := 0; i < ms.numyr; i++ { // w[]
 		for j := 0; j < ms.numacc; j++ {
 			if row[ms.vindx.W(i, j)] != 0 {
-				fmt.Printf("w[%d,%d]=%6.3f, ", i, j, row[ms.vindx.W(i, j)])
+				fmt.Fprintf(ms.logfile, "w[%d,%d]=%6.3f, ", i, j, row[ms.vindx.W(i, j)])
 			}
 		}
 	}
 	for i := 0; i < ms.numyr+1; i++ { // b[] has an extra year
 		for j := 0; j < ms.numacc; j++ {
 			if row[ms.vindx.B(i, j)] != 0 {
-				fmt.Printf("b[%d,%d]=%6.3f, ", i, j, row[ms.vindx.B(i, j)])
+				fmt.Fprintf(ms.logfile, "b[%d,%d]=%6.3f, ", i, j, row[ms.vindx.B(i, j)])
 			}
 		}
 	}
 	for i := 0; i < ms.numyr; i++ { // s[]
 		if row[ms.vindx.S(i)] != 0 {
-			fmt.Printf("s[%d]=%6.3f, ", i, row[ms.vindx.S(i)])
+			fmt.Fprintf(ms.logfile, "s[%d]=%6.3f, ", i, row[ms.vindx.S(i)])
 		}
 	}
 	if ms.ip.accmap["aftertax"] > 0 {
 		for i := 0; i < ms.numyr; i++ { // D[]
 			for j := 0; j < ms.numacc; j++ {
 				if row[ms.vindx.D(i, j)] != 0 {
-					fmt.Printf("D[%d,%d]=%6.3f, ", i, j, row[ms.vindx.D(i, j)])
+					fmt.Fprintf(ms.logfile, "D[%d,%d]=%6.3f, ", i, j, row[ms.vindx.D(i, j)])
 				}
 			}
 		}
 	}
 	if !suppressNewline {
-		fmt.Printf("\n")
+		fmt.Fprintf(ms.logfile, "\n")
 	}
 }

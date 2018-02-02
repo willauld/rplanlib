@@ -1079,15 +1079,12 @@ func TestBuildModel(t *testing.T) {
 			t.Errorf("BuildModel case %d: %s", i, err)
 			continue
 		}
+		logfile, err := os.Create("ModelMatixPP.log")
 		ms := NewModelSpecs(vindx, ti, ip, elem.verbose,
-			elem.allowDeposits, os.Stderr, os.Stdout)
+			elem.allowDeposits, os.Stderr, logfile)
 		/**/
 		c, A, b, notes := ms.BuildModel()
-
-		fmt.Printf("Notes: %v\n", notes)
 		ms.printModelMatrix(c, A, b, notes, nil, false)
-
-		fmt.Printf("Notes: %v\n", notes)
 		/**/
 		if ms.iRate != elem.iRate {
 			t.Errorf("BuildModel case %d: iRate expected %f, found %f", i, elem.iRate, ms.iRate)

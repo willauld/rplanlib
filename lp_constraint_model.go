@@ -333,6 +333,8 @@ func (ms ModelSpecs) BuildModel() ([]float64, [][]float64, []float64, []modelNot
 	c := make([]float64, nvars)
 	notes := make([]modelNote, 0)
 
+	fmt.Printf("\nms.accounttable len: %d\n", len(ms.accounttable))
+
 	//
 	// Add objective function (S1') becomes (R1') if PlusEstate is added
 	//
@@ -369,7 +371,7 @@ func (ms ModelSpecs) BuildModel() ([]float64, [][]float64, []float64, []modelNot
 		}
 		balancer := 1.0 / (startamount)
 		for j := 0; j < len(ms.accounttable); j++ {
-			estateTax := ms.ti.AccountEstateTax[ms.accounttable[j].mykey]
+			estateTax := ms.ti.AccountEstateTax[ms.accounttable[j].acctype]
 			c[ms.vindx.B(ms.numyr, j)] = -1 * balancer * estateTax // balance and discount rate
 		}
 		notes = append(notes, modelNote{-1, "Objective function S1':"})

@@ -42,6 +42,8 @@ type ModelSpecs struct {
 
 	income       []float64
 	SS           []float64
+	SS1          []float64
+	SS2          []float64
 	expenses     []float64
 	taxed        []float64
 	assetSale    []float64
@@ -258,18 +260,27 @@ func NewModelSpecs(vindx VectorVarIndex,
 	}
 	ms.income = income
 
-	SS1, err := buildVector(ip.PIA1, ip.SSStart1, ip.endPlan, ip.startPlan, ip.endPlan, ms.iRate, ip.age1)
+	/*
+		ms.SS1, err := buildVector(ip.PIA1, ip.SSStart1, ip.endPlan, ip.startPlan, ip.endPlan, ms.iRate, ip.age1)
+		if err != nil {
+			fmt.Fprintf(errfile, "BuildVector Failed: %s\n", err)
+		}
+		ms.SS2, err := buildVector(ip.PIA2, ip.SSStart2, ip.endPlan, ip.startPlan, ip.endPlan, ms.iRate, ip.age1)
+		if err != nil {
+			fmt.Fprintf(errfile, "BuildVector Failed: %s\n", err)
+		}
+		ms.SS, err = mergeVectors(SS1, SS2)
+		if err != nil {
+			fmt.Fprintf(errfile, "mergeVector Failed: %s\n", err)
+		}
+	*/
+	ms.SS, ms.SS1, ms.SS2, err = processSS(ip, retirees, ms.iRate)
 	if err != nil {
-		fmt.Fprintf(errfile, "BuildVector Failed: %s\n", err)
+		panic(err)
 	}
-	SS2, err := buildVector(ip.PIA2, ip.SSStart2, ip.endPlan, ip.startPlan, ip.endPlan, ms.iRate, ip.age1)
-	if err != nil {
-		fmt.Fprintf(errfile, "BuildVector Failed: %s\n", err)
-	}
-	ms.SS, err = mergeVectors(SS1, SS2)
-	if err != nil {
-		fmt.Fprintf(errfile, "mergeVector Failed: %s\n", err)
-	}
+	//fmt.Printf("SS1: %v\n", ms.SS1)
+	//fmt.Printf("SS2: %v\n", ms.SS2)
+	//fmt.Printf("SS: %v\n", ms.SS)
 
 	//expenses: []float64 // TODO add real income vector, dummy for now
 	exp1 := 0
@@ -385,7 +396,7 @@ func (ms ModelSpecs) BuildModel() ([]float64, [][]float64, []float64, []modelNot
 		for j := 0; j < len(ms.accounttable); j++ {
 			p := 1.0
 			if ms.accounttable[j].acctype != "aftertax" {
-				if ms.ti.applyEarlyPenalty(year, ms.matchRetiree(ms.accounttable[j].mykey)) {
+				if ms.ti.applyEarlyPenalty(year, ms.matchRetiree(ms.accounttable[j].mykey)) { // TODO: should applyEarlyPenalty() return the penalty amount, spimplifying things?
 					p = 1 - ms.ti.Penalty
 				}
 			}
@@ -405,6 +416,7 @@ func (ms ModelSpecs) BuildModel() ([]float64, [][]float64, []float64, []modelNot
 		row[ms.vindx.S(year)] = 1
 		A = append(A, row)
 		b = append(b, ms.income[year]+ms.SS[year]-ms.expenses[year])
+		fmt.Printf("income[%d]: %f, SS[%d]: %f, expenses[%d]: %f\n", year, ms.income[year], year, ms.SS[year], year, ms.expenses[year]) //LOOK LIKE A BUG IN BUILD VECTOR SS FIXME
 	}
 	//
 	// Add constraint (3a')

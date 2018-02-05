@@ -54,6 +54,11 @@ type InputParams struct {
 }
 
 //TODO: TESTME
+func kgetIPIntValue(str string) int {
+	return 1000 * getIPIntValue(str)
+}
+
+//TODO: TESTME
 func getIPIntValue(str string) int {
 	if str == "" {
 		return 0
@@ -117,17 +122,17 @@ func NewInputParams(ip map[string]string) InputParams {
 	//accounttable: []map[string]string
 	//accmap: map[string]int
 
-	rip.PIA1 = getIPIntValue(ip["eT_PIA1"])
-	rip.PIA2 = getIPIntValue(ip["eT_PIA2"])
+	rip.PIA1 = kgetIPIntValue(ip["eT_PIA1"])
+	rip.PIA2 = kgetIPIntValue(ip["eT_PIA2"])
 	rip.SSStart1 = getIPIntValue(ip["eT_SS_Start1"])
 	rip.SSStart2 = getIPIntValue(ip["eT_SS_Start2"])
 
-	rip.TDRA1 = getIPIntValue(ip["eT_TDRA1"])
-	rip.TDRA2 = getIPIntValue(ip["eT_TDRA2"])
+	rip.TDRA1 = kgetIPIntValue(ip["eT_TDRA1"])
+	rip.TDRA2 = kgetIPIntValue(ip["eT_TDRA2"])
 	rip.TDRARate1 = getIPFloatValue(ip["eT_TDRA_Rate1"])
 	rip.TDRARate2 = getIPFloatValue(ip["eT_TDRA_Rate2"])
-	rip.TDRAContrib1 = getIPIntValue(ip["eT_TDRA_Contrib1"])
-	rip.TDRAContrib2 = getIPIntValue(ip["eT_TDRA_Contrib2"])
+	rip.TDRAContrib1 = kgetIPIntValue(ip["eT_TDRA_Contrib1"])
+	rip.TDRAContrib2 = kgetIPIntValue(ip["eT_TDRA_Contrib2"])
 	rip.TDRAContribStart1 = getIPIntValue(ip["eT_TDRA_ContribStartAge1"])
 	rip.TDRAContribStart2 = getIPIntValue(ip["eT_TDRA_ContribStartAge2"])
 	rip.TDRAContribEnd1 = getIPIntValue(ip["eT_TDRA_ContribEndAge1"])
@@ -139,12 +144,12 @@ func NewInputParams(ip map[string]string) InputParams {
 		rip.accmap["IRA"]++
 	}
 
-	rip.Roth1 = getIPIntValue(ip["eT_Roth1"])
-	rip.Roth2 = getIPIntValue(ip["eT_Roth2"])
+	rip.Roth1 = kgetIPIntValue(ip["eT_Roth1"])
+	rip.Roth2 = kgetIPIntValue(ip["eT_Roth2"])
 	rip.RothRate1 = getIPFloatValue(ip["eT_Roth_Rate1"])
 	rip.RothRate2 = getIPFloatValue(ip["eT_Roth_Rate2"])
-	rip.RothContrib1 = getIPIntValue(ip["eT_Roth_Contrib1"])
-	rip.RothContrib2 = getIPIntValue(ip["eT_Roth_Contrib2"])
+	rip.RothContrib1 = kgetIPIntValue(ip["eT_Roth_Contrib1"])
+	rip.RothContrib2 = kgetIPIntValue(ip["eT_Roth_Contrib2"])
 	rip.RothContribStart1 = getIPIntValue(ip["eT_Roth_ContribStartAge1"])
 	rip.RothContribStart2 = getIPIntValue(ip["eT_Roth_ContribStartAge2"])
 	rip.RothContribEnd1 = getIPIntValue(ip["eT_Roth_ContribEndAge1"])
@@ -156,9 +161,9 @@ func NewInputParams(ip map[string]string) InputParams {
 		rip.accmap["roth"]++
 	}
 
-	rip.Aftatax = getIPIntValue(ip["eT_Aftatax"])
+	rip.Aftatax = kgetIPIntValue(ip["eT_Aftatax"])
 	rip.AftataxRate = getIPFloatValue(ip["eT_Aftatax_Rate"])
-	rip.AftataxContrib = getIPIntValue(ip["eT_Aftatax_Contrib"])
+	rip.AftataxContrib = kgetIPIntValue(ip["eT_Aftatax_Contrib"])
 	rip.AftataxContribStart = getIPIntValue(ip["eT_Aftatax_ContribStartAge"])
 	rip.AftataxContribEnd = getIPIntValue(ip["eT_Aftatax_ContribEndAge"])
 	if rip.Aftatax > 0 {

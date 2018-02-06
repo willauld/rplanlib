@@ -191,7 +191,10 @@ func NewModelSpecs(vindx VectorVarIndex,
 		if err != nil {
 			panic(err)
 		}
-		a.rRate = ip.TDRARate1
+		a.rRate = ms.rRate
+		if ip.TDRARate1 != 0 {
+			a.rRate = ip.TDRARate1
+		}
 		a.acctype = "IRA"
 		a.mykey = "retiree1" // need to make this definable for pc versions
 		ms.accounttable = append(ms.accounttable, a)
@@ -203,7 +206,10 @@ func NewModelSpecs(vindx VectorVarIndex,
 		if err != nil {
 			panic(err)
 		}
-		a.rRate = ip.TDRARate2
+		a.rRate = ms.rRate
+		if ip.TDRARate2 != 0 {
+			a.rRate = ip.TDRARate2
+		}
 		a.acctype = "IRA"
 		a.mykey = "retiree2" // need to make this definable for pc versions
 		ms.accounttable = append(ms.accounttable, a)
@@ -215,7 +221,10 @@ func NewModelSpecs(vindx VectorVarIndex,
 		if err != nil {
 			panic(err)
 		}
-		a.rRate = ip.RothRate1
+		a.rRate = ms.rRate
+		if ip.RothRate1 != 0 {
+			a.rRate = ip.RothRate1
+		}
 		a.acctype = "roth"
 		a.mykey = "retiree1" // need to make this definable for pc versions
 		ms.accounttable = append(ms.accounttable, a)
@@ -227,7 +236,10 @@ func NewModelSpecs(vindx VectorVarIndex,
 		if err != nil {
 			panic(err)
 		}
-		a.rRate = ip.RothRate2
+		a.rRate = ms.rRate
+		if ip.RothRate2 != 0 {
+			a.rRate = ip.RothRate2
+		}
 		a.acctype = "roth"
 		a.mykey = "retiree2" // need to make this definable for pc versions
 		ms.accounttable = append(ms.accounttable, a)
@@ -239,6 +251,10 @@ func NewModelSpecs(vindx VectorVarIndex,
 		a.contributions, err = buildVector(ip.AftataxContrib, ip.AftataxContribStart, ip.AftataxContribEnd, ip.startPlan, ip.endPlan, ms.iRate, ip.age1)
 		if err != nil {
 			panic(err)
+		}
+		a.rRate = ms.rRate
+		if ip.AftataxRate != 0 {
+			a.rRate = ip.AftataxRate
 		}
 		a.rRate = ip.AftataxRate
 		a.acctype = "aftertax"
@@ -554,7 +570,7 @@ func (ms ModelSpecs) BuildModel() ([]float64, [][]float64, []float64, []modelNot
 				if v != nil {
 					max = v[year]
 				}
-				if ms.accounttable[j].acctype != "aftertax" {
+				if ms.accounttable[j].acctype != "aftertax" { //Todo: move this if statement up just under the for to remove all unnessasary work
 					row := make([]float64, nvars)
 					row[ms.vindx.D(year, j)] = 1
 					A = append(A, row)

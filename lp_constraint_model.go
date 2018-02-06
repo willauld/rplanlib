@@ -158,7 +158,7 @@ func NewModelSpecs(vindx VectorVarIndex,
 	retirees := []retiree{
 		{
 			age:        ip.age1,
-			ageAtStart: ip.retireAge1,
+			ageAtStart: ip.age1 + ip.prePlanYears,
 			throughAge: ip.planThroughAge1,
 			mykey:      ip.myKey1,
 			definedContributionPlan: false,
@@ -166,7 +166,7 @@ func NewModelSpecs(vindx VectorVarIndex,
 		},
 		{
 			age:        ip.age2,
-			ageAtStart: ip.retireAge2,
+			ageAtStart: ip.age2 + ip.prePlanYears,
 			throughAge: ip.planThroughAge2,
 			mykey:      ip.myKey2,
 			definedContributionPlan: false,
@@ -344,7 +344,7 @@ func (ms ModelSpecs) BuildModel() ([]float64, [][]float64, []float64, []modelNot
 	c := make([]float64, nvars)
 	notes := make([]modelNote, 0)
 
-	fmt.Printf("\nms.accounttable len: %d\n", len(ms.accounttable))
+	//fmt.Printf("\nms.accounttable len: %d\n", len(ms.accounttable))
 
 	//
 	// Add objective function (S1') becomes (R1') if PlusEstate is added
@@ -409,14 +409,13 @@ func (ms ModelSpecs) BuildModel() ([]float64, [][]float64, []float64, []modelNot
 			for l := 0; l < len(*ms.ti.Capgainstable); l++ {
 				row[ms.vindx.Y(year, l)] = (*ms.ti.Capgainstable)[l][2] // cap gains tax
 			}
-			for j := 0; j < len(ms.accounttable); j++ {
-				row[ms.vindx.D(year, j)] = 1
-			}
+		}
+		for j := 0; j < len(ms.accounttable); j++ {
+			row[ms.vindx.D(year, j)] = 1
 		}
 		row[ms.vindx.S(year)] = 1
 		A = append(A, row)
 		b = append(b, ms.income[year]+ms.SS[year]-ms.expenses[year])
-		fmt.Printf("income[%d]: %f, SS[%d]: %f, expenses[%d]: %f\n", year, ms.income[year], year, ms.SS[year], year, ms.expenses[year]) //LOOK LIKE A BUG IN BUILD VECTOR SS FIXME
 	}
 	//
 	// Add constraint (3a')

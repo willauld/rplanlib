@@ -110,6 +110,7 @@ func processSS(ip InputParams, r []retiree, iRate float64) (SS, SS1, SS2 []float
 			firstdisperseyear = disperseage - SSinput[0].ageAtStart
 		}
 		fraage := SSinput[i].fraage
+		//fmt.Printf("FRA age[%d]: %d\n", i, fraage)
 		fraamount := SSinput[i].fraamount
 		ageAtStart := SSinput[i].ageAtStart
 		currAge := SSinput[i].currAge
@@ -121,8 +122,10 @@ func processSS(ip InputParams, r []retiree, iRate float64) (SS, SS1, SS2 []float
 			//assert i == 1
 			name := SSinput[i].key
 			if firstdisperseyear > disperseage-ageAtStart {
+				//fmt.Printf("SSa: name: %s, firstYr: %d, dispersage: %d, ageAtStart: %d\n", name, firstdisperseyear, disperseage, ageAtStart)
 				disperseage = firstdisperseyear + ageAtStart
 				fmt.Printf("Warning - Social Security spousal benefit can only be claimed\n\tafter the spouse claims benefits.\n\tPlease correct %s's SS age in the configuration file to '%d'.\n", name, disperseage)
+				//fmt.Printf("SSb: name: %s, firstYr: %d, dispersage: %d, ageAtStart: %d\n", name, firstdisperseyear, disperseage, ageAtStart)
 			} else if disperseage > fraage && firstdisperseyear != disperseage-ageAtStart {
 				if firstdisperseyear <= fraage-ageAtStart {
 					disperseage = fraage

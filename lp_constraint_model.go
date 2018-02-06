@@ -148,8 +148,8 @@ func NewModelSpecs(vindx VectorVarIndex,
 		maximize:                "Spending", // or "PlusEstate"
 		iRate:                   1.025,
 		rRate:                   1.06,
-		min:                     -1,
-		max:                     -1,
+		min:                     0, // not specifically set, ignore
+		max:                     0, // not specifically set, ignore
 		verbose:                 verbose,
 		errfile:                 errfile,
 		logfile:                 logfile,

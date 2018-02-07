@@ -1063,7 +1063,7 @@ func TestBuildModel(t *testing.T) {
 				"eT_Aftatax_ContribStartAge": "",
 				"eT_Aftatax_ContribEndAge":   "",
 			},
-			verbose:       false,
+			verbose:       true,
 			allowDeposits: false,
 			iRate:         1.025,
 		},

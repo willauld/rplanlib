@@ -45,12 +45,15 @@ type InputParams struct {
 	AftataxContrib      int
 	AftataxContribStart int
 	AftataxContribEnd   int
+	iRate               float64 // TODO add to Mobile
+	rRate               float64 // TODO add to Mobile
 
 	prePlanYears int
 	startPlan    int
 	endPlan      int
 	numyr        int
 	accmap       map[string]int
+	numacc       int
 }
 
 //TODO: TESTME
@@ -87,14 +90,14 @@ func getIPFloatValue(str string) float64 {
 // NewInputParams takes string inputs and converts them to model inputs
 func NewInputParams(ip map[string]string) InputParams {
 
-	const rRate = 1.06
-	const iRate = 1.025
-
 	rip := InputParams{}
+
+	rip.rRate = 1.06  // = getIPFloatValue(ip["eT_Gen_rRate"]) // TODO add to mobile
+	rip.iRate = 1.025 // = getIPFloatValue(ip["eT_Gen_iRate"]) // TODO add to mobile
 
 	rip.accmap = map[string]int{"IRA": 0, "roth": 0, "aftertax": 0}
 	rip.filingStatus = ip["filingStatus"]
-	rip.myKey1 = "retiree1"
+	rip.myKey1 = "retiree1" // TODO: these two should come from ip FIXME
 	rip.myKey2 = "retiree2"
 	rip.age1 = getIPIntValue(ip["eT_Age1"])
 	rip.age2 = getIPIntValue(ip["eT_Age2"])
@@ -168,6 +171,10 @@ func NewInputParams(ip map[string]string) InputParams {
 	rip.AftataxContribEnd = getIPIntValue(ip["eT_Aftatax_ContribEndAge"])
 	if rip.Aftatax > 0 {
 		rip.accmap["aftertax"]++
+	}
+	rip.numacc = 0
+	for _, v := range rip.accmap {
+		rip.numacc += v
 	}
 
 	//fmt.Printf("\n&&&&\n%v\n&&&&\n", rip)

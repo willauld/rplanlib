@@ -28,17 +28,16 @@ type account struct {
 type ModelSpecs struct {
 	ip    InputParams
 	vindx VectorVarIndex
+	ti    Taxinfo
+	ao    AppOutput
 
-	ti                      Taxinfo
 	allowTdraRothraDeposits bool
 
 	// The following was through 'S'
-	numyr        int    // years in plan
-	prePlanYears int    // years before plan starts
-	maximize     string // "Spending" or "PlusEstate"
-	accounttable []account
-	numacc       int
-	retirees     []retiree
+	illiquidAssetPlanStart float64
+	illiquidAssetPlanEnd   float64
+	accounttable           []account
+	retirees               []retiree
 
 	income       []float64
 	SS           []float64
@@ -49,15 +48,11 @@ type ModelSpecs struct {
 	assetSale    []float64
 	cgAssetTaxed []float64
 
-	iRate float64
-	rRate float64
-
-	min float64
-	max float64
-
-	verbose bool
-	errfile *os.File
-	logfile *os.File
+	verbose   bool
+	errfile   *os.File
+	logfile   *os.File
+	csvfile   *os.File
+	tablefile *os.File
 }
 
 func intMax(a, b int) int {
@@ -138,21 +133,23 @@ func NewModelSpecs(vindx VectorVarIndex,
 	verbose bool,
 	allowDeposits bool,
 	errfile *os.File,
-	logfile *os.File) ModelSpecs {
+	logfile *os.File,
+	csvfile *os.File,
+	tablefile *os.File) ModelSpecs {
 
 	ms := ModelSpecs{
 		ip:    ip,
 		vindx: vindx,
 		ti:    ti,
+		ao:    NewAppOutput(csvfile, tablefile),
 		allowTdraRothraDeposits: allowDeposits,
-		maximize:                "Spending", // or "PlusEstate"
-		iRate:                   1.025,
-		rRate:                   1.06,
-		min:                     0, // not specifically set, ignore
-		max:                     0, // not specifically set, ignore
+		illiquidAssetPlanStart:  0.0,
+		illiquidAssetPlanEnd:    0.0,
 		verbose:                 verbose,
 		errfile:                 errfile,
 		logfile:                 logfile,
+		csvfile:                 csvfile,
+		tablefile:               tablefile,
 	}
 
 	retirees := []retiree{
@@ -174,12 +171,12 @@ func NewModelSpecs(vindx VectorVarIndex,
 		},
 	}
 	ms.retirees = retirees
-	ms.numyr = ip.numyr
-	ms.numacc = 0
+	ms.ip.numyr = ip.numyr
+	ms.ip.numacc = 0
 	for _, n := range ms.ip.accmap {
-		ms.numacc += n
+		ms.ip.numacc += n
 	}
-	//fmt.Fprintf(ms.logfile, "NewModelSpec: numacc: %d, accmap: %v\n", ms.numacc, ms.ip.accmap)
+	//fmt.Fprintf(ms.logfile, "NewModelSpec: numacc: %d, accmap: %v\n", ms.ip.numacc, ms.ip.accmap)
 
 	//build accounttable: []map[string]string
 	var err error
@@ -187,11 +184,11 @@ func NewModelSpecs(vindx VectorVarIndex,
 	if ip.TDRA1 > 0 {
 		a := account{}
 		a.bal = float64(ip.TDRA1)
-		a.contributions, err = buildVector(ip.TDRAContrib1, ip.TDRAContribStart1, ip.TDRAContribEnd1, ip.startPlan, ip.endPlan, ms.iRate, ip.age1)
+		a.contributions, err = buildVector(ip.TDRAContrib1, ip.TDRAContribStart1, ip.TDRAContribEnd1, ip.startPlan, ip.endPlan, ms.ip.iRate, ip.age1)
 		if err != nil {
 			panic(err)
 		}
-		a.rRate = ms.rRate
+		a.rRate = ms.ip.rRate
 		if ip.TDRARate1 != 0 {
 			a.rRate = ip.TDRARate1
 		}
@@ -202,11 +199,11 @@ func NewModelSpecs(vindx VectorVarIndex,
 	if ip.TDRA2 > 0 {
 		a := account{}
 		a.bal = float64(ip.TDRA2)
-		a.contributions, err = buildVector(ip.TDRAContrib2, ip.TDRAContribStart2, ip.TDRAContribEnd2, ip.startPlan, ip.endPlan, ms.iRate, ip.age1)
+		a.contributions, err = buildVector(ip.TDRAContrib2, ip.TDRAContribStart2, ip.TDRAContribEnd2, ip.startPlan, ip.endPlan, ms.ip.iRate, ip.age1)
 		if err != nil {
 			panic(err)
 		}
-		a.rRate = ms.rRate
+		a.rRate = ms.ip.rRate
 		if ip.TDRARate2 != 0 {
 			a.rRate = ip.TDRARate2
 		}
@@ -217,11 +214,11 @@ func NewModelSpecs(vindx VectorVarIndex,
 	if ip.Roth1 > 0 {
 		a := account{}
 		a.bal = float64(ip.Roth1)
-		a.contributions, err = buildVector(ip.RothContrib1, ip.RothContribStart1, ip.RothContribEnd1, ip.startPlan, ip.endPlan, ms.iRate, ip.age1)
+		a.contributions, err = buildVector(ip.RothContrib1, ip.RothContribStart1, ip.RothContribEnd1, ip.startPlan, ip.endPlan, ms.ip.iRate, ip.age1)
 		if err != nil {
 			panic(err)
 		}
-		a.rRate = ms.rRate
+		a.rRate = ms.ip.rRate
 		if ip.RothRate1 != 0 {
 			a.rRate = ip.RothRate1
 		}
@@ -232,11 +229,11 @@ func NewModelSpecs(vindx VectorVarIndex,
 	if ip.Roth2 > 0 {
 		a := account{}
 		a.bal = float64(ip.Roth2)
-		a.contributions, err = buildVector(ip.RothContrib2, ip.RothContribStart2, ip.RothContribEnd2, ip.startPlan, ip.endPlan, ms.iRate, ip.age1)
+		a.contributions, err = buildVector(ip.RothContrib2, ip.RothContribStart2, ip.RothContribEnd2, ip.startPlan, ip.endPlan, ms.ip.iRate, ip.age1)
 		if err != nil {
 			panic(err)
 		}
-		a.rRate = ms.rRate
+		a.rRate = ms.ip.rRate
 		if ip.RothRate2 != 0 {
 			a.rRate = ip.RothRate2
 		}
@@ -248,11 +245,11 @@ func NewModelSpecs(vindx VectorVarIndex,
 		a := account{}
 		a.bal = float64(ip.Aftatax)
 		a.basis = float64(ip.AftataxBasis)
-		a.contributions, err = buildVector(ip.AftataxContrib, ip.AftataxContribStart, ip.AftataxContribEnd, ip.startPlan, ip.endPlan, ms.iRate, ip.age1)
+		a.contributions, err = buildVector(ip.AftataxContrib, ip.AftataxContribStart, ip.AftataxContribEnd, ip.startPlan, ip.endPlan, ms.ip.iRate, ip.age1)
 		if err != nil {
 			panic(err)
 		}
-		a.rRate = ms.rRate
+		a.rRate = ms.ip.rRate
 		if ip.AftataxRate != 0 {
 			a.rRate = ip.AftataxRate
 		}
@@ -261,8 +258,8 @@ func NewModelSpecs(vindx VectorVarIndex,
 		a.mykey = "" // need to make this definable for pc versions
 		ms.accounttable = append(ms.accounttable, a)
 	}
-	if len(ms.accounttable) != ms.numacc {
-		e := fmt.Errorf("NewModelSpecs: len(accounttable): %d not equal to numacc: %d", len(ms.accounttable), ms.numacc)
+	if len(ms.accounttable) != ms.ip.numacc {
+		e := fmt.Errorf("NewModelSpecs: len(accounttable): %d not equal to numacc: %d", len(ms.accounttable), ms.ip.numacc)
 		panic(e)
 	}
 
@@ -270,18 +267,18 @@ func NewModelSpecs(vindx VectorVarIndex,
 	income1 := 0
 	incomeStart1 := ip.startPlan
 	incomeEnd1 := ip.endPlan
-	income, err := buildVector(income1, incomeStart1, incomeEnd1, ip.startPlan, ip.endPlan, ms.iRate, ip.age1)
+	income, err := buildVector(income1, incomeStart1, incomeEnd1, ip.startPlan, ip.endPlan, ms.ip.iRate, ip.age1)
 	if err != nil {
 		fmt.Fprintf(errfile, "BuildVector Failed: %s\n", err)
 	}
 	ms.income = income
 
 	/*
-		ms.SS1, err := buildVector(ip.PIA1, ip.SSStart1, ip.endPlan, ip.startPlan, ip.endPlan, ms.iRate, ip.age1)
+		ms.SS1, err := buildVector(ip.PIA1, ip.SSStart1, ip.endPlan, ip.startPlan, ip.endPlan, ms.ip.iRate, ip.age1)
 		if err != nil {
 			fmt.Fprintf(errfile, "BuildVector Failed: %s\n", err)
 		}
-		ms.SS2, err := buildVector(ip.PIA2, ip.SSStart2, ip.endPlan, ip.startPlan, ip.endPlan, ms.iRate, ip.age1)
+		ms.SS2, err := buildVector(ip.PIA2, ip.SSStart2, ip.endPlan, ip.startPlan, ip.endPlan, ms.ip.iRate, ip.age1)
 		if err != nil {
 			fmt.Fprintf(errfile, "BuildVector Failed: %s\n", err)
 		}
@@ -290,7 +287,7 @@ func NewModelSpecs(vindx VectorVarIndex,
 			fmt.Fprintf(errfile, "mergeVector Failed: %s\n", err)
 		}
 	*/
-	ms.SS, ms.SS1, ms.SS2, err = processSS(ip, retirees, ms.iRate)
+	ms.SS, ms.SS1, ms.SS2, err = processSS(ip, retirees, ms.ip.iRate)
 	if err != nil {
 		panic(err)
 	}
@@ -302,7 +299,7 @@ func NewModelSpecs(vindx VectorVarIndex,
 	exp1 := 0
 	expStart1 := ip.startPlan
 	expEnd1 := ip.endPlan
-	expenses, err := buildVector(exp1, expStart1, expEnd1, ip.startPlan, ip.endPlan, ms.iRate, ip.age1)
+	expenses, err := buildVector(exp1, expStart1, expEnd1, ip.startPlan, ip.endPlan, ms.ip.iRate, ip.age1)
 	if err != nil {
 		fmt.Fprintf(errfile, "BuildVector Failed: %s\n", err)
 	}
@@ -312,14 +309,14 @@ func NewModelSpecs(vindx VectorVarIndex,
 	tax1 := 0
 	taxStart1 := ip.startPlan
 	taxEnd1 := ip.endPlan
-	taxed, err := buildVector(tax1, taxStart1, taxEnd1, ip.startPlan, ip.endPlan, ms.iRate, ip.age1)
+	taxed, err := buildVector(tax1, taxStart1, taxEnd1, ip.startPlan, ip.endPlan, ms.ip.iRate, ip.age1)
 	if err != nil {
 		fmt.Fprintf(errfile, "BuildVector Failed: %s\n", err)
 	}
 	ms.taxed = taxed
 
 	//asset_sale: []float64
-	assetSale, err := buildVector(0, ip.startPlan, ip.endPlan, ip.startPlan, ip.endPlan, ms.iRate, ip.age1)
+	assetSale, err := buildVector(0, ip.startPlan, ip.endPlan, ip.startPlan, ip.endPlan, ms.ip.iRate, ip.age1)
 	if err != nil {
 		fmt.Fprintf(errfile, "BuildVector Failed: %s\n", err)
 	}
@@ -329,7 +326,7 @@ func NewModelSpecs(vindx VectorVarIndex,
 	cgtax1 := 0
 	cgtaxStart1 := ip.startPlan
 	cgtaxEnd1 := ip.endPlan
-	cgtaxed, err := buildVector(cgtax1, cgtaxStart1, cgtaxEnd1, ip.startPlan, ip.endPlan, ms.iRate, ip.age1)
+	cgtaxed, err := buildVector(cgtax1, cgtaxStart1, cgtaxEnd1, ip.startPlan, ip.endPlan, ms.ip.iRate, ip.age1)
 	if err != nil {
 		fmt.Fprintf(errfile, "BuildVector Failed: %s\n", err)
 	}
@@ -365,13 +362,13 @@ func (ms ModelSpecs) BuildModel() ([]float64, [][]float64, []float64, []modelNot
 	//
 	// Add objective function (S1') becomes (R1') if PlusEstate is added
 	//
-	for year := 0; year < ms.numyr; year++ {
+	for year := 0; year < ms.ip.numyr; year++ {
 		c[ms.vindx.S(year)] = -1
 	}
 	//
 	// Add objective function tax bracket forcing function
 	//
-	for year := 0; year < ms.numyr; year++ {
+	for year := 0; year < ms.ip.numyr; year++ {
 		for k := 0; k < len(*ms.ti.Taxtable); k++ {
 			// Multiplies the impact of higher brackets opposite to
 			// optimization. The intent here is to pressure higher
@@ -382,10 +379,10 @@ func (ms ModelSpecs) BuildModel() ([]float64, [][]float64, []float64, []modelNot
 	//
 	// Adder objective function (R1') when PlusEstate is added
 	//
-	if ms.maximize == "PlusEstate" {
+	if ms.ip.maximize == "PlusEstate" {
 		for j := 0; j < len(ms.accounttable); j++ {
 			estateTax := ms.ti.AccountEstateTax[ms.accounttable[j].mykey]
-			c[ms.vindx.B(ms.numyr, j)] = -1 * estateTax // account discount rate
+			c[ms.vindx.B(ms.ip.numyr, j)] = -1 * estateTax // account discount rate
 		}
 		fmt.Fprintf(ms.logfile, "\nConstructing Spending + Estate Model:\n")
 		notes = append(notes, modelNote{-1, "Objective function R1':"})
@@ -399,7 +396,7 @@ func (ms ModelSpecs) BuildModel() ([]float64, [][]float64, []float64, []modelNot
 		balancer := 1.0 / (startamount)
 		for j := 0; j < len(ms.accounttable); j++ {
 			estateTax := ms.ti.AccountEstateTax[ms.accounttable[j].acctype]
-			c[ms.vindx.B(ms.numyr, j)] = -1 * balancer * estateTax // balance and discount rate
+			c[ms.vindx.B(ms.ip.numyr, j)] = -1 * balancer * estateTax // balance and discount rate
 		}
 		notes = append(notes, modelNote{-1, "Objective function S1':"})
 	}
@@ -407,7 +404,7 @@ func (ms ModelSpecs) BuildModel() ([]float64, [][]float64, []float64, []modelNot
 	// Add constraint (2')
 	//
 	notes = append(notes, modelNote{len(A), "Constraints 2':"})
-	for year := 0; year < ms.numyr; year++ {
+	for year := 0; year < ms.ip.numyr; year++ {
 		row := make([]float64, nvars)
 		for j := 0; j < len(ms.accounttable); j++ {
 			p := 1.0
@@ -437,10 +434,10 @@ func (ms ModelSpecs) BuildModel() ([]float64, [][]float64, []float64, []modelNot
 	// Add constraint (3a')
 	//
 	notes = append(notes, modelNote{len(A), "Constraints 3a':"})
-	for year := 0; year < ms.numyr-1; year++ {
+	for year := 0; year < ms.ip.numyr-1; year++ {
 		row := make([]float64, nvars)
 		row[ms.vindx.S(year+1)] = 1
-		row[ms.vindx.S(year)] = -1 * ms.iRate
+		row[ms.vindx.S(year)] = -1 * ms.ip.iRate
 		A = append(A, row)
 		b = append(b, 0)
 	}
@@ -448,9 +445,9 @@ func (ms ModelSpecs) BuildModel() ([]float64, [][]float64, []float64, []modelNot
 	// Add constraint (3b')
 	//
 	notes = append(notes, modelNote{len(A), "Constraints 3b':"})
-	for year := 0; year < ms.numyr-1; year++ {
+	for year := 0; year < ms.ip.numyr-1; year++ {
 		row := make([]float64, nvars)
-		row[ms.vindx.S(year)] = ms.iRate
+		row[ms.vindx.S(year)] = ms.ip.iRate
 		row[ms.vindx.S(year+1)] = -1
 		A = append(A, row)
 		b = append(b, 0)
@@ -459,12 +456,12 @@ func (ms ModelSpecs) BuildModel() ([]float64, [][]float64, []float64, []modelNot
 	// Add constrant (4') rows - not needed if [desired.income] is not defined in input
 	//
 	notes = append(notes, modelNote{len(A), "Constraints 4':"})
-	if ms.min != 0 {
+	if ms.ip.min != 0 {
 		for year := 0; year < 1; year++ { // Only needs setting at the beginning
 			row := make([]float64, nvars)
 			row[ms.vindx.S(year)] = -1
 			A = append(A, row)
-			b = append(b, -ms.min) // [- d_i]
+			b = append(b, float64(-ms.ip.min)) // [- d_i]
 		}
 	}
 
@@ -473,12 +470,12 @@ func (ms ModelSpecs) BuildModel() ([]float64, [][]float64, []float64, []modelNot
 	// not defined in input
 	//
 	notes = append(notes, modelNote{len(A), "Constraints 5':"})
-	if ms.max != 0 {
+	if ms.ip.max != 0 {
 		for year := 0; year < 1; year++ { // Only needs to be set at the beginning
 			row := make([]float64, nvars)
 			row[ms.vindx.S(year)] = 1
 			A = append(A, row)
-			b = append(b, ms.max) // [ dm_i]
+			b = append(b, float64(ms.ip.max)) // [ dm_i]
 		}
 	}
 
@@ -486,7 +483,7 @@ func (ms ModelSpecs) BuildModel() ([]float64, [][]float64, []float64, []modelNot
 	// Add constaints for (6') rows
 	//
 	notes = append(notes, modelNote{len(A), "Constraints 6':"})
-	for year := 0; year < ms.numyr; year++ {
+	for year := 0; year < ms.ip.numyr; year++ {
 		row := make([]float64, nvars)
 		for j := 0; j < len(ms.accounttable); j++ {
 			if ms.accounttable[j].acctype != "aftertax" {
@@ -498,14 +495,14 @@ func (ms ModelSpecs) BuildModel() ([]float64, [][]float64, []float64, []modelNot
 		// using ms.taxed rather than ms.income because income could
 		// include non-taxed anueities that don't count.
 		None := ""
-		infyears := ms.prePlanYears + year
-		b = append(b, math.Min(ms.taxed[year], ms.ti.maxContribution(year, infyears, ms.retirees, None, ms.iRate)))
+		infyears := ms.ip.prePlanYears + year
+		b = append(b, math.Min(ms.taxed[year], ms.ti.maxContribution(year, infyears, ms.retirees, None, ms.ip.iRate)))
 	}
 	//
 	// Add constaints for (7') rows
 	//
 	notes = append(notes, modelNote{len(A), "Constraints 7':"})
-	for year := 0; year < ms.numyr; year++ {
+	for year := 0; year < ms.ip.numyr; year++ {
 		// TODO this is not needed when there is only one retiree
 		for _, v := range ms.retirees {
 			row := make([]float64, nvars)
@@ -518,15 +515,15 @@ func (ms ModelSpecs) BuildModel() ([]float64, [][]float64, []float64, []modelNot
 				}
 			}
 			A = append(A, row)
-			infyears := ms.prePlanYears + year
-			b = append(b, ms.ti.maxContribution(year, infyears, ms.retirees, v.mykey, ms.iRate))
+			infyears := ms.ip.prePlanYears + year
+			b = append(b, ms.ti.maxContribution(year, infyears, ms.retirees, v.mykey, ms.ip.iRate))
 		}
 	}
 	//
 	// Add constaints for (8') rows
 	//
 	notes = append(notes, modelNote{len(A), "Constraints 8':"})
-	for year := 0; year < ms.numyr; year++ {
+	for year := 0; year < ms.ip.numyr; year++ {
 		for j := 0; j < len(ms.accounttable); j++ {
 			v := ms.accounttable[j].contributions
 			if v != nil {
@@ -543,7 +540,7 @@ func (ms ModelSpecs) BuildModel() ([]float64, [][]float64, []float64, []modelNot
 	// Add constaints for (9') rows
 	//
 	notes = append(notes, modelNote{len(A), "Constraints 9':"})
-	for year := 0; year < ms.numyr; year++ {
+	for year := 0; year < ms.ip.numyr; year++ {
 		for j := 0; j < intMin(2, len(ms.accounttable)); j++ {
 			// at most the first two accounts are type IRA w/
 			// RMD requirement
@@ -563,7 +560,7 @@ func (ms ModelSpecs) BuildModel() ([]float64, [][]float64, []float64, []modelNot
 	//
 	notes = append(notes, modelNote{len(A), "Constraints N':"})
 	if !ms.allowTdraRothraDeposits {
-		for year := 0; year < ms.numyr; year++ {
+		for year := 0; year < ms.ip.numyr; year++ {
 			for j := 0; j < len(ms.accounttable); j++ {
 				v := ms.accounttable[j].contributions
 				max := 0.0
@@ -583,7 +580,7 @@ func (ms ModelSpecs) BuildModel() ([]float64, [][]float64, []float64, []modelNot
 	// Add constaints for (10') rows
 	//
 	notes = append(notes, modelNote{len(A), "Constraints 10':"})
-	for year := 0; year < ms.numyr; year++ {
+	for year := 0; year < ms.ip.numyr; year++ {
 		for j := 0; j < intMin(2, len(ms.accounttable)); j++ {
 			// at most the first two accounts are type IRA
 			// w/ RMD requirement
@@ -604,8 +601,8 @@ func (ms ModelSpecs) BuildModel() ([]float64, [][]float64, []float64, []modelNot
 	// Add constraints for (11')
 	//
 	notes = append(notes, modelNote{len(A), "Constraints 11':"})
-	for year := 0; year < ms.numyr; year++ {
-		adjInf := math.Pow(ms.iRate, float64(ms.prePlanYears+year))
+	for year := 0; year < ms.ip.numyr; year++ {
+		adjInf := math.Pow(ms.ip.iRate, float64(ms.ip.prePlanYears+year))
 		row := make([]float64, nvars)
 		for j := 0; j < intMin(2, len(ms.accounttable)); j++ {
 			// IRA can only be in the first two accounts
@@ -624,12 +621,12 @@ func (ms ModelSpecs) BuildModel() ([]float64, [][]float64, []float64, []modelNot
 	// Add constraints for (12')
 	//
 	notes = append(notes, modelNote{len(A), "Constraints 12':"})
-	for year := 0; year < ms.numyr; year++ {
+	for year := 0; year < ms.ip.numyr; year++ {
 		for k := 0; k < len(*ms.ti.Taxtable)-1; k++ {
 			row := make([]float64, nvars)
 			row[ms.vindx.X(year, k)] = 1
 			A = append(A, row)
-			b = append(b, ((*ms.ti.Taxtable)[k][1])*math.Pow(ms.iRate, float64(ms.prePlanYears+year))) // inflation adjusted
+			b = append(b, ((*ms.ti.Taxtable)[k][1])*math.Pow(ms.ip.iRate, float64(ms.ip.prePlanYears+year))) // inflation adjusted
 		}
 	}
 	//
@@ -637,7 +634,7 @@ func (ms ModelSpecs) BuildModel() ([]float64, [][]float64, []float64, []modelNot
 	//
 	notes = append(notes, modelNote{len(A), "Constraints 13a':"})
 	if ms.ip.accmap["aftertax"] > 0 {
-		for year := 0; year < ms.numyr; year++ {
+		for year := 0; year < ms.ip.numyr; year++ {
 			f := ms.cgTaxableFraction(year)
 			row := make([]float64, nvars)
 			for l := 0; l < len(*ms.ti.Capgainstable); l++ {
@@ -659,7 +656,7 @@ func (ms ModelSpecs) BuildModel() ([]float64, [][]float64, []float64, []modelNot
 	//
 	notes = append(notes, modelNote{len(A), "Constraints 13b':"})
 	if ms.ip.accmap["aftertax"] > 0 {
-		for year := 0; year < ms.numyr; year++ {
+		for year := 0; year < ms.ip.numyr; year++ {
 			f := ms.cgTaxableFraction(year)
 			row := make([]float64, nvars)
 			////// Awful Hack! If year of asset sale, assume w(i,j)-D(i,j) is
@@ -681,8 +678,8 @@ func (ms ModelSpecs) BuildModel() ([]float64, [][]float64, []float64, []modelNot
 	//
 	notes = append(notes, modelNote{len(A), "Constraints 14':"})
 	if ms.ip.accmap["aftertax"] > 0 {
-		for year := 0; year < ms.numyr; year++ {
-			adjInf := math.Pow(ms.iRate, float64(ms.prePlanYears+year))
+		for year := 0; year < ms.ip.numyr; year++ {
+			adjInf := math.Pow(ms.ip.iRate, float64(ms.ip.prePlanYears+year))
 			for l := 0; l < len(*ms.ti.Capgainstable)-1; l++ {
 				row := make([]float64, nvars)
 				row[ms.vindx.Y(year, l)] = 1
@@ -700,7 +697,7 @@ func (ms ModelSpecs) BuildModel() ([]float64, [][]float64, []float64, []modelNot
 	// Add constraints for (15a')
 	//
 	notes = append(notes, modelNote{len(A), "Constraints 15a':"})
-	for year := 0; year < ms.numyr; year++ {
+	for year := 0; year < ms.ip.numyr; year++ {
 		for j := 0; j < len(ms.accounttable); j++ {
 			//j = len(ms.accounttable)-1 // nl the last account, the investment account
 			row := make([]float64, nvars)
@@ -721,7 +718,7 @@ func (ms ModelSpecs) BuildModel() ([]float64, [][]float64, []float64, []modelNot
 	// Add constraints for (15b')
 	//
 	notes = append(notes, modelNote{len(A), "Constraints 15b':"})
-	for year := 0; year < ms.numyr; year++ {
+	for year := 0; year < ms.ip.numyr; year++ {
 		for j := 0; j < len(ms.accounttable); j++ {
 			//j = len(ms.accounttable)-1 // nl the last account, the investment account
 			row := make([]float64, nvars)
@@ -802,7 +799,7 @@ func (ms ModelSpecs) cgTaxableFraction(year int) float64 {
 		for _, v := range ms.accounttable {
 			if v.acctype == "aftertax" {
 				if v.bal > 0 {
-					f = 1 - (v.basis / (v.bal * math.Pow(v.rRate, float64(year+ms.prePlanYears))))
+					f = 1 - (v.basis / (v.bal * math.Pow(v.rRate, float64(year+ms.ip.prePlanYears))))
 				}
 				break // should be the last entry anyway but...
 			}
@@ -897,12 +894,12 @@ func (ms ModelSpecs) printConstraint(row []float64, b float64) {
 }
 
 func (ms ModelSpecs) printModelRow(row []float64, suppressNewline bool) {
-	if ms.numacc < 0 || ms.numacc > 5 {
-		e := fmt.Errorf("PrintModelRow: number of accounts is out of bounds, should be between [0, 5] but is %d", ms.numacc)
+	if ms.ip.numacc < 0 || ms.ip.numacc > 5 {
+		e := fmt.Errorf("PrintModelRow: number of accounts is out of bounds, should be between [0, 5] but is %d", ms.ip.numacc)
 		fmt.Fprintf(ms.logfile, "%s\n", e)
 		return
 	}
-	for i := 0; i < ms.numyr; i++ { // x[]
+	for i := 0; i < ms.ip.numyr; i++ { // x[]
 		for k := 0; k < len(*ms.ti.Taxtable); k++ {
 			if row[ms.vindx.X(i, k)] != 0 {
 				fmt.Fprintf(ms.logfile, "x[%d,%d]=%6.3f, ", i, k, row[ms.vindx.X(i, k)])
@@ -910,7 +907,7 @@ func (ms ModelSpecs) printModelRow(row []float64, suppressNewline bool) {
 		}
 	}
 	if ms.ip.accmap["aftertax"] > 0 {
-		for i := 0; i < ms.numyr; i++ { // y[]
+		for i := 0; i < ms.ip.numyr; i++ { // y[]
 			for l := 0; l < len(*ms.ti.Capgainstable); l++ {
 				if row[ms.vindx.Y(i, l)] != 0 {
 					fmt.Fprintf(ms.logfile, "y[%d,%d]=%6.3f, ", i, l, row[ms.vindx.Y(i, l)])
@@ -918,28 +915,28 @@ func (ms ModelSpecs) printModelRow(row []float64, suppressNewline bool) {
 			}
 		}
 	}
-	for i := 0; i < ms.numyr; i++ { // w[]
-		for j := 0; j < ms.numacc; j++ {
+	for i := 0; i < ms.ip.numyr; i++ { // w[]
+		for j := 0; j < ms.ip.numacc; j++ {
 			if row[ms.vindx.W(i, j)] != 0 {
 				fmt.Fprintf(ms.logfile, "w[%d,%d]=%6.3f, ", i, j, row[ms.vindx.W(i, j)])
 			}
 		}
 	}
-	for i := 0; i < ms.numyr+1; i++ { // b[] has an extra year
-		for j := 0; j < ms.numacc; j++ {
+	for i := 0; i < ms.ip.numyr+1; i++ { // b[] has an extra year
+		for j := 0; j < ms.ip.numacc; j++ {
 			if row[ms.vindx.B(i, j)] != 0 {
 				fmt.Fprintf(ms.logfile, "b[%d,%d]=%6.3f, ", i, j, row[ms.vindx.B(i, j)])
 			}
 		}
 	}
-	for i := 0; i < ms.numyr; i++ { // s[]
+	for i := 0; i < ms.ip.numyr; i++ { // s[]
 		if row[ms.vindx.S(i)] != 0 {
 			fmt.Fprintf(ms.logfile, "s[%d]=%6.3f, ", i, row[ms.vindx.S(i)])
 		}
 	}
 	if ms.ip.accmap["aftertax"] > 0 {
-		for i := 0; i < ms.numyr; i++ { // D[]
-			for j := 0; j < ms.numacc; j++ {
+		for i := 0; i < ms.ip.numyr; i++ { // D[]
+			for j := 0; j < ms.ip.numacc; j++ {
 				if row[ms.vindx.D(i, j)] != 0 {
 					fmt.Fprintf(ms.logfile, "D[%d,%d]=%6.3f, ", i, j, row[ms.vindx.D(i, j)])
 				}

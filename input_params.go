@@ -47,6 +47,9 @@ type InputParams struct {
 	AftataxContribEnd   int
 	iRate               float64 // TODO add to Mobile
 	rRate               float64 // TODO add to Mobile
+	maximize            string  // "Spending" or "PlusEstate" // TODO add to Mobile
+	min                 int     // TODO add to Mobile
+	max                 int     // TODO add to Mobile
 
 	prePlanYears int
 	startPlan    int
@@ -94,6 +97,10 @@ func NewInputParams(ip map[string]string) InputParams {
 
 	rip.rRate = 1.06  // = getIPFloatValue(ip["eT_Gen_rRate"]) // TODO add to mobile
 	rip.iRate = 1.025 // = getIPFloatValue(ip["eT_Gen_iRate"]) // TODO add to mobile
+	rip.min = 0       // = getIPIntValue(ip["eT_min"]) // TODO add to mobile
+	rip.max = 0       // = getIPIntValue(ip["eT_max"]) // TODO add to mobile
+	//	maximize:                "Spending", // or "PlusEstate"
+	rip.maximize = "Spending" // = ip["eT_Maximize"] // TODO add to mobile
 
 	rip.accmap = map[string]int{"IRA": 0, "roth": 0, "aftertax": 0}
 	rip.filingStatus = ip["filingStatus"]

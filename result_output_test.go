@@ -73,12 +73,17 @@ func TestResultsOutput(t *testing.T) {
 		vindx, err := NewVectorVarIndex(ip.numyr, taxbins,
 			cgbins, ip.accmap, os.Stdout)
 		if err != nil {
-			t.Errorf("BuildModel case %d: %s", i, err)
+			t.Errorf("TestResultsOutput case %d: %s", i, err)
 			continue
 		}
 		logfile, err := os.Create("ModelMatixPP.log")
+		if err != nil {
+			t.Errorf("TestResultsOutput case %d: %s", i, err)
+			continue
+		}
+		csvfile := (*os.File)(nil)
 		ms := NewModelSpecs(vindx, ti, ip, elem.verbose,
-			elem.allowDeposits, os.Stderr, logfile)
+			elem.allowDeposits, os.Stderr, logfile, csvfile, logfile)
 		/**/
 		c, a, b, notes := ms.BuildModel()
 		ms.printModelMatrix(c, a, b, notes, nil, false)

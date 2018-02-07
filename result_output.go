@@ -18,23 +18,6 @@ import modelio
 */
 const __version__ = "0.3-rc2"
 
-// ResultsOutput is the type for printing model results
-type ResultsOutput struct {
-	ti    Taxinfo
-	ip    InputParams
-	vindx VectorVarIndex
-}
-
-// NewResultsOutput creates a ResultsOutput object for printing the Model output
-func NewResultsOutput(ti Taxinfo, ip InputParams, vindx VectorVarIndex) ResultsOutput {
-	ro := ResultsOutput{
-		ti:    ti,
-		ip:    ip,
-		vindx: vindx,
-	}
-	return ro
-}
-
 /*
 def precheck_consistancy():
     print("\nDoing Pre-check:")
@@ -248,13 +231,14 @@ def print_income_expense_details():
         ao.output("\n")
     print_income_header(headerlist, map, income_cat, fieldwidth)
 */
-/*
-def deposit_amount(S, res, year, index):
-    amount = res.x[vindx.D(year,index)]
-    if S.accounttable[index]['acctype'] == 'aftertax':
-        amount += S.asset_sale[year]
-    return amount
-*/
+
+func (ms ModelSpecs) deposit_amount(xp *[]float64, year int, index int) float64 {
+	amount := (*xp)[ms.vindx.D(year, index)]
+	if ms.accounttable[index].acctype == "aftertax" {
+		amount += ms.assetSale[year]
+	}
+	return amount
+}
 
 /*
 def print_account_trans(res):
@@ -546,39 +530,42 @@ def print_cap_gains_brackets(res):
     printheader_capgains_brackets()
 */
 
-/*
-def OrdinaryTaxable(year):
-    withdrawals = 0
-    deposits = 0
-    for j in range(min(2,len(S.accounttable))):
-        if S.accounttable[j]['acctype'] == 'IRA':
-            withdrawals += res.x[vindx.w(year,j)]
-            deposits += deposit_amount(S, res, year, j)
-    T = withdrawals - deposits + S.taxed[year] + taxinfo.SS_taxable*S.SS[year] -(taxinfo.stded*S.i_rate**(S.preplanyears+year))
-    if T < 0:
-        T = 0
-    return T
-*/
+func (ms ModelSpecs) OrdinaryTaxable(year int, xp *[]float64) float64 {
+	withdrawals := 0.0
+	deposits := 0.0
+	for j := 0; j < intMin(2, len(ms.accounttable)); j++ {
+		if ms.accounttable[j].acctype == "IRA" {
+			withdrawals += (*xp)[ms.vindx.W(year, j)]
+			deposits += ms.deposit_amount(xp, year, j)
+		}
+	}
+	T := withdrawals - deposits + ms.taxed[year] + ms.ti.SStaxable*ms.SS[year] - (ms.ti.Stded * math.Pow(ms.ip.iRate, float64(ms.ip.prePlanYears+year)))
+	if T < 0 {
+		T = 0
+	}
+	return T
+}
 
-func (ms ModelSpecs) IncomeSummary(year int, xp *[]float64) (T, spendable, tax, rate, ncg_tax, earlytax float64, roth_early bool) {
+// IncomeSummary returns key indicators to summarize income
+func (ms ModelSpecs) IncomeSummary(year int, xp *[]float64) (T, spendable, tax, rate, ncgtax, earlytax float64, rothearly bool) {
 	// TODO clean up and simplify this fuction
 	//
 	// return OrdinaryTaxable, Spendable, Tax, Rate, CG_Tax
 	// Need to account for withdrawals from IRA deposited in Investment account NOT SPENDABLE
-	age := year + ms.ip.startPlan
+	//age := year + ms.ip.startPlan
 	earlytax = 0.0
-	roth_early = false
+	rothearly = false
 	for j, acc := range ms.accounttable {
 		if acc.acctype != "aftertax" {
 			if ms.ti.applyEarlyPenalty(year, ms.matchRetiree(acc.mykey)) {
 				earlytax += (*xp)[ms.vindx.W(year, j)] * ms.ti.Penalty
 				if (*xp)[ms.vindx.W(year, j)] > 0 && acc.acctype == "roth" {
-					roth_early = true
+					rothearly = true
 				}
 			}
 		}
 	}
-	T = OrdinaryTaxable(year)
+	T = ms.OrdinaryTaxable(year, xp)
 	ntax := 0.0
 	rate = 0.0
 	for k := 0; k < len(*ms.ti.Taxtable); k++ {
@@ -589,37 +576,38 @@ func (ms ModelSpecs) IncomeSummary(year int, xp *[]float64) (T, spendable, tax, 
 	}
 	tax = ntax
 	D := 0.0
-	ncg_tax = 0.0
+	ncgtax = 0.0
 	//if S.accmap["aftertax"] > 0:
 	for j := 0; j < len(ms.accounttable); j++ {
-		D += deposit_amount(xp, year, j)
+		D += ms.deposit_amount(xp, year, j)
 	}
 	if ms.ip.accmap["aftertax"] > 0 {
 		for l := 0; l < len(*ms.ti.Capgainstable); l++ {
-			ncg_tax += (*xp)[ms.vindx.Y(year, l)] * (*ms.ti.Capgainstable)[l][2]
+			ncgtax += (*xp)[ms.vindx.Y(year, l)] * (*ms.ti.Capgainstable)[l][2]
 		}
 	}
 	totWithdrawals := 0.0
 	for j := 0; j < len(ms.accounttable); j++ {
 		totWithdrawals += (*xp)[ms.vindx.W(year, j)]
 	}
-	spendable = totWithdrawals - D + ms.income[year] + ms.SS[year] - ms.expenses[year] - tax - ncg_tax - earlytax + ms.assetSale[year]
-	return T, spendable, tax, rate, ncg_tax, earlytax, roth_early
+	spendable = totWithdrawals - D + ms.income[year] + ms.SS[year] - ms.expenses[year] - tax - ncgtax - earlytax + ms.assetSale[year]
+	return T, spendable, tax, rate, ncgtax, earlytax, rothearly
 }
 
 //func (ro ResultsOutput) getResultTotals(x []float64)
-func (ms ModelSpecs) getResultTotals(x []float64) (twithd, tcombined, tT, ttax, tcgtax, tearlytax, tspendable, tbeginbal, tendbal float64) {
+func (ms ModelSpecs) getResultTotals(xp *[]float64) (twithd, tcombined, tT, ttax, tcgtax, tearlytax, tspendable, tbeginbal, tendbal float64) {
 	tincome := 0.0
-	pv_tincome := 0.0
-	pv_twithd := 0.0
-	pv_ttax := 0.0
-	pv_tT := 0.0
+	//pv_tincome := 0.0
+	//pv_twithd := 0.0
+	//pv_ttax := 0.0
+	//pv_tT := 0.0
 	for year := 0; year < ms.ip.numyr; year++ {
-		i_mul := math.Pow(ms.ip.iRate, float64(ms.ip.prePlanYears+year))
-		T, spendable, tax, rate, cg_tax, earlytax, rothearly := IncomeSummary(year)
+		//i_mul := math.Pow(ms.ip.iRate, float64(ms.ip.prePlanYears+year))
+		//T, spendable, tax, rate, cg_tax, earlytax, rothearly := ms.IncomeSummary(year, xp)
+		T, spendable, tax, _, cg_tax, earlytax, _ := ms.IncomeSummary(year, xp)
 		tot_withdrawals := 0.0
 		for j := 0; j < ms.ip.numacc; j++ {
-			tot_withdrawals += x[ms.vindx.W(year, j)]
+			tot_withdrawals += (*xp)[ms.vindx.W(year, j)]
 		}
 		twithd += tot_withdrawals
 		tincome += ms.income[year] + ms.SS[year] // + withdrawals
@@ -632,36 +620,36 @@ func (ms ModelSpecs) getResultTotals(x []float64) (twithd, tcombined, tT, ttax, 
 	tbeginbal = 0
 	tendbal = 0
 	for j := 0; j < ms.ip.numacc; j++ {
-		tbeginbal += x[ms.vindx.B(0, j)]
+		tbeginbal += (*xp)[ms.vindx.B(0, j)]
 		//balance for the year following the last year
-		tendbal += x[ms.vindx.B(ms.ip.numyr, j)]
+		tendbal += (*xp)[ms.vindx.B(ms.ip.numyr, j)]
 	}
 
 	tcombined = tincome + twithd
 	return twithd, tcombined, tT, ttax, tcgtax, tearlytax, tspendable, tbeginbal, tendbal
 }
 
-func (ms ModelSpecs) printBaseConfig(x []float64) { // input is res.x
-	totwithd, tincome, tTaxable, tincometax, tcgtax, tearlytax, tspendable, tbeginbal, tendbal := ms.getResultTotals(x)
-	ao.output("\n")
-	ao.output("======\n")
-	str := fmt.Sprintf("Optimized for %s with %s status\n\tstarting at age %d with an estate of $%6.0f liquid and $%6.0f illiquid\n", ms.ip.maximize, ms.ip.filingStatus /*retirement_type?*/, ms.ip.startPlan, tbeginbal, S.illiquidassetplanstart)
-	ao.output(str)
-	ao.output("\n")
-	ao.output(fmt.Sprintf("Minium desired: $%6.0f\n", S.min))
-	ao.output(fmt.Sprintf("Maximum desired: $%6.0f\n", S.max))
-	ao.output("\n")
-	str = fmt.Sprintf("After tax yearly income: $%6.0f adjusting for inflation\n\tand final estate at age %d with $%6.0f liquid and $%6.0f illiquid\n", x[vindx.s(0)], S.startage+S.numyr, tendbal, S.illiquidassetplanend)
-	ao.output(str)
-	ao.output("\n")
-	ao.output(fmt.Sprintf("total withdrawals: $%6.0f\n", totwithd))
-	ao.output(fmt.Sprintf("total ordinary taxable income $%6.0f\n", tTaxable))
-	ao.output(fmt.Sprintf("total ordinary tax on all taxable income: $%6.0f (%3.1f%%) of taxable income\n", tincometax+tearlytax, 100*(tincometax+tearlytax)/tTaxable))
-	ao.output(fmt.Sprintf("total income (withdrawals + other) $%6.0f\n", tincome))
-	ao.output(fmt.Sprintf("total cap gains tax: $%6.0f\n", tcg_tax))
-	ao.output(fmt.Sprintf("total all tax on all income: $%6.0f (%3.1f%%)\n", tincometax+tcg_tax+tearlytax, 100*(tincometax+tcg_tax+tearlytax)/tincome))
-	ao.output(fmt.Sprintf("Total spendable (after tax money): $%6.0f\n", tspendable))
-	ao.output("\n")
+func (ms ModelSpecs) printBaseConfig(xp *[]float64) { // input is res.x
+	totwithd, tincome, tTaxable, tincometax, tcgtax, tearlytax, tspendable, tbeginbal, tendbal := ms.getResultTotals(xp)
+	ms.ao.output("\n")
+	ms.ao.output("======\n")
+	str := fmt.Sprintf("Optimized for %s with %s status\n\tstarting at age %d with an estate of $%6.0f liquid and $%6.0f illiquid\n", ms.ip.maximize, ms.ip.filingStatus /*retirement_type?*/, ms.ip.startPlan, tbeginbal, ms.illiquidAssetPlanStart)
+	ms.ao.output(str)
+	ms.ao.output("\n")
+	ms.ao.output(fmt.Sprintf("Minium desired: $%6.0f\n", ms.ip.min))
+	ms.ao.output(fmt.Sprintf("Maximum desired: $%6.0f\n", ms.ip.max))
+	ms.ao.output("\n")
+	str = fmt.Sprintf("After tax yearly income: $%6.0f adjusting for inflation\n\tand final estate at age %d with $%6.0f liquid and $%6.0f illiquid\n", (*xp)[ms.vindx.S(0)], ms.ip.retireAge1+ms.ip.numyr, tendbal, ms.illiquidAssetPlanEnd)
+	ms.ao.output(str)
+	ms.ao.output("\n")
+	ms.ao.output(fmt.Sprintf("total withdrawals: $%6.0f\n", totwithd))
+	ms.ao.output(fmt.Sprintf("total ordinary taxable income $%6.0f\n", tTaxable))
+	ms.ao.output(fmt.Sprintf("total ordinary tax on all taxable income: $%6.0f (%3.1f%%) of taxable income\n", tincometax+tearlytax, 100*(tincometax+tearlytax)/tTaxable))
+	ms.ao.output(fmt.Sprintf("total income (withdrawals + other) $%6.0f\n", tincome))
+	ms.ao.output(fmt.Sprintf("total cap gains tax: $%6.0f\n", tcgtax))
+	ms.ao.output(fmt.Sprintf("total all tax on all income: $%6.0f (%3.1f%%)\n", tincometax+tcgtax+tearlytax, 100*(tincometax+tcgtax+tearlytax)/tincome))
+	ms.ao.output(fmt.Sprintf("Total spendable (after tax money): $%6.0f\n", tspendable))
+	ms.ao.output("\n")
 }
 
 /*

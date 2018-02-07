@@ -1009,9 +1009,9 @@ func TestNewModelSpecs(t *testing.T) {
 			continue
 		}
 		ms := NewModelSpecs(vindx, ti, ip, elem.verbose,
-			elem.allowDeposits, os.Stderr, os.Stdout)
-		if ms.iRate != elem.iRate {
-			t.Errorf("TestNewModelSpecs case %d: iRate expected %f, found %f", i, elem.iRate, ms.iRate)
+			elem.allowDeposits, os.Stderr, os.Stdout, nil, nil)
+		if ms.ip.iRate != elem.iRate {
+			t.Errorf("TestNewModelSpecs case %d: iRate expected %f, found %f", i, elem.iRate, ms.ip.iRate)
 		}
 	}
 }
@@ -1081,13 +1081,13 @@ func TestBuildModel(t *testing.T) {
 		}
 		logfile, err := os.Create("ModelMatixPP.log")
 		ms := NewModelSpecs(vindx, ti, ip, elem.verbose,
-			elem.allowDeposits, os.Stderr, logfile)
+			elem.allowDeposits, os.Stderr, logfile, nil, nil)
 		/**/
 		c, A, b, notes := ms.BuildModel()
 		ms.printModelMatrix(c, A, b, notes, nil, false)
 		/**/
-		if ms.iRate != elem.iRate {
-			t.Errorf("BuildModel case %d: iRate expected %f, found %f", i, elem.iRate, ms.iRate)
+		if ms.ip.iRate != elem.iRate {
+			t.Errorf("BuildModel case %d: iRate expected %f, found %f", i, elem.iRate, ms.ip.iRate)
 		}
 	}
 }
@@ -1343,7 +1343,7 @@ func TestCgTaxableFraction(t *testing.T) { /* TODO:FIXME:IMPLEMENTME */
 		f := elem.ms.cgTaxableFraction(elem.year)
 		fprime := elem.expectf
 		if elem.expectf < 0 {
-			fprime = 1 - (elem.ms.accounttable[0].basis / (elem.ms.accounttable[0].bal * math.Pow(elem.ms.accounttable[0].rRate, float64(elem.year+elem.ms.prePlanYears))))
+			fprime = 1 - (elem.ms.accounttable[0].basis / (elem.ms.accounttable[0].bal * math.Pow(elem.ms.accounttable[0].rRate, float64(elem.year+elem.ms.ip.prePlanYears))))
 		}
 		if f != fprime {
 			t.Errorf("cgTaxableFraction case %d: expected %f, found %f", i, fprime, f)
@@ -1462,8 +1462,6 @@ func TestPrintModelMatrix(t *testing.T) {
 			ip:      ip,
 			vindx:   vindx,
 			ti:      ti,
-			numyr:   ip.numyr,
-			numacc:  numaccounts,
 			logfile: os.Stdout,
 			errfile: os.Stderr,
 		}
@@ -1647,8 +1645,6 @@ func TestPrintConstraint(t *testing.T) {
 			ip:      ip,
 			vindx:   vindx,
 			ti:      ti,
-			numyr:   ip.numyr,
-			numacc:  numaccounts,
 			logfile: os.Stdout,
 			errfile: os.Stderr,
 		}
@@ -1806,8 +1802,6 @@ func TestPrintModelRow(t *testing.T) {
 			ip:      ip,
 			vindx:   vindx,
 			ti:      ti,
-			numyr:   ip.numyr,
-			numacc:  numaccounts,
 			logfile: os.Stdout,
 			errfile: os.Stderr,
 		}

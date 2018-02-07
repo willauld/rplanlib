@@ -6,38 +6,28 @@ import (
 	"strings"
 )
 
-type appOutput struct {
+// AppOutput holds the info needed for writing output tables and csv
+type AppOutput struct {
 	csvFile   *os.File
 	tableFile *os.File
 }
 
-func (ao *appOutput) NewAppOutput(cvsfile, tablefile string) error {
-	var err error
-	ao.csvFile = nil
-	ao.tableFile = os.Stdout
-	if cvsfile != "" {
-		ao.csvFile, err = os.Create(cvsfile)
-		if err != nil {
-			return err
-		}
+// NewAppOutput creats an initialized AppOutput object
+func NewAppOutput(csvfile, tablefile *os.File) AppOutput {
+	ao := AppOutput{
+		csvFile:   nil,
+		tableFile: os.Stdout,
 	}
-	if tablefile != "" {
-		ao.tableFile, err = os.Create(tablefile)
-		if err != nil {
-			return err
-		}
+	if csvfile != nil {
+		ao.csvFile = csvfile
 	}
-	return nil
+	if tablefile != nil {
+		ao.tableFile = tablefile
+	}
+	return ao
 }
 
-// How to auto close a file on exit in go?
-/*
-   def __del__(self):
-       if self.csv_file is not None and not self.csv_file.closed:
-           self.csv_file.close()
-*/
-
-func (ao appOutput) output(str string) { // TODO move to a better place
+func (ao AppOutput) output(str string) { // TODO move to a better place
 	//
 	// output writes the information after doing two separate
 	// transformations. One for standard out and the other for

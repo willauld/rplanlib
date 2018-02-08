@@ -633,22 +633,43 @@ func (ms ModelSpecs) printBaseConfig(xp *[]float64) { // input is res.x
 	totwithd, tincome, tTaxable, tincometax, tcgtax, tearlytax, tspendable, tbeginbal, tendbal := ms.getResultTotals(xp)
 	ms.ao.output("\n")
 	ms.ao.output("======\n")
-	str := fmt.Sprintf("Optimized for %s with %s status\n\tstarting at age %d with an estate of $%6.0f liquid and $%6.0f illiquid\n", ms.ip.maximize, ms.ip.filingStatus /*retirement_type?*/, ms.ip.startPlan, tbeginbal, ms.illiquidAssetPlanStart)
+	str := fmt.Sprintf("Optimized for %s with %s status\n\tstarting at age %d with an estate of $%s liquid and $%s illiquid\n", ms.ip.maximize, ms.ip.filingStatus /*retirement_type?*/, ms.ip.startPlan, RenderFloat("#_###.", tbeginbal), RenderFloat("#_###.", ms.illiquidAssetPlanStart))
 	ms.ao.output(str)
 	ms.ao.output("\n")
-	ms.ao.output(fmt.Sprintf("Minium desired: $%6.0f\n", ms.ip.min))
-	ms.ao.output(fmt.Sprintf("Maximum desired: $%6.0f\n", ms.ip.max))
+	if ms.ip.min == 0 && ms.ip.max == 0 {
+		ms.ao.output("No desired minium or maximum amount specified\n")
+	} else if ms.ip.min == 0 {
+		// max specified
+		ms.ao.output(fmt.Sprintf("Maximum desired: $%s\n", RenderFloat("#_###.", float64(ms.ip.max))))
+
+	} else {
+		// min specified
+		ms.ao.output(fmt.Sprintf("Minium desired: $%s\n", RenderFloat("#_###.", float64(ms.ip.min))))
+	}
 	ms.ao.output("\n")
-	str = fmt.Sprintf("After tax yearly income: $%6.0f adjusting for inflation\n\tand final estate at age %d with $%6.0f liquid and $%6.0f illiquid\n", (*xp)[ms.vindx.S(0)], ms.ip.retireAge1+ms.ip.numyr, tendbal, ms.illiquidAssetPlanEnd)
+	str = fmt.Sprintf("After tax yearly income: $%s adjusting for inflation\n\tand final estate at age %d with $%s liquid and $%s illiquid\n", RenderFloat("#_###.", (*xp)[ms.vindx.S(0)]), ms.ip.retireAge1+ms.ip.numyr, RenderFloat("#_###.", tendbal), RenderFloat("#_###.", ms.illiquidAssetPlanEnd))
 	ms.ao.output(str)
 	ms.ao.output("\n")
-	ms.ao.output(fmt.Sprintf("total withdrawals: $%6.0f\n", totwithd))
-	ms.ao.output(fmt.Sprintf("total ordinary taxable income $%6.0f\n", tTaxable))
-	ms.ao.output(fmt.Sprintf("total ordinary tax on all taxable income: $%6.0f (%3.1f%%) of taxable income\n", tincometax+tearlytax, 100*(tincometax+tearlytax)/tTaxable))
-	ms.ao.output(fmt.Sprintf("total income (withdrawals + other) $%6.0f\n", tincome))
-	ms.ao.output(fmt.Sprintf("total cap gains tax: $%6.0f\n", tcgtax))
-	ms.ao.output(fmt.Sprintf("total all tax on all income: $%6.0f (%3.1f%%)\n", tincometax+tcgtax+tearlytax, 100*(tincometax+tcgtax+tearlytax)/tincome))
-	ms.ao.output(fmt.Sprintf("Total spendable (after tax money): $%6.0f\n", tspendable))
+	ms.ao.output(fmt.Sprintf("total withdrawals: $%s\n", RenderFloat("#_###.", totwithd)))
+	ms.ao.output(fmt.Sprintf("total ordinary taxable income $%s\n", RenderFloat("#_###.", tTaxable)))
+	if tTaxable > 0.0 {
+		s1 := RenderFloat("#_###.", tincometax+tearlytax)
+		s2 := RenderFloat("##.#", 100*(tincometax+tearlytax)/tTaxable)
+		ms.ao.output(fmt.Sprintf("total ordinary tax on all taxable income: $%s (%s%s) of taxable income\n", s1, s2, "%%"))
+	} else {
+		s1 := RenderFloat("#_###.", tincometax+tearlytax)
+		ms.ao.output(fmt.Sprintf("total ordinary tax on all taxable income: $%s\n", s1))
+	}
+	ms.ao.output(fmt.Sprintf("total income (withdrawals + other) $%s\n", RenderFloat("#_###.", tincome)))
+	ms.ao.output(fmt.Sprintf("total cap gains tax: $%s\n", RenderFloat("#_###.", tcgtax)))
+	if tincome > 0.0 {
+		s1 := RenderFloat("#_###.", tincometax+tcgtax+tearlytax)
+		s2 := RenderFloat("##.#", 100*(tincometax+tcgtax+tearlytax)/tincome)
+		ms.ao.output(fmt.Sprintf("total all tax on all income: $%s (%s%s)\n", s1, s2, "%%"))
+	} else {
+		ms.ao.output(fmt.Sprintf("total all tax on all income: $%s == ERROR\n", RenderFloat("#_###.", tincometax+tcgtax+tearlytax)))
+	}
+	ms.ao.output(fmt.Sprintf("Total spendable (after tax money): $%s\n", RenderFloat("#_###.", tspendable)))
 	ms.ao.output("\n")
 }
 

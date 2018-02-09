@@ -104,72 +104,76 @@ func NewInputParams(ip map[string]string) InputParams {
 
 	rip.accmap = map[string]int{"IRA": 0, "roth": 0, "aftertax": 0}
 	rip.filingStatus = ip["filingStatus"]
-	rip.myKey1 = "retiree1" // TODO: these two should come from ip FIXME
-	rip.myKey2 = "retiree2"
+	rip.myKey1 = ip["retiree1"] // TODO: these two should come from ip FIXME
 	rip.age1 = getIPIntValue(ip["eT_Age1"])
-	rip.age2 = getIPIntValue(ip["eT_Age2"])
 	rip.retireAge1 = getIPIntValue(ip["eT_RetireAge1"])
 	if rip.retireAge1 < rip.age1 {
 		rip.retireAge1 = rip.age1
 	}
-	rip.retireAge2 = getIPIntValue(ip["eT_RetireAge2"])
-	if rip.retireAge2 < rip.age2 {
-		rip.retireAge2 = rip.age2
-	}
 	rip.planThroughAge1 = getIPIntValue(ip["eT_PlanThroughAge1"])
-	rip.planThroughAge2 = getIPIntValue(ip["eT_PlanThroughAge2"])
 	yearsToRetire1 := rip.retireAge1 - rip.age1
-	yearsToRetire2 := rip.retireAge2 - rip.age2
-	rip.prePlanYears = intMin(yearsToRetire1, yearsToRetire2)
-	rip.startPlan = rip.prePlanYears + rip.age1
+	rip.prePlanYears = yearsToRetire1
 	through1 := rip.planThroughAge1 - rip.age1
-	through2 := rip.planThroughAge2 - rip.age2
-	rip.endPlan = intMax(through1, through2) + 1 + rip.age1
-	//delta := age1 - age2
-
-	rip.numyr = rip.endPlan - rip.startPlan
-
-	//accounttable: []map[string]string
-	//accmap: map[string]int
 
 	rip.PIA1 = kgetIPIntValue(ip["eT_PIA1"])
-	rip.PIA2 = kgetIPIntValue(ip["eT_PIA2"])
 	rip.SSStart1 = getIPIntValue(ip["eT_SS_Start1"])
-	rip.SSStart2 = getIPIntValue(ip["eT_SS_Start2"])
 
 	rip.TDRA1 = kgetIPIntValue(ip["eT_TDRA1"])
-	rip.TDRA2 = kgetIPIntValue(ip["eT_TDRA2"])
 	rip.TDRARate1 = getIPFloatValue(ip["eT_TDRA_Rate1"])
-	rip.TDRARate2 = getIPFloatValue(ip["eT_TDRA_Rate2"])
 	rip.TDRAContrib1 = kgetIPIntValue(ip["eT_TDRA_Contrib1"])
-	rip.TDRAContrib2 = kgetIPIntValue(ip["eT_TDRA_Contrib2"])
 	rip.TDRAContribStart1 = getIPIntValue(ip["eT_TDRA_ContribStartAge1"])
-	rip.TDRAContribStart2 = getIPIntValue(ip["eT_TDRA_ContribStartAge2"])
 	rip.TDRAContribEnd1 = getIPIntValue(ip["eT_TDRA_ContribEndAge1"])
-	rip.TDRAContribEnd2 = getIPIntValue(ip["eT_TDRA_ContribEndAge2"])
 	if rip.TDRA1 > 0 {
-		rip.accmap["IRA"]++
-	}
-	if rip.TDRA2 > 0 {
 		rip.accmap["IRA"]++
 	}
 
 	rip.Roth1 = kgetIPIntValue(ip["eT_Roth1"])
-	rip.Roth2 = kgetIPIntValue(ip["eT_Roth2"])
 	rip.RothRate1 = getIPFloatValue(ip["eT_Roth_Rate1"])
-	rip.RothRate2 = getIPFloatValue(ip["eT_Roth_Rate2"])
 	rip.RothContrib1 = kgetIPIntValue(ip["eT_Roth_Contrib1"])
-	rip.RothContrib2 = kgetIPIntValue(ip["eT_Roth_Contrib2"])
 	rip.RothContribStart1 = getIPIntValue(ip["eT_Roth_ContribStartAge1"])
-	rip.RothContribStart2 = getIPIntValue(ip["eT_Roth_ContribStartAge2"])
 	rip.RothContribEnd1 = getIPIntValue(ip["eT_Roth_ContribEndAge1"])
-	rip.RothContribEnd2 = getIPIntValue(ip["eT_Roth_ContribEndAge2"])
 	if rip.Roth1 > 0 {
 		rip.accmap["roth"]++
 	}
-	if rip.Roth2 > 0 {
-		rip.accmap["roth"]++
+
+	var through2 int
+	if rip.filingStatus == "joint" {
+		rip.myKey2 = ip["retiree2"]
+		rip.age2 = getIPIntValue(ip["eT_Age2"])
+		rip.retireAge2 = getIPIntValue(ip["eT_RetireAge2"])
+		if rip.retireAge2 < rip.age2 {
+			rip.retireAge2 = rip.age2
+		}
+		rip.planThroughAge2 = getIPIntValue(ip["eT_PlanThroughAge2"])
+		yearsToRetire2 := rip.retireAge2 - rip.age2
+		rip.prePlanYears = intMin(yearsToRetire1, yearsToRetire2)
+		through2 = rip.planThroughAge2 - rip.age2
+
+		rip.PIA2 = kgetIPIntValue(ip["eT_PIA2"])
+		rip.SSStart2 = getIPIntValue(ip["eT_SS_Start2"])
+
+		rip.TDRA2 = kgetIPIntValue(ip["eT_TDRA2"])
+		rip.TDRARate2 = getIPFloatValue(ip["eT_TDRA_Rate2"])
+		rip.TDRAContrib2 = kgetIPIntValue(ip["eT_TDRA_Contrib2"])
+		rip.TDRAContribStart2 = getIPIntValue(ip["eT_TDRA_ContribStartAge2"])
+		rip.TDRAContribEnd2 = getIPIntValue(ip["eT_TDRA_ContribEndAge2"])
+		if rip.TDRA2 > 0 {
+			rip.accmap["IRA"]++
+		}
+
+		rip.Roth2 = kgetIPIntValue(ip["eT_Roth2"])
+		rip.RothRate2 = getIPFloatValue(ip["eT_Roth_Rate2"])
+		rip.RothContrib2 = kgetIPIntValue(ip["eT_Roth_Contrib2"])
+		rip.RothContribStart2 = getIPIntValue(ip["eT_Roth_ContribStartAge2"])
+		rip.RothContribEnd2 = getIPIntValue(ip["eT_Roth_ContribEndAge2"])
+		if rip.Roth2 > 0 {
+			rip.accmap["roth"]++
+		}
 	}
+	// the following must be after "joint" section
+	rip.startPlan = rip.prePlanYears + rip.age1
+	rip.endPlan = intMax(through1, through2) + 1 + rip.age1
+	rip.numyr = rip.endPlan - rip.startPlan
 
 	rip.Aftatax = kgetIPIntValue(ip["eT_Aftatax"])
 	rip.AftataxRate = getIPFloatValue(ip["eT_Aftatax_Rate"])
@@ -179,6 +183,7 @@ func NewInputParams(ip map[string]string) InputParams {
 	if rip.Aftatax > 0 {
 		rip.accmap["aftertax"]++
 	}
+
 	rip.numacc = 0
 	for _, v := range rip.accmap {
 		rip.numacc += v

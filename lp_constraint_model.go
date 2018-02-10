@@ -74,6 +74,13 @@ func checkStrconvError(e error) { // TODO: should I remove this?
 	}
 }
 
+func accessVector(v []float64, index int) float64 {
+	if v != nil {
+		return v[index]
+	}
+	return 0.0
+}
+
 // mergeVectors sums two vectors of equal length returning a third vector
 func mergeVectors(v1, v2 []float64) ([]float64, error) {
 	if len(v1) != len(v2) {
@@ -287,10 +294,7 @@ func NewModelSpecs(vindx VectorVarIndex,
 			fmt.Fprintf(errfile, "mergeVector Failed: %s\n", err)
 		}
 	*/
-	ms.SS, ms.SS1, ms.SS2, err = processSS(ip, retirees, ms.ip.iRate)
-	if err != nil {
-		panic(err)
-	}
+	ms.SS, ms.SS1, ms.SS2 = processSS(ip, retirees, ms.ip.iRate)
 	//fmt.Printf("SS1: %v\n", ms.SS1)
 	//fmt.Printf("SS2: %v\n", ms.SS2)
 	//fmt.Printf("SS: %v\n", ms.SS)
@@ -428,7 +432,7 @@ func (ms ModelSpecs) BuildModel() ([]float64, [][]float64, []float64, []modelNot
 		}
 		row[ms.vindx.S(year)] = 1
 		A = append(A, row)
-		b = append(b, ms.income[year]+ms.SS[year]-ms.expenses[year])
+		b = append(b, accessVector(ms.income, year)+accessVector(ms.SS, year)-accessVector(ms.expenses, year))
 	}
 	//
 	// Add constraint (3a')
@@ -615,7 +619,7 @@ func (ms ModelSpecs) BuildModel() ([]float64, [][]float64, []float64, []modelNot
 			row[ms.vindx.X(year, k)] = -1
 		}
 		A = append(A, row)
-		b = append(b, ms.ti.Stded*adjInf-ms.taxed[year]-ms.ti.SStaxable*ms.SS[year])
+		b = append(b, ms.ti.Stded*adjInf-accessVector(ms.taxed, year)-ms.ti.SStaxable*accessVector(ms.SS, year))
 	}
 	//
 	// Add constraints for (12')

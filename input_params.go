@@ -104,7 +104,7 @@ func NewInputParams(ip map[string]string) InputParams {
 
 	rip.accmap = map[string]int{"IRA": 0, "roth": 0, "aftertax": 0}
 	rip.filingStatus = ip["filingStatus"]
-	rip.myKey1 = ip["retiree1"] // TODO: these two should come from ip FIXME
+	rip.myKey1 = ip["key1"] // TODO: these two should come from ip FIXME
 	rip.age1 = getIPIntValue(ip["eT_Age1"])
 	rip.retireAge1 = getIPIntValue(ip["eT_RetireAge1"])
 	if rip.retireAge1 < rip.age1 {
@@ -138,7 +138,7 @@ func NewInputParams(ip map[string]string) InputParams {
 
 	var through2 int
 	if rip.filingStatus == "joint" {
-		rip.myKey2 = ip["retiree2"]
+		rip.myKey2 = ip["key2"]
 		rip.age2 = getIPIntValue(ip["eT_Age2"])
 		rip.retireAge2 = getIPIntValue(ip["eT_RetireAge2"])
 		if rip.retireAge2 < rip.age2 {

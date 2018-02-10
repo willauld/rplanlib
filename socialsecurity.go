@@ -60,12 +60,13 @@ type SSInput struct {
 	bucket     []float64
 }
 
-func processSS(ip InputParams, r []retiree, iRate float64) (SS, SS1, SS2 []float64, e error) {
+func processSS(ip InputParams, r []retiree, iRate float64) (SS, SS1, SS2 []float64) {
 
+	//fmt.Printf("PIA1: %d, PIA2: %d\n", ip.PIA1, ip.PIA2)
 	SSinput := make([]SSInput, 2)
-	if ip.PIA1 < 0 && ip.PIA2 < 0 {
-		e := fmt.Errorf("processSS: both PIA1: %d and PIA2: %d are negitive", ip.PIA1, ip.PIA2)
-		return nil, nil, nil, e
+	if ip.PIA1 <= 0 && ip.PIA2 <= 0 {
+		//e := fmt.Errorf("processSS: both PIA1: %d and PIA2: %d non-positive", ip.PIA1, ip.PIA2)
+		return nil, nil, nil
 	}
 	SS = make([]float64, ip.numyr) // = [0] * self.numyr
 
@@ -147,6 +148,7 @@ func processSS(ip InputParams, r []retiree, iRate float64) (SS, SS1, SS2 []float
 			if year < 0 {
 				// ERROR if ever happens
 				fmt.Printf("ERROR - this should never happen. local code 11111\n")
+				fmt.Printf("age: %d, year: %d, endage: %d, ageAtStart: %d\n", age, year, endage, SSinput[i].ageAtStart)
 				continue
 			} else if year >= ip.numyr {
 				// ERROR if ever happens
@@ -181,13 +183,13 @@ func processSS(ip InputParams, r []retiree, iRate float64) (SS, SS1, SS2 []float
 			SS[year] = greater
 		}
 	}
-	//fmt.Printf("SSinput[0]: %v\n", SSinput[0])
-	//fmt.Printf("SSinput[1]: %v\n", SSinput[1])
+	//fmt.Printf("SSinput[0]: %#v\n", SSinput[0])
+	//fmt.Printf("SSinput[1]: %#v\n", SSinput[1])
 	SS1 = SSinput[0].bucket
 	SS2 = SSinput[1].bucket
 	if SSinput[0].key != ip.myKey1 {
 		SS1 = SSinput[1].bucket
 		SS2 = SSinput[0].bucket
 	}
-	return SS, SS1, SS2, nil
+	return SS, SS1, SS2
 }

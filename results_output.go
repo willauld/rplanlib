@@ -539,7 +539,7 @@ func (ms ModelSpecs) OrdinaryTaxable(year int, xp *[]float64) float64 {
 			deposits += ms.deposit_amount(xp, year, j)
 		}
 	}
-	T := withdrawals - deposits + ms.taxed[year] + ms.ti.SStaxable*ms.SS[year] - (ms.ti.Stded * math.Pow(ms.ip.iRate, float64(ms.ip.prePlanYears+year)))
+	T := withdrawals - deposits + accessVector(ms.taxed, year) + ms.ti.SStaxable*accessVector(ms.SS, year) - (ms.ti.Stded * math.Pow(ms.ip.iRate, float64(ms.ip.prePlanYears+year)))
 	if T < 0 {
 		T = 0
 	}
@@ -590,7 +590,7 @@ func (ms ModelSpecs) IncomeSummary(year int, xp *[]float64) (T, spendable, tax, 
 	for j := 0; j < len(ms.accounttable); j++ {
 		totWithdrawals += (*xp)[ms.vindx.W(year, j)]
 	}
-	spendable = totWithdrawals - D + ms.income[year] + ms.SS[year] - ms.expenses[year] - tax - ncgtax - earlytax + ms.assetSale[year]
+	spendable = totWithdrawals - D + accessVector(ms.income, year) + accessVector(ms.SS, year) - accessVector(ms.expenses, year) - tax - ncgtax - earlytax + accessVector(ms.assetSale, year)
 	return T, spendable, tax, rate, ncgtax, earlytax, rothearly
 }
 
@@ -610,7 +610,7 @@ func (ms ModelSpecs) getResultTotals(xp *[]float64) (twithd, tcombined, tT, ttax
 			tot_withdrawals += (*xp)[ms.vindx.W(year, j)]
 		}
 		twithd += tot_withdrawals
-		tincome += ms.income[year] + ms.SS[year] // + withdrawals
+		tincome += accessVector(ms.income, year) + accessVector(ms.SS, year) // + withdrawals
 		ttax += tax
 		tcgtax += cg_tax
 		tearlytax += earlytax

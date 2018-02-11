@@ -6,7 +6,7 @@ import (
 	"os"
 )
 
-type retiree struct {
+type retiree struct { // TODO limit the fields here maxContribution is bigest (only) user
 	age                     int
 	ageAtStart              int
 	throughAge              int
@@ -15,8 +15,10 @@ type retiree struct {
 	dcpBuckets              []float64
 }
 type account struct {
-	bal   float64
-	basis float64
+	bal       float64
+	origbal   float64
+	basis     float64
+	origbasis float64
 	//estateTax     float64
 	contributions []float64
 	rRate         float64
@@ -92,6 +94,61 @@ func mergeVectors(v1, v2 []float64) ([]float64, error) {
 		v3[i] = v1[i] + v2[i]
 	}
 	return v3, nil
+}
+
+// genContrib
+// rate = 1.0 implies no inflation for contributions
+func genContrib(yearly int,
+	startAge int,
+	endAge int,
+	vecStartAge int,
+	vecEndAge int,
+	iRate float64,
+	rRate float64,
+	baseAge int) ([]float64, float64, float64, error) {
+
+	zeroVector := false
+	//verify that startAge and endAge are within vecStart and end
+	if vecStartAge > vecEndAge {
+		err := fmt.Errorf("vec start age (%d) is greater than vec end age (%d)", vecStartAge, vecEndAge)
+		return nil, 0.0, 0.0, err
+	}
+	if startAge > endAge {
+		err := fmt.Errorf("start age (%d) is greater than end age (%d)", startAge, endAge)
+		return nil, 0.0, 0.0, err
+	}
+	if startAge > vecEndAge {
+		zeroVector = true
+	}
+	if endAge < vecStartAge {
+		zeroVector = true
+	}
+	if endAge > vecEndAge && startAge < vecEndAge {
+		endAge = vecEndAge
+	}
+	precontribs := 0.0
+	precontribsPlusReturns := 0.0
+	for age := startAge; age < vecStartAge; age++ {
+		preyears := age - baseAge
+		// capture all contributions before start of retirement
+		b := float64(yearly) * math.Pow(iRate, float64(preyears))
+		precontribs += b
+		precontribsPlusReturns += b
+		precontribsPlusReturns *= rRate
+	}
+	var vec []float64
+	if !zeroVector {
+		vecSize := vecEndAge - vecStartAge
+		vec := make([]float64, vecSize)
+		for i := 0; i < vecSize; i++ {
+			if i >= startAge-vecStartAge && i <= endAge-vecStartAge {
+				to := float64(startAge - baseAge + i)
+				adj := math.Pow(iRate, to)
+				vec[i] = float64(yearly) * adj // or something like this FIXME TODO
+			}
+		}
+	}
+	return vec, precontribsPlusReturns, precontribs, nil
 }
 
 // buildVector creates a vector with a 'rate' adjusted 'yearly' amount in buckets between start and end age
@@ -178,84 +235,82 @@ func NewModelSpecs(vindx VectorVarIndex,
 		},
 	}
 	ms.retirees = retirees
-	ms.ip.numyr = ip.numyr
-	ms.ip.numacc = 0
-	for _, n := range ms.ip.accmap {
-		ms.ip.numacc += n
-	}
 	//fmt.Fprintf(ms.logfile, "NewModelSpec: numacc: %d, accmap: %v\n", ms.ip.numacc, ms.ip.accmap)
 
 	//build accounttable: []map[string]string
 	var err error
+	var dbal float64
 	const maxPossibleAccounts = 5
 	if ip.TDRA1 > 0 {
 		a := account{}
-		a.bal = float64(ip.TDRA1)
-		a.contributions, err = buildVector(ip.TDRAContrib1, ip.TDRAContribStart1, ip.TDRAContribEnd1, ip.startPlan, ip.endPlan, ms.ip.iRate, ip.age1)
-		if err != nil {
-			panic(err)
-		}
-		a.rRate = ms.ip.rRate
-		if ip.TDRARate1 != 0 {
+		a.rRate = ip.rRate
+		if ip.TDRARate1 != 0.0 {
 			a.rRate = ip.TDRARate1
 		}
 		a.acctype = "IRA"
 		a.mykey = "retiree1" // need to make this definable for pc versions
+		a.origbal = float64(ip.TDRA1)
+		a.contributions, dbal, _, err = genContrib(ip.TDRAContrib1, ip.TDRAContribStart1, ip.TDRAContribEnd1, ip.startPlan, ip.endPlan, ip.iRate, a.rRate, ip.age1)
+		if err != nil {
+			panic(err)
+		}
+		a.bal = a.origbal*math.Pow(a.rRate, float64(ip.prePlanYears)) + dbal
 		ms.accounttable = append(ms.accounttable, a)
 	}
 	if ip.TDRA2 > 0 {
 		a := account{}
-		a.bal = float64(ip.TDRA2)
-		a.contributions, err = buildVector(ip.TDRAContrib2, ip.TDRAContribStart2, ip.TDRAContribEnd2, ip.startPlan, ip.endPlan, ms.ip.iRate, ip.age1)
-		if err != nil {
-			panic(err)
-		}
 		a.rRate = ms.ip.rRate
 		if ip.TDRARate2 != 0 {
 			a.rRate = ip.TDRARate2
 		}
 		a.acctype = "IRA"
 		a.mykey = "retiree2" // need to make this definable for pc versions
+		a.origbal = float64(ip.TDRA2)
+		//a.contributions, err = buildVector(ip.TDRAContrib2, ip.TDRAContribStart2, ip.TDRAContribEnd2, ip.startPlan, ip.endPlan, ms.ip.iRate, ip.age1)
+		a.contributions, dbal, _, err = genContrib(ip.TDRAContrib2, ip.TDRAContribStart2, ip.TDRAContribEnd2, ip.startPlan, ip.endPlan, ip.iRate, a.rRate, ip.age1)
+		if err != nil {
+			panic(err)
+		}
+		a.bal = a.origbal*math.Pow(a.rRate, float64(ip.prePlanYears)) + dbal
 		ms.accounttable = append(ms.accounttable, a)
 	}
 	if ip.Roth1 > 0 {
 		a := account{}
-		a.bal = float64(ip.Roth1)
-		a.contributions, err = buildVector(ip.RothContrib1, ip.RothContribStart1, ip.RothContribEnd1, ip.startPlan, ip.endPlan, ms.ip.iRate, ip.age1)
-		if err != nil {
-			panic(err)
-		}
 		a.rRate = ms.ip.rRate
 		if ip.RothRate1 != 0 {
 			a.rRate = ip.RothRate1
 		}
 		a.acctype = "roth"
 		a.mykey = "retiree1" // need to make this definable for pc versions
+		a.origbal = float64(ip.Roth1)
+		//a.contributions, err = buildVector(ip.RothContrib1, ip.RothContribStart1, ip.RothContribEnd1, ip.startPlan, ip.endPlan, ms.ip.iRate, ip.age1)
+		a.contributions, dbal, _, err = genContrib(ip.RothContrib1, ip.RothContribStart1, ip.RothContribEnd1, ip.startPlan, ip.endPlan, ip.iRate, a.rRate, ip.age1)
+		if err != nil {
+			panic(err)
+		}
+		a.bal = a.origbal*math.Pow(a.rRate, float64(ip.prePlanYears)) + dbal
 		ms.accounttable = append(ms.accounttable, a)
 	}
 	if ip.Roth2 > 0 {
 		a := account{}
-		a.bal = float64(ip.Roth2)
-		a.contributions, err = buildVector(ip.RothContrib2, ip.RothContribStart2, ip.RothContribEnd2, ip.startPlan, ip.endPlan, ms.ip.iRate, ip.age1)
-		if err != nil {
-			panic(err)
-		}
 		a.rRate = ms.ip.rRate
 		if ip.RothRate2 != 0 {
 			a.rRate = ip.RothRate2
 		}
 		a.acctype = "roth"
 		a.mykey = "retiree2" // need to make this definable for pc versions
-		ms.accounttable = append(ms.accounttable, a)
-	}
-	if ip.Aftatax > 0 {
-		a := account{}
-		a.bal = float64(ip.Aftatax)
-		a.basis = float64(ip.AftataxBasis)
-		a.contributions, err = buildVector(ip.AftataxContrib, ip.AftataxContribStart, ip.AftataxContribEnd, ip.startPlan, ip.endPlan, ms.ip.iRate, ip.age1)
+		a.origbal = float64(ip.Roth2)
+		//a.contributions, err = buildVector(ip.RothContrib2, ip.RothContribStart2, ip.RothContribEnd2, ip.startPlan, ip.endPlan, ms.ip.iRate, ip.age1)
+		a.contributions, dbal, _, err = genContrib(ip.RothContrib1, ip.RothContribStart2, ip.RothContribEnd2, ip.startPlan, ip.endPlan, ip.iRate, a.rRate, ip.age1)
 		if err != nil {
 			panic(err)
 		}
+		a.bal = a.origbal*math.Pow(a.rRate, float64(ip.prePlanYears)) + dbal
+		ms.accounttable = append(ms.accounttable, a)
+	}
+	if ip.Aftatax > 0 {
+		var dbasis float64
+		a := account{}
 		a.rRate = ms.ip.rRate
 		if ip.AftataxRate != 0 {
 			a.rRate = ip.AftataxRate
@@ -263,6 +318,15 @@ func NewModelSpecs(vindx VectorVarIndex,
 		a.rRate = ip.AftataxRate
 		a.acctype = "aftertax"
 		a.mykey = "" // need to make this definable for pc versions
+		a.origbal = float64(ip.Aftatax)
+		a.origbasis = float64(ip.AftataxBasis)
+		//a.contributions, err = buildVector(ip.AftataxContrib, ip.AftataxContribStart, ip.AftataxContribEnd, ip.startPlan, ip.endPlan, ms.ip.iRate, ip.age1)
+		a.contributions, dbal, dbasis, err = genContrib(ip.AftataxContrib, ip.AftataxContribStart, ip.AftataxContribEnd, ip.startPlan, ip.endPlan, ip.iRate, a.rRate, ip.age1)
+		if err != nil {
+			panic(err)
+		}
+		a.bal = a.origbal*math.Pow(a.rRate, float64(ip.prePlanYears)) + dbal
+		a.basis = a.origbasis + dbasis
 		ms.accounttable = append(ms.accounttable, a)
 	}
 	if len(ms.accounttable) != ms.ip.numacc {

@@ -311,12 +311,63 @@ func TestProcessSS(t *testing.T) {
 			warningmes: "",
 			expectnil:  false,
 		},
+		{ // Case 5 // joint with independent ss incomes
+			ip: map[string]string{
+				"setName":                    "activeParams",
+				"filingStatus":               "joint",
+				"key1":                       "retiree1",
+				"key2":                       "retiree2",
+				"eT_Age1":                    "54",
+				"eT_Age2":                    "57",
+				"eT_RetireAge1":              "65",
+				"eT_RetireAge2":              "66",
+				"eT_PlanThroughAge1":         "75",
+				"eT_PlanThroughAge2":         "80",
+				"eT_PIA1":                    "20", //20k
+				"eT_PIA2":                    "30",
+				"eT_SS_Start1":               "67",
+				"eT_SS_Start2":               "70",
+				"eT_TDRA1":                   "200", // 200k
+				"eT_TDRA2":                   "",
+				"eT_TDRA_Rate1":              "",
+				"eT_TDRA_Rate2":              "",
+				"eT_TDRA_Contrib1":           "",
+				"eT_TDRA_Contrib2":           "",
+				"eT_TDRA_ContribStartAge1":   "",
+				"eT_TDRA_ContribStartAge2":   "",
+				"eT_TDRA_ContribEndAge1":     "",
+				"eT_TDRA_ContribEndAge2":     "",
+				"eT_Roth1":                   "",
+				"eT_Roth2":                   "",
+				"eT_Roth_Rate1":              "",
+				"eT_Roth_Rate2":              "",
+				"eT_Roth_Contrib1":           "",
+				"eT_Roth_Contrib2":           "",
+				"eT_Roth_ContribStartAge1":   "",
+				"eT_Roth_ContribStartAge2":   "",
+				"eT_Roth_ContribEndAge1":     "",
+				"eT_Roth_ContribEndAge2":     "",
+				"eT_Aftatax":                 "",
+				"eT_Aftatax_Rate":            "",
+				"eT_Aftatax_Contrib":         "",
+				"eT_Aftatax_ContribStartAge": "",
+				"eT_Aftatax_ContribEndAge":   "",
+
+				"eT_iRate":    "2.5",
+				"eT_rRate":    "6",
+				"eT_maximize": "Spending", // or "PlusEstate"
+			},
+			warningmes: "",
+			expectnil:  false,
+		},
 	}
 	for i, elem := range tests {
-		//if i != 4 {
-		//	continue
-		//}
-		//fmt.Printf("\nCase %d::\n", i)
+		/*
+			if i != 5 {
+				continue
+			}
+			fmt.Printf("\nCase %d::\n", i)
+		*/
 		ip := NewInputParams(elem.ip)
 
 		doNothing := false // Turn on/off Stdio redirection
@@ -341,9 +392,11 @@ func TestProcessSS(t *testing.T) {
 			}
 			continue
 		}
-		//fmt.Printf("ss: %#v\n", ss)
-		//fmt.Printf("ss1: %#v\n", ss1)
-		//fmt.Printf("ss2: %#v\n", ss2)
+		/*
+			fmt.Printf("ss: %#v\n", ss)
+			fmt.Printf("ss1: %#v\n", ss1)
+			fmt.Printf("ss2: %#v\n", ss2)
+		*/
 		if len(ss) != len(ss1) {
 			t.Errorf("TestProcessSS case %d: Social Security vectors are not the same lengths as required\n", i)
 		}

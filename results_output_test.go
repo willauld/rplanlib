@@ -24,6 +24,8 @@ func TestResultsOutput(t *testing.T) {
 			ip: map[string]string{
 				"setName":                    "activeParams",
 				"filingStatus":               "joint",
+				"key1":                       "retiree1",
+				"key2":                       "retiree2",
 				"eT_Age1":                    "54",
 				"eT_Age2":                    "54",
 				"eT_RetireAge1":              "65",

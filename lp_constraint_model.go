@@ -294,7 +294,7 @@ func NewModelSpecs(vindx VectorVarIndex,
 			fmt.Fprintf(errfile, "mergeVector Failed: %s\n", err)
 		}
 	*/
-	ms.SS, ms.SS1, ms.SS2 = processSS(ip, retirees, ms.ip.iRate)
+	ms.SS, ms.SS1, ms.SS2 = processSS(&ip)
 	//fmt.Printf("SS1: %v\n", ms.SS1)
 	//fmt.Printf("SS2: %v\n", ms.SS2)
 	//fmt.Printf("SS: %v\n", ms.SS)

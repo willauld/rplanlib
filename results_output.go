@@ -15,8 +15,8 @@ import vector_var_index as vvar
 import app_output as app_out
 import lp_constraint_model as lp
 import modelio
-*/
 const __version__ = "0.3-rc2"
+*/
 
 /*
 def precheck_consistancy():
@@ -662,12 +662,10 @@ func (ms ModelSpecs) printBaseConfig(xp *[]float64) { // input is res.x
 	}
 	ms.ao.output(fmt.Sprintf("total income (withdrawals + other) $%s\n", RenderFloat("#_###.", tincome)))
 	ms.ao.output(fmt.Sprintf("total cap gains tax: $%s\n", RenderFloat("#_###.", tcgtax)))
-	if tincome > 0.0 {
+	if int(tincome) > 0 {
 		s1 := RenderFloat("#_###.", tincometax+tcgtax+tearlytax)
 		s2 := RenderFloat("##.#", 100*(tincometax+tcgtax+tearlytax)/tincome)
 		ms.ao.output(fmt.Sprintf("total all tax on all income: $%s (%s%s)\n", s1, s2, "%%"))
-	} else {
-		ms.ao.output(fmt.Sprintf("total all tax on all income: $%s == ERROR\n", RenderFloat("#_###.", tincometax+tcgtax+tearlytax)))
 	}
 	ms.ao.output(fmt.Sprintf("Total spendable (after tax money): $%s\n", RenderFloat("#_###.", tspendable)))
 	ms.ao.output("\n")

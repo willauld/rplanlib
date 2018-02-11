@@ -90,7 +90,7 @@ def consistancy_check(res, years, taxbins, cgbins, accounts, accmap, vindx):
                 (year + S.startage, TaxableOrdinary,s))
 
         for j in range(len(S.accounttable)):
-            a = res.x[vindx.b(year+1,j)] - (res.x[vindx.b(year,j)] - res.x[vindx.w(year,j)] + deposit_amount(S, res, year, j))*S.accounttable[j]['rate']
+            a = res.x[vindx.b(year+1,j)] - (res.x[vindx.b(year,j)] - res.x[vindx.w(year,j)] + depositAmount(S, res, year, j))*S.accounttable[j]['rate']
             if a > 1:
                 v = S.accounttable[j]
                 print("account[%d], type %s, index %d, mykey %s" % (j, v['acctype'], v['index'], v['mykey']))
@@ -102,7 +102,7 @@ def consistancy_check(res, years, taxbins, cgbins, accounts, accmap, vindx):
             print("Calc Spendable %6.2f should equal s(year:%d) %6.2f"% (spendable, year, res.x[vindx.s(year)]))
             for j in range(len(S.accounttable)):
                 print("+w[%d,%d]: %6.0f" % (year, j, res.x[vindx.w(year,j)]))
-                print("-D[%d,%d]: %6.0f" % (year, j, deposit_amount(S, res, year, j)))
+                print("-D[%d,%d]: %6.0f" % (year, j, depositAmount(S, res, year, j)))
             print("+o[%d]: %6.0f +SS[%d]: %6.0f -tax: %6.0f -cg_tax: %6.0f" % (year, S.income[year] ,year, S.SS[year] , tax ,cg_tax))
 
         bt = 0
@@ -159,7 +159,7 @@ func print_model_results(res) {
         deposit = {'IRA': 0, 'roth': 0, 'aftertax': 0}
         for j in range(len(S.accounttable)) {
             withdrawal[S.accounttable[j]['acctype']] += res.x[vindx.w(year,j)]
-            deposit[S.accounttable[j]['acctype']] += deposit_amount(S, res, year, j)
+            deposit[S.accounttable[j]['acctype']] += depositAmount(S, res, year, j)
         }
 
         if S.secondary != "" {
@@ -232,7 +232,7 @@ def print_income_expense_details():
     print_income_header(headerlist, map, income_cat, fieldwidth)
 */
 
-func (ms ModelSpecs) deposit_amount(xp *[]float64, year int, index int) float64 {
+func (ms ModelSpecs) depositAmount(xp *[]float64, year int, index int) float64 {
 	amount := (*xp)[ms.vindx.D(year, index)]
 	if ms.accounttable[index].acctype == "aftertax" {
 		amount += ms.assetSale[year]
@@ -302,26 +302,26 @@ def print_account_trans(res):
             ao.output(" %3d:" % (year+S.startage))
         if S.accmap['IRA'] >1:
             ao.output(("&@%7.0f" * 8) % (
-              res.x[vindx.b(year,0)]/OneK, res.x[vindx.w(year,0)]/OneK, deposit_amount(S, res, year, 0)/OneK, rmdref[0]/OneK, # IRA1
-              res.x[vindx.b(year,1)]/OneK, res.x[vindx.w(year,1)]/OneK, deposit_amount(S, res, year, 1)/OneK, rmdref[1]/OneK)) # IRA2
+              res.x[vindx.b(year,0)]/OneK, res.x[vindx.w(year,0)]/OneK, depositAmount(S, res, year, 0)/OneK, rmdref[0]/OneK, # IRA1
+              res.x[vindx.b(year,1)]/OneK, res.x[vindx.w(year,1)]/OneK, depositAmount(S, res, year, 1)/OneK, rmdref[1]/OneK)) # IRA2
         elif S.accmap['IRA'] == 1:
             ao.output(("&@%7.0f" * 4) % (
-              res.x[vindx.b(year,0)]/OneK, res.x[vindx.w(year,0)]/OneK, deposit_amount(S, res, year, 0)/OneK, rmdref[0]/OneK)) # IRA1
+              res.x[vindx.b(year,0)]/OneK, res.x[vindx.w(year,0)]/OneK, depositAmount(S, res, year, 0)/OneK, rmdref[0]/OneK)) # IRA1
         index = S.accmap['IRA']
         if S.accmap['roth'] >1:
             ao.output(("&@%7.0f" * 6) % (
-              res.x[vindx.b(year,index)]/OneK, res.x[vindx.w(year,index)]/OneK, deposit_amount(S, res, year, index)/OneK, # roth1
-              res.x[vindx.b(year,index+1)]/OneK, res.x[vindx.w(year,index+1)]/OneK, deposit_amount(S, res, year, index+1)/OneK)) # roth2
+              res.x[vindx.b(year,index)]/OneK, res.x[vindx.w(year,index)]/OneK, depositAmount(S, res, year, index)/OneK, # roth1
+              res.x[vindx.b(year,index+1)]/OneK, res.x[vindx.w(year,index+1)]/OneK, depositAmount(S, res, year, index+1)/OneK)) # roth2
         elif S.accmap['roth'] == 1:
             ao.output(("&@%7.0f" * 3) % (
-              res.x[vindx.b(year,index)]/OneK, res.x[vindx.w(year,index)]/OneK, deposit_amount(S, res, year, index)/OneK)) # roth1
+              res.x[vindx.b(year,index)]/OneK, res.x[vindx.w(year,index)]/OneK, depositAmount(S, res, year, index)/OneK)) # roth1
         index = S.accmap['IRA'] + S.accmap['roth']
         #assert index == len(S.accounttable)-1
         if index == len(S.accounttable)-1:
             ao.output(("&@%7.0f" * 3) % (
                 res.x[vindx.b(year,index)]/OneK,
                 res.x[vindx.w(year,index)]/OneK,
-                deposit_amount(S, res, year, index)/OneK)) # aftertax account
+                depositAmount(S, res, year, index)/OneK)) # aftertax account
         ao.output("\n")
     ao.output("Plan End: -----------\n")
     #
@@ -373,7 +373,7 @@ def print_tax(res):
         deposit = {'IRA': 0, 'roth': 0, 'aftertax': 0}
         for j in range(len(S.accounttable)):
             withdrawal[S.accounttable[j]['acctype']] += res.x[vindx.w(year,j)]
-            deposit[S.accounttable[j]['acctype']] += deposit_amount(S, res, year,j)
+            deposit[S.accounttable[j]['acctype']] += depositAmount(S, res, year,j)
         if S.secondary != "":
             ao.output("%3d/%3d:" % (year+S.startage, year+S.startage-S.delta))
         else:
@@ -433,7 +433,7 @@ def print_tax_brackets(res):
         deposit = {'IRA': 0, 'roth': 0, 'aftertax': 0}
         for j in range(len(S.accounttable)):
             withdrawal[S.accounttable[j]['acctype']] += res.x[vindx.w(year,j)]
-            deposit[S.accounttable[j]['acctype']] += deposit_amount(S, res, year, j)
+            deposit[S.accounttable[j]['acctype']] += depositAmount(S, res, year, j)
         ao.output(("&@%7.0f" * 7 ) %
               (
               withdrawal['IRA']/OneK, deposit['IRA']/OneK, # IRA
@@ -484,7 +484,7 @@ def print_cap_gains_brackets(res):
             f = model.cg_taxable_fraction(year)
             j = len(S.accounttable)-1 # Aftertax / investment account always the last entry when present
             atw = res.x[vindx.w(year,j)]/OneK # Aftertax / investment account
-            atd = deposit_amount(S, res, year, j)/OneK # Aftertax / investment account
+            atd = depositAmount(S, res, year, j)/OneK # Aftertax / investment account
             #
             # OK, this next bit can be confusing. In the line above atd
             # includes both the D(i,j) and net amount from sell of assets
@@ -536,7 +536,7 @@ func (ms ModelSpecs) OrdinaryTaxable(year int, xp *[]float64) float64 {
 	for j := 0; j < intMin(2, len(ms.accounttable)); j++ {
 		if ms.accounttable[j].acctype == "IRA" {
 			withdrawals += (*xp)[ms.vindx.W(year, j)]
-			deposits += ms.deposit_amount(xp, year, j)
+			deposits += ms.depositAmount(xp, year, j)
 		}
 	}
 	T := withdrawals - deposits + accessVector(ms.taxed, year) + ms.ti.SStaxable*accessVector(ms.SS, year) - (ms.ti.Stded * math.Pow(ms.ip.iRate, float64(ms.ip.prePlanYears+year)))
@@ -579,7 +579,7 @@ func (ms ModelSpecs) IncomeSummary(year int, xp *[]float64) (T, spendable, tax, 
 	ncgtax = 0.0
 	//if S.accmap["aftertax"] > 0:
 	for j := 0; j < len(ms.accounttable); j++ {
-		D += ms.deposit_amount(xp, year, j)
+		D += ms.depositAmount(xp, year, j)
 	}
 	if ms.ip.accmap["aftertax"] > 0 {
 		for l := 0; l < len(*ms.ti.Capgainstable); l++ {
@@ -604,15 +604,15 @@ func (ms ModelSpecs) getResultTotals(xp *[]float64) (twithd, tcombined, tT, ttax
 	for year := 0; year < ms.ip.numyr; year++ {
 		//i_mul := math.Pow(ms.ip.iRate, float64(ms.ip.prePlanYears+year))
 		//T, spendable, tax, rate, cg_tax, earlytax, rothearly := ms.IncomeSummary(year, xp)
-		T, spendable, tax, _, cg_tax, earlytax, _ := ms.IncomeSummary(year, xp)
-		tot_withdrawals := 0.0
+		T, spendable, tax, _, cgtax, earlytax, _ := ms.IncomeSummary(year, xp)
+		totWithdrawals := 0.0
 		for j := 0; j < ms.ip.numacc; j++ {
-			tot_withdrawals += (*xp)[ms.vindx.W(year, j)]
+			totWithdrawals += (*xp)[ms.vindx.W(year, j)]
 		}
-		twithd += tot_withdrawals
+		twithd += totWithdrawals
 		tincome += accessVector(ms.income, year) + accessVector(ms.SS, year) // + withdrawals
 		ttax += tax
-		tcgtax += cg_tax
+		tcgtax += cgtax
 		tearlytax += earlytax
 		tT += T
 		tspendable += spendable

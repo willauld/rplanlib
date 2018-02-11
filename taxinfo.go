@@ -175,12 +175,12 @@ func (ti Taxinfo) maxContribution(year int, yearsToInflateBy int, retirees []ret
 		v := retirees[i]
 		if retireekey == "" || v.mykey == retireekey { // if "", Sum all retiree
 			max += ti.Contribspecs["TDRA"]
-			startage := v.ageAtStart
+			startage := v.ageAtStart // TODO: Fixme remove startage not needed
 			age := startage + year
 			if age >= int(ti.Contribspecs["CatchupAge"]) {
 				max += ti.Contribspecs["TDRACatchup"]
 			}
-			havePlan := v.definedContributionPlan
+			havePlan := v.definedContributionPlan // TODO remove havePlan not needed
 			if havePlan {
 				a := v.dcpBuckets
 				/* no lazy expantion in golang implementation, created in NewModelSpecs()

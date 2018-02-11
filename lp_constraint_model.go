@@ -344,7 +344,8 @@ func NewModelSpecs(vindx VectorVarIndex,
 	return ms
 }
 
-type modelNote struct {
+// ModelNote contains section information for the constraint model
+type ModelNote struct {
 	index int
 	note  string
 }
@@ -353,13 +354,13 @@ type modelNote struct {
 // Minimize: c^T * x
 // Subject to: A_ub * x <= b_ub
 // all vars positive
-func (ms ModelSpecs) BuildModel() ([]float64, [][]float64, []float64, []modelNote) {
+func (ms ModelSpecs) BuildModel() ([]float64, [][]float64, []float64, []ModelNote) {
 
 	nvars := ms.vindx.Vsize
 	A := make([][]float64, 0)
 	b := make([]float64, 0)
 	c := make([]float64, nvars)
-	notes := make([]modelNote, 0)
+	notes := make([]ModelNote, 0)
 
 	//fmt.Printf("\nms.accounttable len: %d\n", len(ms.accounttable))
 
@@ -389,7 +390,7 @@ func (ms ModelSpecs) BuildModel() ([]float64, [][]float64, []float64, []modelNot
 			c[ms.vindx.B(ms.ip.numyr, j)] = -1 * estateTax // account discount rate
 		}
 		fmt.Fprintf(ms.logfile, "\nConstructing Spending + Estate Model:\n")
-		notes = append(notes, modelNote{-1, "Objective function R1':"})
+		notes = append(notes, ModelNote{-1, "Objective function R1':"})
 	} else {
 		fmt.Fprintf(ms.logfile, "\nConstructing Spending Model:\n")
 
@@ -402,12 +403,12 @@ func (ms ModelSpecs) BuildModel() ([]float64, [][]float64, []float64, []modelNot
 			estateTax := ms.ti.AccountEstateTax[ms.accounttable[j].acctype]
 			c[ms.vindx.B(ms.ip.numyr, j)] = -1 * balancer * estateTax // balance and discount rate
 		}
-		notes = append(notes, modelNote{-1, "Objective function S1':"})
+		notes = append(notes, ModelNote{-1, "Objective function S1':"})
 	}
 	//
 	// Add constraint (2')
 	//
-	notes = append(notes, modelNote{len(A), "Constraints 2':"})
+	notes = append(notes, ModelNote{len(A), "Constraints 2':"})
 	for year := 0; year < ms.ip.numyr; year++ {
 		row := make([]float64, nvars)
 		for j := 0; j < len(ms.accounttable); j++ {
@@ -437,7 +438,7 @@ func (ms ModelSpecs) BuildModel() ([]float64, [][]float64, []float64, []modelNot
 	//
 	// Add constraint (3a')
 	//
-	notes = append(notes, modelNote{len(A), "Constraints 3a':"})
+	notes = append(notes, ModelNote{len(A), "Constraints 3a':"})
 	for year := 0; year < ms.ip.numyr-1; year++ {
 		row := make([]float64, nvars)
 		row[ms.vindx.S(year+1)] = 1
@@ -448,7 +449,7 @@ func (ms ModelSpecs) BuildModel() ([]float64, [][]float64, []float64, []modelNot
 	//
 	// Add constraint (3b')
 	//
-	notes = append(notes, modelNote{len(A), "Constraints 3b':"})
+	notes = append(notes, ModelNote{len(A), "Constraints 3b':"})
 	for year := 0; year < ms.ip.numyr-1; year++ {
 		row := make([]float64, nvars)
 		row[ms.vindx.S(year)] = ms.ip.iRate
@@ -459,7 +460,7 @@ func (ms ModelSpecs) BuildModel() ([]float64, [][]float64, []float64, []modelNot
 	//
 	// Add constrant (4') rows - not needed if [desired.income] is not defined in input
 	//
-	notes = append(notes, modelNote{len(A), "Constraints 4':"})
+	notes = append(notes, ModelNote{len(A), "Constraints 4':"})
 	if ms.ip.min != 0 {
 		for year := 0; year < 1; year++ { // Only needs setting at the beginning
 			row := make([]float64, nvars)
@@ -473,7 +474,7 @@ func (ms ModelSpecs) BuildModel() ([]float64, [][]float64, []float64, []modelNot
 	// Add constraints for (5') rows - not added if [max.income] is
 	// not defined in input
 	//
-	notes = append(notes, modelNote{len(A), "Constraints 5':"})
+	notes = append(notes, ModelNote{len(A), "Constraints 5':"})
 	if ms.ip.max != 0 {
 		for year := 0; year < 1; year++ { // Only needs to be set at the beginning
 			row := make([]float64, nvars)
@@ -486,7 +487,7 @@ func (ms ModelSpecs) BuildModel() ([]float64, [][]float64, []float64, []modelNot
 	//
 	// Add constaints for (6') rows
 	//
-	notes = append(notes, modelNote{len(A), "Constraints 6':"})
+	notes = append(notes, ModelNote{len(A), "Constraints 6':"})
 	for year := 0; year < ms.ip.numyr; year++ {
 		row := make([]float64, nvars)
 		for j := 0; j < len(ms.accounttable); j++ {
@@ -505,7 +506,7 @@ func (ms ModelSpecs) BuildModel() ([]float64, [][]float64, []float64, []modelNot
 	//
 	// Add constaints for (7') rows
 	//
-	notes = append(notes, modelNote{len(A), "Constraints 7':"})
+	notes = append(notes, ModelNote{len(A), "Constraints 7':"})
 	for year := 0; year < ms.ip.numyr; year++ {
 		// TODO this is not needed when there is only one retiree
 		for _, v := range ms.retirees {
@@ -526,7 +527,7 @@ func (ms ModelSpecs) BuildModel() ([]float64, [][]float64, []float64, []modelNot
 	//
 	// Add constaints for (8') rows
 	//
-	notes = append(notes, modelNote{len(A), "Constraints 8':"})
+	notes = append(notes, ModelNote{len(A), "Constraints 8':"})
 	for year := 0; year < ms.ip.numyr; year++ {
 		for j := 0; j < len(ms.accounttable); j++ {
 			v := ms.accounttable[j].contributions
@@ -543,7 +544,7 @@ func (ms ModelSpecs) BuildModel() ([]float64, [][]float64, []float64, []modelNot
 	//
 	// Add constaints for (9') rows
 	//
-	notes = append(notes, modelNote{len(A), "Constraints 9':"})
+	notes = append(notes, ModelNote{len(A), "Constraints 9':"})
 	for year := 0; year < ms.ip.numyr; year++ {
 		for j := 0; j < intMin(2, len(ms.accounttable)); j++ {
 			// at most the first two accounts are type IRA w/
@@ -562,7 +563,7 @@ func (ms ModelSpecs) BuildModel() ([]float64, [][]float64, []float64, []modelNot
 	//
 	// Add constaints for (N') rows
 	//
-	notes = append(notes, modelNote{len(A), "Constraints N':"})
+	notes = append(notes, ModelNote{len(A), "Constraints N':"})
 	if !ms.allowTdraRothraDeposits {
 		for year := 0; year < ms.ip.numyr; year++ {
 			for j := 0; j < len(ms.accounttable); j++ {
@@ -583,7 +584,7 @@ func (ms ModelSpecs) BuildModel() ([]float64, [][]float64, []float64, []modelNot
 	//
 	// Add constaints for (10') rows
 	//
-	notes = append(notes, modelNote{len(A), "Constraints 10':"})
+	notes = append(notes, ModelNote{len(A), "Constraints 10':"})
 	for year := 0; year < ms.ip.numyr; year++ {
 		for j := 0; j < intMin(2, len(ms.accounttable)); j++ {
 			// at most the first two accounts are type IRA
@@ -604,7 +605,7 @@ func (ms ModelSpecs) BuildModel() ([]float64, [][]float64, []float64, []modelNot
 	//
 	// Add constraints for (11')
 	//
-	notes = append(notes, modelNote{len(A), "Constraints 11':"})
+	notes = append(notes, ModelNote{len(A), "Constraints 11':"})
 	for year := 0; year < ms.ip.numyr; year++ {
 		adjInf := math.Pow(ms.ip.iRate, float64(ms.ip.prePlanYears+year))
 		row := make([]float64, nvars)
@@ -624,7 +625,7 @@ func (ms ModelSpecs) BuildModel() ([]float64, [][]float64, []float64, []modelNot
 	//
 	// Add constraints for (12')
 	//
-	notes = append(notes, modelNote{len(A), "Constraints 12':"})
+	notes = append(notes, ModelNote{len(A), "Constraints 12':"})
 	for year := 0; year < ms.ip.numyr; year++ {
 		for k := 0; k < len(*ms.ti.Taxtable)-1; k++ {
 			row := make([]float64, nvars)
@@ -636,7 +637,7 @@ func (ms ModelSpecs) BuildModel() ([]float64, [][]float64, []float64, []modelNot
 	//
 	// Add constraints for (13a')
 	//
-	notes = append(notes, modelNote{len(A), "Constraints 13a':"})
+	notes = append(notes, ModelNote{len(A), "Constraints 13a':"})
 	if ms.ip.accmap["aftertax"] > 0 {
 		for year := 0; year < ms.ip.numyr; year++ {
 			f := ms.cgTaxableFraction(year)
@@ -658,7 +659,7 @@ func (ms ModelSpecs) BuildModel() ([]float64, [][]float64, []float64, []modelNot
 	//
 	// Add constraints for (13b')
 	//
-	notes = append(notes, modelNote{len(A), "Constraints 13b':"})
+	notes = append(notes, ModelNote{len(A), "Constraints 13b':"})
 	if ms.ip.accmap["aftertax"] > 0 {
 		for year := 0; year < ms.ip.numyr; year++ {
 			f := ms.cgTaxableFraction(year)
@@ -680,7 +681,7 @@ func (ms ModelSpecs) BuildModel() ([]float64, [][]float64, []float64, []modelNot
 	//
 	// Add constraints for (14')
 	//
-	notes = append(notes, modelNote{len(A), "Constraints 14':"})
+	notes = append(notes, ModelNote{len(A), "Constraints 14':"})
 	if ms.ip.accmap["aftertax"] > 0 {
 		for year := 0; year < ms.ip.numyr; year++ {
 			adjInf := math.Pow(ms.ip.iRate, float64(ms.ip.prePlanYears+year))
@@ -700,7 +701,7 @@ func (ms ModelSpecs) BuildModel() ([]float64, [][]float64, []float64, []modelNot
 	//
 	// Add constraints for (15a')
 	//
-	notes = append(notes, modelNote{len(A), "Constraints 15a':"})
+	notes = append(notes, ModelNote{len(A), "Constraints 15a':"})
 	for year := 0; year < ms.ip.numyr; year++ {
 		for j := 0; j < len(ms.accounttable); j++ {
 			//j = len(ms.accounttable)-1 // nl the last account, the investment account
@@ -721,7 +722,7 @@ func (ms ModelSpecs) BuildModel() ([]float64, [][]float64, []float64, []modelNot
 	//
 	// Add constraints for (15b')
 	//
-	notes = append(notes, modelNote{len(A), "Constraints 15b':"})
+	notes = append(notes, ModelNote{len(A), "Constraints 15b':"})
 	for year := 0; year < ms.ip.numyr; year++ {
 		for j := 0; j < len(ms.accounttable); j++ {
 			//j = len(ms.accounttable)-1 // nl the last account, the investment account
@@ -742,7 +743,7 @@ func (ms ModelSpecs) BuildModel() ([]float64, [][]float64, []float64, []modelNot
 	// Constraint for (16a')
 	//   Set the begining b[1,j] balances
 	//
-	notes = append(notes, modelNote{len(A), "Constraints 16a':"})
+	notes = append(notes, ModelNote{len(A), "Constraints 16a':"})
 	for j := 0; j < len(ms.accounttable); j++ {
 		row := make([]float64, nvars)
 		row[ms.vindx.B(0, j)] = 1
@@ -753,7 +754,7 @@ func (ms ModelSpecs) BuildModel() ([]float64, [][]float64, []float64, []modelNot
 	// Constraint for (16b')
 	//   Set the begining b[1,j] balances
 	//
-	notes = append(notes, modelNote{len(A), "Constraints 16b':"})
+	notes = append(notes, ModelNote{len(A), "Constraints 16b':"})
 	for j := 0; j < len(ms.accounttable); j++ {
 		row := make([]float64, nvars)
 		row[ms.vindx.B(0, j)] = -1
@@ -763,7 +764,7 @@ func (ms ModelSpecs) BuildModel() ([]float64, [][]float64, []float64, []modelNot
 	//
 	// Constrant for (17') is default for sycpy so no code is needed
 	//
-	notes = append(notes, modelNote{len(A), "Constraints 17':"})
+	notes = append(notes, ModelNote{len(A), "Constraints 17':"})
 	if ms.verbose {
 		fmt.Fprintf(ms.logfile, "Num vars: %d\n", len(c))
 		fmt.Fprintf(ms.logfile, "Num contraints: %d\n", len(b))
@@ -814,7 +815,7 @@ func (ms ModelSpecs) cgTaxableFraction(year int) float64 {
 
 // TODO: FIXME: Create UNIT tests: last two parameters need s vector (s is output from simplex run)
 // printModelMatrix prints to object function (cx) and constraint matrix (Ax<=b)
-func (ms ModelSpecs) printModelMatrix(c []float64, A [][]float64, b []float64, notes []modelNote, s []float64, nonBindingOnly bool) {
+func (ms ModelSpecs) printModelMatrix(c []float64, A [][]float64, b []float64, notes []ModelNote, s []float64, nonBindingOnly bool) {
 	note := ""
 	notesIndex := 0
 	nextModelIndex := len(A) + 1 // beyond the end of A

@@ -1,7 +1,6 @@
 package rplanlib
 
 import (
-	"fmt"
 	"testing"
 )
 
@@ -75,8 +74,9 @@ func TestAdjPIA(t *testing.T) {
 
 func TestProcessSS(t *testing.T) {
 	tests := []struct {
-		ip       map[string]string
-		retirees []retiree
+		ip         map[string]string
+		warningmes string
+		expectnil  bool
 	}{
 		{ // case 0
 			ip: map[string]string{
@@ -120,26 +120,55 @@ func TestProcessSS(t *testing.T) {
 				"eT_Aftatax_ContribStartAge": "",
 				"eT_Aftatax_ContribEndAge":   "",
 			},
-			retirees: []retiree{
-				{ // retireeindx == 0
-					age:        66,
-					ageAtStart: 66,
-					throughAge: 76,
-					mykey:      "retiree1",
-					definedContributionPlan: false,
-					dcpBuckets:              nil,
-				},
-				{ // retireeindx == 1
-					age:        64,
-					ageAtStart: 64,
-					throughAge: 76,
-					mykey:      "retiree2",
-					definedContributionPlan: false,
-					dcpBuckets:              nil,
-				},
-			},
+			warningmes: "",
+			expectnil:  false,
 		},
 		{ // case 1
+			ip: map[string]string{
+				"setName":                    "",
+				"filingStatus":               "joint",
+				"key1":                       "retiree1",
+				"key2":                       "retiree2",
+				"eT_Age1":                    "66",
+				"eT_Age2":                    "64",
+				"eT_RetireAge1":              "66",
+				"eT_RetireAge2":              "66",
+				"eT_PlanThroughAge1":         "76",
+				"eT_PlanThroughAge2":         "76",
+				"eT_PIA1":                    "20", //20k
+				"eT_PIA2":                    "-1", // spousal benefit
+				"eT_SS_Start1":               "66",
+				"eT_SS_Start2":               "68",
+				"eT_TDRA1":                   "",
+				"eT_TDRA2":                   "",
+				"eT_TDRA_Rate1":              "",
+				"eT_TDRA_Rate2":              "",
+				"eT_TDRA_Contrib1":           "",
+				"eT_TDRA_Contrib2":           "",
+				"eT_TDRA_ContribStartAge1":   "",
+				"eT_TDRA_ContribStartAge2":   "",
+				"eT_TDRA_ContribEndAge1":     "",
+				"eT_TDRA_ContribEndAge2":     "",
+				"eT_Roth1":                   "",
+				"eT_Roth2":                   "",
+				"eT_Roth_Rate1":              "",
+				"eT_Roth_Rate2":              "",
+				"eT_Roth_Contrib1":           "",
+				"eT_Roth_Contrib2":           "",
+				"eT_Roth_ContribStartAge1":   "",
+				"eT_Roth_ContribStartAge2":   "",
+				"eT_Roth_ContribEndAge1":     "",
+				"eT_Roth_ContribEndAge2":     "",
+				"eT_Aftatax":                 "",
+				"eT_Aftatax_Rate":            "",
+				"eT_Aftatax_Contrib":         "",
+				"eT_Aftatax_ContribStartAge": "",
+				"eT_Aftatax_ContribEndAge":   "",
+			},
+			warningmes: "Warning-SocialSecurityspousalbenefitsdonotincreaseafterFRA,resettingbenefitsstarttoFRA.Pleasecorrectretiree2'sSSageintheconfigurationfileto'66'.",
+			expectnil:  false,
+		},
+		{ // case 2
 			ip: map[string]string{
 				"setName":                    "",
 				"filingStatus":               "joint",
@@ -181,26 +210,10 @@ func TestProcessSS(t *testing.T) {
 				"eT_Aftatax_ContribStartAge": "",
 				"eT_Aftatax_ContribEndAge":   "",
 			},
-			retirees: []retiree{
-				{ // retireeindx == 0
-					age:        66,
-					ageAtStart: 66,
-					throughAge: 76,
-					mykey:      "retiree1",
-					definedContributionPlan: false,
-					dcpBuckets:              nil,
-				},
-				{ // retireeindx == 1
-					age:        64,
-					ageAtStart: 64,
-					throughAge: 76,
-					mykey:      "retiree2",
-					definedContributionPlan: false,
-					dcpBuckets:              nil,
-				},
-			},
+			warningmes: "Warning - Social Security spousal benefit can only be claimed after the spouse claims benefits. Please correct retiree1's SS age in the configuration file to '72'.",
+			expectnil:  false,
 		},
-		{ // Case 2 // case to match mobile.toml
+		{ // Case 3 // case to match mobile.toml
 			ip: map[string]string{
 				"setName":                    "activeParams",
 				"filingStatus":               "joint",
@@ -246,26 +259,10 @@ func TestProcessSS(t *testing.T) {
 				"eT_rRate":    "6",
 				"eT_maximize": "Spending", // or "PlusEstate"
 			},
-			retirees: []retiree{
-				{ // retireeindx == 0
-					age:        54,
-					ageAtStart: 65,
-					throughAge: 75,
-					mykey:      "retiree1",
-					definedContributionPlan: false,
-					dcpBuckets:              nil,
-				},
-				{ // retireeindx == 1
-					age:        54,
-					ageAtStart: 65,
-					throughAge: 75,
-					mykey:      "retiree2",
-					definedContributionPlan: false,
-					dcpBuckets:              nil,
-				},
-			},
+			warningmes: "",
+			expectnil:  true,
 		},
-		{ // Case 3 // case to match mobile.toml
+		{ // Case 4 // case to match mobile.toml
 			ip: map[string]string{
 				"setName":                    "activeParams",
 				"filingStatus":               "single",
@@ -311,30 +308,47 @@ func TestProcessSS(t *testing.T) {
 				"eT_rRate":    "6",
 				"eT_maximize": "Spending", // or "PlusEstate"
 			},
-			retirees: []retiree{
-				{ // retireeindx == 0
-					age:        54,
-					ageAtStart: 65,
-					throughAge: 75,
-					mykey:      "retiree1",
-					definedContributionPlan: false,
-					dcpBuckets:              nil,
-				},
-			},
+			warningmes: "",
+			expectnil:  false,
 		},
 	}
 	for i, elem := range tests {
-		fmt.Printf("\nCase %d::\n", i)
+		//if i != 4 {
+		//	continue
+		//}
+		//fmt.Printf("\nCase %d::\n", i)
 		ip := NewInputParams(elem.ip)
-		ss, ss1, ss2 := processSS(ip, elem.retirees, ip.iRate)
-		if ss == nil { //TODO: FIXME this should verify nil is expected FIXME
+
+		doNothing := false // Turn on/off Stdio redirection
+		mychan := make(chan string)
+		oldout, w, err := RedirectStdout(mychan, doNothing)
+		if err != nil {
+			t.Errorf("RedirectStdout: %s\n", err)
+			return // should this be continue?
+		}
+		ss, ss1, ss2 := processSS(&ip)
+
+		str := RestoreStdout(mychan, oldout, w, doNothing)
+		strn := stripWhitespace(str)
+		warningmes := stripWhitespace(elem.warningmes)
+		if warningmes != strn {
+			t.Errorf("TestProcessSS case %d:  expected Warning '%s'\n\tbut found: '%s'\n", i, warningmes, strn)
+		}
+
+		if ss == nil {
+			if !elem.expectnil {
+				t.Errorf("TestProcessSS case %d: Social Security vector (SS) is unexpectedly nil\n", i)
+			}
 			continue
 		}
+		//fmt.Printf("ss: %#v\n", ss)
+		//fmt.Printf("ss1: %#v\n", ss1)
+		//fmt.Printf("ss2: %#v\n", ss2)
 		if len(ss) != len(ss1) {
 			t.Errorf("TestProcessSS case %d: Social Security vectors are not the same lengths as required\n", i)
 		}
 		zeros := ip.SSStart1 - ip.startPlan
-		//fmt.Printf("zeros: %d, SSstart1: %d, startPlan: %d\n", zeros, ip.SSStart1, ip.startPlan)
+		//fmt.Printf("zeros: %d, SSstart1: %d, startPlan: %d, endPlan: %d, planthrough1: %d\n", zeros, ip.SSStart1, ip.startPlan, ip.endPlan, ip.planThroughAge1)
 		// Verify years before starting SS have zero SS income
 		for j := 0; j < zeros; j++ {
 			if ss1[j] != 0 {
@@ -342,7 +356,7 @@ func TestProcessSS(t *testing.T) {
 			}
 		}
 		if ip.filingStatus != "joint" {
-			for j := 0; j < len(ss); j++ {
+			for j := 0; j < len(ss); j++ { // TODO: FIXME if not joint to need ss1 separate from ss - remove it
 				if ss[j] != ss1[j] {
 					t.Errorf("TestProcessSS case %d:  SS[%d](%f) must equal SS1[%d](%f)\n", i, j, ss[j], j, ss1[j])
 				}
@@ -365,7 +379,7 @@ func TestProcessSS(t *testing.T) {
 				}
 			}
 			// varify that years after retiree's planthrough have zero SS income
-			r1end := ip.planThroughAge1 - ip.retireAge1 + 1
+			r1end := ip.planThroughAge1 - ip.startPlan + 1
 			//fmt.Printf("r1end: %d, planThroughAge1: %d, retireAge1: %d\n", r1end, ip.planThroughAge1, ip.retireAge1)
 			for j := r1end; j < ip.numyr; j++ {
 				if ss1[j] != 0 {
@@ -373,7 +387,7 @@ func TestProcessSS(t *testing.T) {
 				}
 			}
 			// varify that years after retiree's planthrough have zero SS income
-			r2end := ip.planThroughAge2 - elem.retirees[1].ageAtStart + 1
+			r2end := ip.planThroughAge2 - delta - ip.startPlan + 1
 			for j := r2end; j < ip.numyr; j++ {
 				if ss2[j] != 0 {
 					t.Errorf("TestProcessSS case %d:  ss2[%d]: %f should equal zero, it's after planThrough age\n", i, j, ss2[j])

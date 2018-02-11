@@ -399,6 +399,8 @@ func TestNewInputParams(t *testing.T) {
 			ip: map[string]string{
 				"setName":                    "activeParams",
 				"filingStatus":               "joint",
+				"key1":                       "retiree1",
+				"key2":                       "retiree2",
 				"eT_Age1":                    "65",
 				"eT_Age2":                    "63",
 				"eT_RetireAge1":              "66",
@@ -445,6 +447,8 @@ func TestNewInputParams(t *testing.T) {
 			ip: map[string]string{
 				"setName":                    "activeParams",
 				"filingStatus":               "joint",
+				"key1":                       "retiree1",
+				"key2":                       "retiree2",
 				"eT_Age1":                    "63",
 				"eT_Age2":                    "65",
 				"eT_RetireAge1":              "66",
@@ -491,6 +495,8 @@ func TestNewInputParams(t *testing.T) {
 			ip: map[string]string{
 				"setName":                    "activeParams",
 				"filingStatus":               "joint",
+				"key1":                       "retiree1",
+				"key2":                       "retiree2",
 				"eT_Age1":                    "65",
 				"eT_Age2":                    "55",
 				"eT_RetireAge1":              "65",
@@ -537,6 +543,8 @@ func TestNewInputParams(t *testing.T) {
 			ip: map[string]string{
 				"setName":                    "activeParams",
 				"filingStatus":               "single",
+				"key1":                       "retiree1",
+				"key2":                       "retiree2",
 				"eT_Age1":                    "45",
 				"eT_Age2":                    "",
 				"eT_RetireAge1":              "65",
@@ -912,6 +920,8 @@ func TestNewModelSpecs(t *testing.T) {
 			ip: map[string]string{
 				"setName":                    "activeParams",
 				"filingStatus":               "joint",
+				"key1":                       "retiree1",
+				"key2":                       "retiree2",
 				"eT_Age1":                    "65",
 				"eT_Age2":                    "63",
 				"eT_RetireAge1":              "66",
@@ -957,6 +967,8 @@ func TestNewModelSpecs(t *testing.T) {
 			ip: map[string]string{
 				"setName":                    "activeParams",
 				"filingStatus":               "mseparate",
+				"key1":                       "retiree1",
+				"key2":                       "retiree2",
 				"eT_Age1":                    "",
 				"eT_Age2":                    "",
 				"eT_RetireAge1":              "",
@@ -1003,6 +1015,8 @@ func TestNewModelSpecs(t *testing.T) {
 			ip: map[string]string{
 				"setName":                    "activeParams",
 				"filingStatus":               "single",
+				"key1":                       "retiree1",
+				"key2":                       "retiree2",
 				"eT_Age1":                    "",
 				"eT_Age2":                    "",
 				"eT_RetireAge1":              "",
@@ -1073,6 +1087,8 @@ func TestBuildModel(t *testing.T) {
 			ip: map[string]string{
 				"setName":                    "activeParams",
 				"filingStatus":               "joint",
+				"key1":                       "retiree1",
+				"key2":                       "retiree2",
 				"eT_Age1":                    "65",
 				"eT_Age2":                    "63",
 				"eT_RetireAge1":              "66",
@@ -1407,11 +1423,13 @@ func TestPrintModelMatrix(t *testing.T) {
 			ip: map[string]string{
 				"setName":                    "activeParams",
 				"filingStatus":               "single",
+				"key1":                       "retiree1",
+				"key2":                       "retiree2",
 				"eT_Age1":                    "60",
 				"eT_Age2":                    "",
 				"eT_RetireAge1":              "65",
 				"eT_RetireAge2":              "",
-				"eT_PlanThroughAge1":         "70",
+				"eT_PlanThroughAge1":         "75",
 				"eT_PlanThroughAge2":         "",
 				"eT_PIA1":                    "20", // 20k
 				"eT_PIA2":                    "",
@@ -1450,11 +1468,13 @@ func TestPrintModelMatrix(t *testing.T) {
 			ip: map[string]string{
 				"setName":                    "activeParams",
 				"filingStatus":               "single",
+				"key1":                       "retiree1",
+				"key2":                       "retiree2",
 				"eT_Age1":                    "60",
 				"eT_Age2":                    "",
 				"eT_RetireAge1":              "65",
 				"eT_RetireAge2":              "",
-				"eT_PlanThroughAge1":         "70",
+				"eT_PlanThroughAge1":         "75",
 				"eT_PlanThroughAge2":         "",
 				"eT_PIA1":                    "20", // 20k
 				"eT_PIA2":                    "",
@@ -1588,11 +1608,13 @@ func TestPrintConstraint(t *testing.T) {
 			ip: map[string]string{
 				"setName":                    "activeParams",
 				"filingStatus":               "single",
+				"key1":                       "retiree1",
+				"key2":                       "retiree2",
 				"eT_Age1":                    "60",
 				"eT_Age2":                    "",
 				"eT_RetireAge1":              "65",
 				"eT_RetireAge2":              "",
-				"eT_PlanThroughAge1":         "70",
+				"eT_PlanThroughAge1":         "75",
 				"eT_PlanThroughAge2":         "",
 				"eT_PIA1":                    "20", // 20k
 				"eT_PIA2":                    "",
@@ -1632,11 +1654,13 @@ func TestPrintConstraint(t *testing.T) {
 			ip: map[string]string{
 				"setName":                    "activeParams",
 				"filingStatus":               "single",
+				"key1":                       "retiree1",
+				"key2":                       "retiree2",
 				"eT_Age1":                    "60",
 				"eT_Age2":                    "",
 				"eT_RetireAge1":              "65",
 				"eT_RetireAge2":              "",
-				"eT_PlanThroughAge1":         "70",
+				"eT_PlanThroughAge1":         "75",
 				"eT_PlanThroughAge2":         "",
 				"eT_PIA1":                    "20", // 20k
 				"eT_PIA2":                    "",
@@ -1744,11 +1768,13 @@ func TestPrintModelRow(t *testing.T) {
 			ip: map[string]string{
 				"setName":                    "activeParams",
 				"filingStatus":               "single",
+				"key1":                       "retiree1",
+				"key2":                       "retiree2",
 				"eT_Age1":                    "60",
 				"eT_Age2":                    "",
 				"eT_RetireAge1":              "65",
 				"eT_RetireAge2":              "",
-				"eT_PlanThroughAge1":         "70",
+				"eT_PlanThroughAge1":         "75",
 				"eT_PlanThroughAge2":         "",
 				"eT_PIA1":                    "20", // 20k
 				"eT_PIA2":                    "",
@@ -1788,11 +1814,13 @@ func TestPrintModelRow(t *testing.T) {
 			ip: map[string]string{
 				"setName":                    "activeParams",
 				"filingStatus":               "single",
+				"key1":                       "retiree1",
+				"key2":                       "retiree2",
 				"eT_Age1":                    "60",
 				"eT_Age2":                    "",
 				"eT_RetireAge1":              "65",
 				"eT_RetireAge2":              "",
-				"eT_PlanThroughAge1":         "70",
+				"eT_PlanThroughAge1":         "75",
 				"eT_PlanThroughAge2":         "",
 				"eT_PIA1":                    "20", // 20k
 				"eT_PIA2":                    "",
@@ -1899,6 +1927,8 @@ func TestPrintModelRow(t *testing.T) {
 			ip: map[string]string{
 				"setName":                    "",
 				"filingStatus":               "",
+				"key1":                       "retiree1",
+				"key2":                       "retiree2",
 				"eT_Age1":            "",
 				"eT_Age2":            "",
 				"eT_RetireAge1":      "",
@@ -1939,20 +1969,23 @@ func TestPrintModelRow(t *testing.T) {
 
 func TestRedirectOutput(t *testing.T) {
 	mychan := make(chan string)
-	oldout, w, err := RedirectStdout(mychan)
+	oldout, w, err := RedirectStdout(mychan, false)
 	if err != nil {
 		t.Errorf("RedirectStdout: %s\n", err)
 		return
 	}
 	outstr := "This will be captured for comparisons later\nAnd this too\n"
 	fmt.Printf("%s", outstr)
-	str := RestoreStdout(mychan, oldout, w)
+	str := RestoreStdout(mychan, oldout, w, false)
 	if str != outstr {
 		t.Errorf("Capured output fails: expected '%s', found '%s'", outstr, str)
 	}
 }
 
-func RedirectStdout(mechan chan string) (*os.File, *os.File, error) {
+func RedirectStdout(mechan chan string, doNothing bool) (*os.File, *os.File, error) {
+	if doNothing {
+		return nil, nil, nil
+	}
 	oldStdout := os.Stdout
 	readPipe, writePipe, err := os.Pipe()
 	if err != nil {
@@ -1973,7 +2006,10 @@ func RedirectStdout(mechan chan string) (*os.File, *os.File, error) {
 	return oldStdout, writePipe, nil
 }
 
-func RestoreStdout(mechan chan string, oldStdout *os.File, writePipe *os.File) string {
+func RestoreStdout(mechan chan string, oldStdout *os.File, writePipe *os.File, doNothing bool) string {
+	if doNothing {
+		return ""
+	}
 	// Reset the output again
 	writePipe.Close()
 	os.Stdout = oldStdout

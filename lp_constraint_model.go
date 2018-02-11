@@ -96,8 +96,11 @@ func mergeVectors(v1, v2 []float64) ([]float64, error) {
 	return v3, nil
 }
 
-// genContrib
-// rate = 1.0 implies no inflation for contributions
+// genContrib generates the starting balance/basis as well as a vector
+// of 'iRate' adjusted 'yearly' contributions
+// iRate = 1.0 implies no inflation of contributions
+// All age values must be consistant, ie, in turms of retiree 1 or 2 but
+// not mixed
 func genContrib(yearly int,
 	startAge int,
 	endAge int,
@@ -250,7 +253,7 @@ func NewModelSpecs(vindx VectorVarIndex,
 		a.acctype = "IRA"
 		a.mykey = "retiree1" // need to make this definable for pc versions
 		a.origbal = float64(ip.TDRA1)
-		a.contributions, dbal, _, err = genContrib(ip.TDRAContrib1, ip.TDRAContribStart1, ip.TDRAContribEnd1, ip.startPlan, ip.endPlan, ip.iRate, a.rRate, ip.age1)
+		a.contributions, dbal, _, err = genContrib(ip.TDRAContrib1, ms.convertAge(ip.TDRAContribStart1, a.mykey), ms.convertAge(ip.TDRAContribEnd1, a.mykey), ip.startPlan, ip.endPlan, ip.iRate, a.rRate, ip.age1)
 		if err != nil {
 			panic(err)
 		}
@@ -267,7 +270,7 @@ func NewModelSpecs(vindx VectorVarIndex,
 		a.mykey = "retiree2" // need to make this definable for pc versions
 		a.origbal = float64(ip.TDRA2)
 		//a.contributions, err = buildVector(ip.TDRAContrib2, ip.TDRAContribStart2, ip.TDRAContribEnd2, ip.startPlan, ip.endPlan, ms.ip.iRate, ip.age1)
-		a.contributions, dbal, _, err = genContrib(ip.TDRAContrib2, ip.TDRAContribStart2, ip.TDRAContribEnd2, ip.startPlan, ip.endPlan, ip.iRate, a.rRate, ip.age1)
+		a.contributions, dbal, _, err = genContrib(ip.TDRAContrib2, ms.convertAge(ip.TDRAContribStart2, a.mykey), ms.convertAge(ip.TDRAContribEnd2, a.mykey), ip.startPlan, ip.endPlan, ip.iRate, a.rRate, ip.age1)
 		if err != nil {
 			panic(err)
 		}
@@ -301,7 +304,7 @@ func NewModelSpecs(vindx VectorVarIndex,
 		a.mykey = "retiree2" // need to make this definable for pc versions
 		a.origbal = float64(ip.Roth2)
 		//a.contributions, err = buildVector(ip.RothContrib2, ip.RothContribStart2, ip.RothContribEnd2, ip.startPlan, ip.endPlan, ms.ip.iRate, ip.age1)
-		a.contributions, dbal, _, err = genContrib(ip.RothContrib1, ip.RothContribStart2, ip.RothContribEnd2, ip.startPlan, ip.endPlan, ip.iRate, a.rRate, ip.age1)
+		a.contributions, dbal, _, err = genContrib(ip.RothContrib1, ms.convertAge(ip.RothContribStart2, a.mykey), ms.convertAge(ip.RothContribEnd2, a.mykey), ip.startPlan, ip.endPlan, ip.iRate, a.rRate, ip.age1)
 		if err != nil {
 			panic(err)
 		}
@@ -858,6 +861,24 @@ func (ms ModelSpecs) matchRetiree(retireekey string) *retiree {
 		}
 	}
 	return nil
+}
+
+// TODO unit test me :-)
+// convertAge converts an age for key1 to an age in the primary timeline
+func (ms ModelSpecs) convertAge(age int, key string) int {
+	index := -1
+	for i, v := range ms.retirees {
+		if v.mykey == key {
+			index = i
+		}
+	}
+	if index == -1 {
+		return -1000 // TODO find a better response
+	} else if index == 0 {
+		return age
+	}
+	delta := ms.retirees[0].age - ms.retirees[1].age
+	return age + delta
 }
 
 // cgTaxableFraction estimates the portion of capital gains not from basis

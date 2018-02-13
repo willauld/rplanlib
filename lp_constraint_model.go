@@ -55,6 +55,8 @@ type ModelSpecs struct {
 	logfile   *os.File
 	csvfile   *os.File
 	tablefile *os.File
+
+	OneK float64
 }
 
 func intMax(a, b int) int {
@@ -217,6 +219,7 @@ func NewModelSpecs(vindx VectorVarIndex,
 		logfile:                 logfile,
 		csvfile:                 csvfile,
 		tablefile:               tablefile,
+		OneK:                    1.0, //1000.0,
 	}
 
 	retirees := []retiree{
@@ -559,7 +562,7 @@ func (ms ModelSpecs) BuildModel() ([]float64, [][]float64, []float64, []ModelNot
 		row := make([]float64, nvars)
 		for j := 0; j < len(ms.accounttable); j++ {
 			if ms.accounttable[j].acctype != "aftertax" {
-				row[ms.vindx.D(year, j)] = 1
+				row[ms.vindx.D(year, j)] = 1 // TODO if this is not executed, DONT register this constrain, DONT add to A and b
 			}
 		}
 		A = append(A, row)
@@ -583,7 +586,7 @@ func (ms ModelSpecs) BuildModel() ([]float64, [][]float64, []float64, []ModelNot
 					// ["acctype"] != "aftertax": no "mykey" in aftertax
 					// (this will either break or just not match - we
 					// will see)
-					row[ms.vindx.D(year, j)] = 1
+					row[ms.vindx.D(year, j)] = 1 // TODO if this is not executed, DONT register this constraint, DONT add to A and b
 				}
 			}
 			A = append(A, row)
@@ -1024,12 +1027,10 @@ func (ms ModelSpecs) printModelRow(row []float64, suppressNewline bool) {
 			fmt.Fprintf(ms.logfile, "s[%d]=%6.3f, ", i, row[ms.vindx.S(i)])
 		}
 	}
-	if ms.ip.accmap["aftertax"] > 0 {
-		for i := 0; i < ms.ip.numyr; i++ { // D[]
-			for j := 0; j < ms.ip.numacc; j++ {
-				if row[ms.vindx.D(i, j)] != 0 {
-					fmt.Fprintf(ms.logfile, "D[%d,%d]=%6.3f, ", i, j, row[ms.vindx.D(i, j)])
-				}
+	for i := 0; i < ms.ip.numyr; i++ { // D[]
+		for j := 0; j < ms.ip.numacc; j++ {
+			if row[ms.vindx.D(i, j)] != 0 {
+				fmt.Fprintf(ms.logfile, "D[%d,%d]=%6.3f, ", i, j, row[ms.vindx.D(i, j)])
 			}
 		}
 	}

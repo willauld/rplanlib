@@ -118,8 +118,9 @@ func TestResultsOutput(t *testing.T) {
 		fmt.Printf(str)
 		fmt.Printf("Calling LPSimplex() for m:%d x n:%d model\n", len(a), len(a[0]))
 
+		ms.printActivitySummary(&res.X)
 		/*
-			ms.print_model_results(res.x)
+			//ms.print_model_results(res.x)
 				        if args.verboseincome:
 				            print_income_expense_details()
 				        if args.verboseaccounttrans:

@@ -113,111 +113,128 @@ def consistancy_check(res, years, taxbins, cgbins, accounts, accmap, vindx):
     print()
 */
 
-/* TODO NEXT UP
-func print_model_results(res) {
-    func printheader1(fieldwidth int) {
-        names = None
-        if S.secondary != "" {
-            names = "{}/{}\n".format(S.primary, S.secondary)
-            age_width = 8
-        } else {
-            if S.primary != 'nokey' {
-                names = "{}\n".format(S.primary)
-            }
-            age_width = 5
-        }
-        if names is not None {
-            ao.output('{:<s}'.format(names, width=2*age_width, use=2*age_width))
-        }
-        ao.output("{:>{width}.{width}s}".format('age ', width=age_width))
-        headers = ["fIRA", "tIRA", "RMDref", "fRoth", "tRoth", "fAftaTx", "tAftaTx", "o_inc", "SS", "Expense", "TFedTax", "Spndble"]
-        for s in headers {
-            ao.output("&@{:>{width}.{width}s}".format(s, width=fieldwidth))
-        }
-        ao.output('\n')
-    }
+func (ms ModelSpecs) activitySummaryHeader(fieldwidth int) {
+	var ageWidth int
 
-    ao.output("\nActivity Summary:\n")
-    ao.output('\n')
-    fieldwidth = 7
-    printheader1(fieldwidth)
-    for year in range(S.numyr) {
-        i_mul = S.i_rate ** (S.preplanyears+year)
-        age = year + S.startage
-        T,spendable,tax,rate,cg_tax,earlytax,rothearly = IncomeSummary(year)
-
-        rmdref = 0
-        for j in range(min(2,len(S.accounttable))) { // at most the first two accounts are type IRA w/ RMD requirement
-            if S.accounttable[j]['acctype'] == 'IRA' {
-                rmd = S.rmd_needed(year,S.accounttable[j]['mykey'])
-                if rmd > 0 {
-                    rmdref += res.x[vindx.b(year,j)]/rmd
-                }
-            }
-        }
-        withdrawal = {'IRA': 0, 'roth': 0, 'aftertax': 0}
-        deposit = {'IRA': 0, 'roth': 0, 'aftertax': 0}
-        for j in range(len(S.accounttable)) {
-            withdrawal[S.accounttable[j]['acctype']] += res.x[vindx.w(year,j)]
-            deposit[S.accounttable[j]['acctype']] += depositAmount(S, res, year, j)
-        }
-
-        if S.secondary != "" {
-            ao.output("%3d/%3d:" % (year+S.startage, year+S.startage-S.delta))
-        } else {
-            ao.output(" %3d:" % (year+S.startage))
-        }
-        items = [ withdrawal['IRA']/OneK, deposit['IRA']/OneK, rmdref/OneK, # IRA
-                withdrawal['roth']/OneK, deposit['roth']/OneK,  # Roth
-                withdrawal['aftertax']/OneK, deposit['aftertax']/OneK,  #D, # AftaTax
-                S.income[year]/OneK, S.SS[year]/OneK, S.expenses[year]/OneK,
-                (tax+cg_tax+earlytax)/OneK ]
-        for i in items {
-            ao.output("&@{:>{width}.0f}".format(i, width=fieldwidth))
-        }
-        s = res.x[vindx.s(year)]/OneK
-        star = ' '
-        T,spendable,tax,rate,cg_tax,earlytax,rothearly = IncomeSummary(year)
-        if spendable + 0.1 < res.x[vindx.s(year)]  or \
-            spendable -0.1 > res.x[vindx.s(year)] {
-            s = spendable/OneK
-            star = '*'
-            }
-        ao.output("&@%7.0f%c" % (s, star) )
-        ao.output("\n")
-    }
-    printheader1(fieldwidth)
+	names := ""
+	if ms.ip.filingStatus == "joint" {
+		names = fmt.Sprintf("%s/%s\n", ms.ip.myKey1, ms.ip.myKey2)
+		ageWidth = 8
+	} else {
+		if ms.ip.myKey1 != "nokey" {
+			names = fmt.Sprintf("%s\n", ms.ip.myKey1)
+		}
+		ageWidth = 5
+	}
+	if names != "" {
+		format := fmt.Sprintf("%%%ds", 2*ageWidth)
+		str := fmt.Sprintf(format, names)
+		ms.ao.output(str)
+	}
+	format := fmt.Sprintf("%%%d.%ds", ageWidth, ageWidth)
+	str := fmt.Sprintf(format, "age ")
+	ms.ao.output(str)
+	headers := []string{"fIRA", "tIRA", "RMDref", "fRoth", "tRoth", "fAftaTx", "tAftaTx", "o_inc", "SS", "Expense", "TFedTax", "Spndble"}
+	for _, s := range headers {
+		format := fmt.Sprintf("&@%%%d.%ds", fieldwidth, fieldwidth)
+		str := fmt.Sprintf(format, s)
+		ms.ao.output(str)
+	}
+	ms.ao.output("\n")
 }
+
+// TODO NEXT UP
+func (ms ModelSpecs) printActivitySummary(xp *[]float64) {
+
+	ms.ao.output("\nActivity Summary:\n")
+	ms.ao.output("\n")
+	fieldwidth := 7
+	ms.activitySummaryHeader(fieldwidth)
+	for year := 0; year < ms.ip.numyr; year++ {
+		//i_mul := math.Pow(ms.ip.iRate, float64(ms.ip.prePlanYears+year))
+		//age := year + ms.ip.startPlan
+		//T, spendable, tax, rate, cg_tax, earlytax, rothearly := ms.IncomeSummary(year, xp)
+		_, spendable, tax, _, cg_tax, earlytax, _ := ms.IncomeSummary(year, xp)
+
+		rmdref := 0.0
+		for j := 0; j < intMin(2, len(ms.accounttable)); j++ { // at most the first two accounts are type IRA w/ RMD requirement
+			if ms.accounttable[j].acctype == "IRA" {
+				rmd := ms.ti.rmdNeeded(year, ms.matchRetiree(ms.accounttable[j].mykey))
+				if rmd > 0 {
+					rmdref += (*xp)[ms.vindx.B(year, j)] / rmd
+				}
+			}
+		}
+		withdrawal := map[string]float64{"IRA": 0, "roth": 0, "aftertax": 0}
+		deposit := map[string]float64{"IRA": 0, "roth": 0, "aftertax": 0}
+		for j := 0; j < len(ms.accounttable); j++ {
+			withdrawal[ms.accounttable[j].acctype] += (*xp)[ms.vindx.W(year, j)]
+			deposit[ms.accounttable[j].acctype] += ms.depositAmount(xp, year, j)
+		}
+
+		if ms.ip.filingStatus == "joint" {
+			delta := ms.ip.age1 - ms.ip.age2
+			ms.ao.output(fmt.Sprintf("%3d/%3d:", year+ms.ip.startPlan, year+ms.ip.startPlan-delta))
+		} else {
+			ms.ao.output(fmt.Sprintf(" %3d:", year+ms.ip.startPlan))
+		}
+		items := []float64{withdrawal["IRA"] / ms.OneK, deposit["IRA"] / ms.OneK, rmdref / ms.OneK, // IRA
+			withdrawal["roth"] / ms.OneK, deposit["roth"] / ms.OneK, // Roth
+			withdrawal["aftertax"] / ms.OneK, deposit["aftertax"] / ms.OneK, //D, // AftaTax
+			accessVector(ms.income, year) / ms.OneK, accessVector(ms.SS, year) / ms.OneK, accessVector(ms.expenses, year) / ms.OneK,
+			(tax + cg_tax + earlytax) / ms.OneK}
+		for _, f := range items {
+			format := fmt.Sprintf("&@%%%d.0f", fieldwidth)
+			str := fmt.Sprintf(format, f)
+			ms.ao.output(str)
+			//ao.output("&@{:>{width}.0f}".format(i, width=fieldwidth))
+		}
+		s := (*xp)[ms.vindx.S(year)] / ms.OneK
+		star := ' '
+		//T, spendable, tax, rate, cg_tax, earlytax, rothearly := ms.IncomeSummary(year, xp)
+		if spendable+0.1 < (*xp)[ms.vindx.S(year)] || spendable-0.1 > (*xp)[ms.vindx.S(year)] {
+			// replace the model ouput with actual value and add star
+			// to indicate that we did so
+			s = spendable / ms.OneK
+			star = '*'
+		}
+		ms.ao.output(fmt.Sprintf("&@%7.0f%c", s, star))
+		//ao.output("&@%7.0f%c" % (s, star) )
+		ms.ao.output("\n")
+	}
+	ms.activitySummaryHeader(fieldwidth)
+}
+
 /*
 def print_income_expense_details():
     def print_income_header(headerlist, map, income_cat, fieldwidth):
-        names = ''
+        names = ""
         if S.secondary != "":
             names = "{}/{}".format(S.primary, S.secondary)
             age_width = 8
         else:
-            if S.primary != 'nokey':
+            if S.primary != "nokey":
                 names = "{}".format(S.primary)
             age_width = 5
-        ao.output('{:<{width}.{use}s}'.format(names, width=age_width, use=age_width))
+        ao.output("{:<{width}.{use}s}".format(names, width=age_width, use=age_width))
         for i in range(len(map)):
             if map[i]> 0:
                 ats = 1
                 if i > 0:
                     ats = map[i-1]
                 totalspace = fieldwidth*map[i] + map[i] -1 # -1 is for the &
-                ao.output("&{at:@<{at_width}.{at_width}s}{str:<{width}.{width}s}".format(str=income_cat[i], width=totalspace, at='@', at_width=ats))
+                ao.output("&{at:@<{at_width}.{at_width}s}{str:<{width}.{width}s}".format(str=income_cat[i], width=totalspace, at="@", at_width=ats))
         ao.output("\n")
-        ao.output("{str:>{width}s}".format(width=age_width, str='age '))
+        ao.output("{str:>{width}s}".format(width=age_width, str="age ""))
         for str in headerlist:
-            if str == 'nokey': # HAACCKKK
-                str = 'SS'
-            ao.output('&@{:>{width}.{width}s}'.format(str, width=fieldwidth))
+            if str == "nokey": # HAACCKKK
+                str = "SS"
+            ao.output("&@{:>{width}.{width}s}".format(str, width=fieldwidth))
         ao.output("\n")
 
     ao.output("\nIncome and Expense Summary:\n\n")
     headerlist, map, datamatrix = S.get_SS_income_asset_expense_list()
-    income_cat = ['SSincome:', 'Income:', 'AssetSale:', 'Expense:']
+    income_cat = ["SSincome:", "Income:", "AssetSale:", "Expense:""]
     fieldwidth = 8
     print_income_header(headerlist, map, income_cat, fieldwidth)
 
@@ -227,7 +244,7 @@ def print_income_expense_details():
         else:
             ao.output(" %3d:" % (year+S.startage))
         for i in range(len(datamatrix)):
-            ao.output("&@{:{width}.0f}".format(datamatrix[i][year]/OneK, width=fieldwidth))
+            ao.output("&@{:{width}.0f}".format(datamatrix[i][year]/ms.OneK, width=fieldwidth))
         ao.output("\n")
     print_income_header(headerlist, map, income_cat, fieldwidth)
 */
@@ -247,18 +264,18 @@ def print_account_trans(res):
             ao.output("%s/%s\n" % (S.primary, S.secondary))
             ao.output("    age ")
         else:
-            if S.primary != 'nokey':
+            if S.primary != "nokey":
                 ao.output("%s\n" % (S.primary))
             ao.output(" age ")
-        if S.accmap['IRA'] >1:
+        if S.accmap["IRA"] >1:
             ao.output(("&@%7s" * 8) % ("IRA1", "fIRA1", "tIRA1", "RMDref1", "IRA2", "fIRA2", "tIRA2", "RMDref2"))
-        elif S.accmap['IRA'] == 1:
+        elif S.accmap["IRA"] == 1:
             ao.output(("&@%7s" * 4) % ("IRA", "fIRA", "tIRA", "RMDref"))
-        if S.accmap['roth'] >1:
+        if S.accmap["roth"] >1:
             ao.output(("&@%7s" * 6) % ("Roth1", "fRoth1", "tRoth1", "Roth2", "fRoth2", "tRoth2"))
-        elif S.accmap['roth'] == 1:
+        elif S.accmap["roth"] == 1:
             ao.output(("&@%7s" * 3) % ("Roth", "fRoth", "tRoth"))
-        if S.accmap['IRA']+S.accmap['roth'] == len(S.accounttable)-1:
+        if S.accmap["IRA"]+S.accmap["roth"] == len(S.accounttable)-1:
             ao.output(("&@%7s" * 3) % ("AftaTx", "fAftaTx", "tAftaTx"))
         ao.output("\n")
 
@@ -271,17 +288,17 @@ def print_account_trans(res):
         ao.output("%3d/%3d:" % (S.primAge, S.primAge-S.delta))
     else:
         ao.output(" %3d:" % (S.primAge))
-    for i in range(S.accmap['IRA']):
+    for i in range(S.accmap["IRA"]):
         ao.output(("&@%7.0f" * 4) % (
-              S.accounttable[i]['origbal']/OneK, 0, S.accounttable[i]['contrib']/OneK, 0)) # IRAn
-    for i in range(S.accmap['roth']):
-        index = S.accmap['IRA'] + i
+              S.accounttable[i]["origbal"]/ms.OneK, 0, S.accounttable[i]["contrib"]/ms.OneK, 0)) # IRAn
+    for i in range(S.accmap["roth"]):
+        index = S.accmap["IRA"] + i
         ao.output(("&@%7.0f" * 3) % (
-              S.accounttable[index]['origbal']/OneK, 0, S.accounttable[index]['contrib']/OneK)) # rothn
-    index = S.accmap['IRA'] + S.accmap['roth']
+              S.accounttable[index]["origbal"]/ms.OneK, 0, S.accounttable[index]["contrib"]/ms.OneK)) # rothn
+    index = S.accmap["IRA"] + S.accmap["roth"]
     if index == len(S.accounttable)-1:
         ao.output(("&@%7.0f" * 3) % (
-                S.accounttable[index]['origbal']/OneK, 0, S.accounttable[index]['contrib']/OneK)) # aftertax
+                S.accounttable[index]["origbal"]/ms.OneK, 0, S.accounttable[index]["contrib"]/ms.OneK)) # aftertax
     ao.output("\n")
     ao.output("Plan Start: ---------\n")
     #
@@ -302,26 +319,26 @@ def print_account_trans(res):
             ao.output(" %3d:" % (year+S.startage))
         if S.accmap['IRA'] >1:
             ao.output(("&@%7.0f" * 8) % (
-              res.x[vindx.b(year,0)]/OneK, res.x[vindx.w(year,0)]/OneK, depositAmount(S, res, year, 0)/OneK, rmdref[0]/OneK, # IRA1
-              res.x[vindx.b(year,1)]/OneK, res.x[vindx.w(year,1)]/OneK, depositAmount(S, res, year, 1)/OneK, rmdref[1]/OneK)) # IRA2
+              res.x[vindx.b(year,0)]/ms.OneK, res.x[vindx.w(year,0)]/ms.OneK, depositAmount(S, res, year, 0)/ms.OneK, rmdref[0]/ms.OneK, # IRA1
+              res.x[vindx.b(year,1)]/ms.OneK, res.x[vindx.w(year,1)]/ms.OneK, depositAmount(S, res, year, 1)/ms.OneK, rmdref[1]/ms.OneK)) # IRA2
         elif S.accmap['IRA'] == 1:
             ao.output(("&@%7.0f" * 4) % (
-              res.x[vindx.b(year,0)]/OneK, res.x[vindx.w(year,0)]/OneK, depositAmount(S, res, year, 0)/OneK, rmdref[0]/OneK)) # IRA1
+              res.x[vindx.b(year,0)]/ms.OneK, res.x[vindx.w(year,0)]/ms.OneK, depositAmount(S, res, year, 0)/ms.OneK, rmdref[0]/ms.OneK)) # IRA1
         index = S.accmap['IRA']
         if S.accmap['roth'] >1:
             ao.output(("&@%7.0f" * 6) % (
-              res.x[vindx.b(year,index)]/OneK, res.x[vindx.w(year,index)]/OneK, depositAmount(S, res, year, index)/OneK, # roth1
-              res.x[vindx.b(year,index+1)]/OneK, res.x[vindx.w(year,index+1)]/OneK, depositAmount(S, res, year, index+1)/OneK)) # roth2
+              res.x[vindx.b(year,index)]/ms.OneK, res.x[vindx.w(year,index)]/ms.OneK, depositAmount(S, res, year, index)/ms.OneK, # roth1
+              res.x[vindx.b(year,index+1)]/ms.OneK, res.x[vindx.w(year,index+1)]/ms.OneK, depositAmount(S, res, year, index+1)/ms.OneK)) # roth2
         elif S.accmap['roth'] == 1:
             ao.output(("&@%7.0f" * 3) % (
-              res.x[vindx.b(year,index)]/OneK, res.x[vindx.w(year,index)]/OneK, depositAmount(S, res, year, index)/OneK)) # roth1
+              res.x[vindx.b(year,index)]/ms.OneK, res.x[vindx.w(year,index)]/ms.OneK, depositAmount(S, res, year, index)/ms.OneK)) # roth1
         index = S.accmap['IRA'] + S.accmap['roth']
         #assert index == len(S.accounttable)-1
         if index == len(S.accounttable)-1:
             ao.output(("&@%7.0f" * 3) % (
-                res.x[vindx.b(year,index)]/OneK,
-                res.x[vindx.w(year,index)]/OneK,
-                depositAmount(S, res, year, index)/OneK)) # aftertax account
+                res.x[vindx.b(year,index)]/ms.OneK,
+                res.x[vindx.w(year,index)]/ms.OneK,
+                depositAmount(S, res, year, index)/ms.OneK)) # aftertax account
         ao.output("\n")
     ao.output("Plan End: -----------\n")
     #
@@ -334,15 +351,15 @@ def print_account_trans(res):
         ao.output(" %3d:" % (year+S.startage))
     for i in range(S.accmap['IRA']):
         ao.output(("&@%7.0f" * 4) % (
-              res.x[vindx.b(year,i)]/OneK, 0, 0, 0)) # IRAn
+              res.x[vindx.b(year,i)]/ms.OneK, 0, 0, 0)) # IRAn
     for i in range(S.accmap['roth']):
         index = S.accmap['IRA'] + i
         ao.output(("&@%7.0f" * 3) % (
-              res.x[vindx.b(year,index)]/OneK, 0, 0)) # rothn
+              res.x[vindx.b(year,index)]/ms.OneK, 0, 0)) # rothn
     index = S.accmap['IRA'] + S.accmap['roth']
     if index == len(S.accounttable)-1:
         ao.output(("&@%7.0f" * 3) % (
-              res.x[vindx.b(year,index)]/OneK, 0, 0)) # aftertax
+              res.x[vindx.b(year,index)]/ms.OneK, 0, 0)) # aftertax
     ao.output("\n")
     print_acc_header1()
 */
@@ -382,12 +399,12 @@ def print_tax(res):
         if rothearly:
             star = '*'
         ao.output(("&@%7.0f" * 6 + "&@%6.0f%c" * 1 + "&@%7.0f" * 8 ) %
-              ( withdrawal['IRA']/OneK, deposit['IRA']/OneK, # sum IRA
-              S.taxed[year]/OneK, taxinfo.SS_taxable*S.SS[year]/OneK,
-              taxinfo.stded*i_mul/OneK, T/OneK, earlytax/OneK, star, tax/OneK, rate*100,
-                withdrawal['aftertax']/OneK, deposit['aftertax']/OneK,#Aftertax
-              f*100, cg_tax/OneK,
-              ttax/OneK, res.x[vindx.s(year)]/OneK ))
+              ( withdrawal['IRA']/ms.OneK, deposit['IRA']/ms.OneK, # sum IRA
+              S.taxed[year]/ms.OneK, taxinfo.SS_taxable*S.SS[year]/ms.OneK,
+              taxinfo.stded*i_mul/ms.OneK, T/ms.OneK, earlytax/ms.OneK, star, tax/ms.OneK, rate*100,
+                withdrawal['aftertax']/ms.OneK, deposit['aftertax']/ms.OneK,#Aftertax
+              f*100, cg_tax/ms.OneK,
+              ttax/ms.OneK, res.x[vindx.s(year)]/ms.OneK ))
         ao.output("\n")
     printheader_tax()
 */
@@ -436,9 +453,9 @@ def print_tax_brackets(res):
             deposit[S.accounttable[j]['acctype']] += depositAmount(S, res, year, j)
         ao.output(("&@%7.0f" * 7 ) %
               (
-              withdrawal['IRA']/OneK, deposit['IRA']/OneK, # IRA
-              S.taxed[year]/OneK, taxinfo.SS_taxable*S.SS[year]/OneK,
-              taxinfo.stded*i_mul/OneK, T/OneK, tax/OneK) )
+              withdrawal['IRA']/ms.OneK, deposit['IRA']/ms.OneK, # IRA
+              S.taxed[year]/ms.OneK, taxinfo.SS_taxable*S.SS[year]/ms.OneK,
+              taxinfo.stded*i_mul/ms.OneK, T/ms.OneK, tax/ms.OneK) )
         bt = 0
         for k in range(len(taxinfo.taxtable)):
             ao.output("&@%6.0f" % res.x[vindx.x(year,k)])
@@ -483,8 +500,8 @@ def print_cap_gains_brackets(res):
         if S.accmap['aftertax'] > 0:
             f = model.cg_taxable_fraction(year)
             j = len(S.accounttable)-1 # Aftertax / investment account always the last entry when present
-            atw = res.x[vindx.w(year,j)]/OneK # Aftertax / investment account
-            atd = depositAmount(S, res, year, j)/OneK # Aftertax / investment account
+            atw = res.x[vindx.w(year,j)]/ms.OneK # Aftertax / investment account
+            atd = depositAmount(S, res, year, j)/ms.OneK # Aftertax / investment account
             #
             # OK, this next bit can be confusing. In the line above atd
             # includes both the D(i,j) and net amount from sell of assets
@@ -493,9 +510,9 @@ def print_cap_gains_brackets(res):
             # separately in S.cg_asset_taxed. Given this we only ad to
             # cg_taxable the withdrawals over deposits, as is normal, plus
             # the taxable amounts from asset sales.
-            att = ((f*(res.x[vindx.w(year,j)]-res.x[vindx.D(year,j)]))+S.cg_asset_taxed[year])/OneK # non-basis fraction / cg taxable $
+            att = ((f*(res.x[vindx.w(year,j)]-res.x[vindx.D(year,j)]))+S.cg_asset_taxed[year])/ms.OneK # non-basis fraction / cg taxable $
             if atd > atw:
-                att = S.cg_asset_taxed[year]/OneK # non-basis fraction / cg taxable $
+                att = S.cg_asset_taxed[year]/ms.OneK # non-basis fraction / cg taxable $
         T,spendable,tax,rate,cg_tax,earlytax,rothearly = IncomeSummary(year)
         ttax = tax + cg_tax
         if S.secondary != "":
@@ -506,7 +523,7 @@ def print_cap_gains_brackets(res):
               (
               atw, atd, # Aftertax / investment account
               f*100, att, # non-basis fraction / cg taxable $
-              T/OneK, cg_tax/OneK))
+              T/ms.OneK, cg_tax/ms.OneK))
         bt = 0
         bttax = 0
         for l in range(len(taxinfo.capgainstable)):
@@ -780,9 +797,9 @@ if __name__ == '__main__':
     if args.verbosemodelall:
         non_binding_only = False
 
-    OneK = 1000.0
+    ms.OneK = 1000.0
     if args.noroundingoutput:
-        OneK = 1
+        ms.OneK = 1
 
     years = S.numyr
     taxbins = len(taxinfo.taxtable)
@@ -826,7 +843,8 @@ if __name__ == '__main__':
                 exit(1)
         consistancy_check(res, years, taxbins, cgbins, accounts, S.accmap, vindx)
 
-        print_model_results(res)
+        ms.printActivitySummary(res.x)
+        //print_model_results(res)
         if args.verboseincome:
             print_income_expense_details()
         if args.verboseaccounttrans:

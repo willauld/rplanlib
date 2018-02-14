@@ -2017,6 +2017,34 @@ func RestoreStdout(mechan chan string, oldStdout *os.File, writePipe *os.File, d
 	return str
 }
 
+func (ms *ModelSpecs) RedirectModelSpecsTable(mechan chan string) (*os.File, *os.File, error) {
+	oldtable := ms.ao.tableFile
+	readPipe, writePipe, err := os.Pipe()
+	if err != nil {
+		return oldtable, nil, err
+	}
+	ms.ao.tableFile = writePipe
+	go func() {
+		var buf bytes.Buffer
+		_, err := io.Copy(&buf, readPipe)
+		readPipe.Close()
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "func() copyPipe: %v\n", err)
+			return
+		}
+		mechan <- buf.String()
+	}()
+	return oldtable, writePipe, nil
+}
+
+func (ms *ModelSpecs) RestoreModelSpecsTable(mechan chan string, oldtable *os.File, writePipe *os.File) string {
+	// Reset the output again
+	writePipe.Close()
+	ms.ao.tableFile = oldtable
+	str := <-mechan
+	return str
+}
+
 func (ms *ModelSpecs) RedirectModelSpecsLog(mechan chan string) (*os.File, *os.File, error) {
 	oldlog := ms.logfile
 	readPipe, writePipe, err := os.Pipe()

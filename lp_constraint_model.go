@@ -50,11 +50,11 @@ type ModelSpecs struct {
 	assetSale    []float64
 	cgAssetTaxed []float64
 
-	verbose   bool
-	errfile   *os.File
-	logfile   *os.File
-	csvfile   *os.File
-	tablefile *os.File
+	verbose bool
+	errfile *os.File
+	logfile *os.File
+	//csvfile   *os.File
+	//tablefile *os.File
 
 	OneK float64
 }
@@ -217,9 +217,9 @@ func NewModelSpecs(vindx VectorVarIndex,
 		verbose:                 verbose,
 		errfile:                 errfile,
 		logfile:                 logfile,
-		csvfile:                 csvfile,
-		tablefile:               tablefile,
-		OneK:                    1.0, //1000.0,
+		//csvfile:                 csvfile,
+		//tablefile:               tablefile,
+		OneK: 1.0, //1000.0,
 	}
 
 	retirees := []retiree{

@@ -245,14 +245,6 @@ def print_income_expense_details():
     print_income_header(headerlist, map, income_cat, fieldwidth)
 */
 
-func (ms ModelSpecs) depositAmount(xp *[]float64, year int, index int) float64 {
-	amount := (*xp)[ms.vindx.D(year, index)]
-	if ms.accounttable[index].acctype == "aftertax" {
-		amount += ms.assetSale[year]
-	}
-	return amount
-}
-
 /*
 def print_account_trans(res):
     def print_acc_header1():
@@ -542,6 +534,14 @@ def print_cap_gains_brackets(res):
         #    print("y[2]remain: %6.0f " % (taxinfo.capgainstable[1][1]*i_mul - (res.x[vindx.x(year,2)]+ res.x[vindx.x(year,3)]+ res.x[vindx.x(year,4)]+res.x[vindx.x(year,5)])))
     printheader_capgains_brackets()
 */
+
+func (ms ModelSpecs) depositAmount(xp *[]float64, year int, index int) float64 {
+	amount := (*xp)[ms.vindx.D(year, index)]
+	if ms.accounttable[index].acctype == "aftertax" {
+		amount += ms.assetSale[year]
+	}
+	return amount
+}
 
 func (ms ModelSpecs) ordinaryTaxable(year int, xp *[]float64) float64 {
 	withdrawals := 0.0

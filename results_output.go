@@ -84,7 +84,7 @@ def consistancy_check(res, years, taxbins, cgbins, accounts, accmap, vindx):
                     print("Inproperly packed GC tax brackets in year %d bracket %d" % (year, l))
                 if bamount == 0.0:
                     fz = True
-        TaxableOrdinary = OrdinaryTaxable(year)
+        TaxableOrdinary = ordinaryTaxable(year)
         if (TaxableOrdinary + 0.1 < s) or (TaxableOrdinary - 0.1 > s):
             print("Error: Expected (age:%d) Taxable Ordinary income %6.2f doesn't match bracket sum %6.2f" %
                 (year + S.startage, TaxableOrdinary,s))
@@ -151,10 +151,8 @@ func (ms ModelSpecs) printActivitySummary(xp *[]float64) {
 	fieldwidth := 7
 	ms.activitySummaryHeader(fieldwidth)
 	for year := 0; year < ms.ip.numyr; year++ {
-		//i_mul := math.Pow(ms.ip.iRate, float64(ms.ip.prePlanYears+year))
-		//age := year + ms.ip.startPlan
-		//T, spendable, tax, rate, cg_tax, earlytax, rothearly := ms.IncomeSummary(year, xp)
-		_, spendable, tax, _, cg_tax, earlytax, _ := ms.IncomeSummary(year, xp)
+		//T, spendable, tax, rate, cgtax, earlytax, rothearly := ms.IncomeSummary(year, xp)
+		_, spendable, tax, _, cgtax, earlytax, _ := ms.IncomeSummary(year, xp)
 
 		rmdref := 0.0
 		for j := 0; j < intMin(2, len(ms.accounttable)); j++ { // at most the first two accounts are type IRA w/ RMD requirement
@@ -182,7 +180,7 @@ func (ms ModelSpecs) printActivitySummary(xp *[]float64) {
 			withdrawal["roth"] / ms.OneK, deposit["roth"] / ms.OneK, // Roth
 			withdrawal["aftertax"] / ms.OneK, deposit["aftertax"] / ms.OneK, //D, // AftaTax
 			accessVector(ms.income, year) / ms.OneK, accessVector(ms.SS, year) / ms.OneK, accessVector(ms.expenses, year) / ms.OneK,
-			(tax + cg_tax + earlytax) / ms.OneK}
+			(tax + cgtax + earlytax) / ms.OneK}
 		for _, f := range items {
 			format := fmt.Sprintf("&@%%%d.0f", fieldwidth)
 			str := fmt.Sprintf(format, f)
@@ -191,7 +189,6 @@ func (ms ModelSpecs) printActivitySummary(xp *[]float64) {
 		}
 		s := (*xp)[ms.vindx.S(year)] / ms.OneK
 		star := ' '
-		//T, spendable, tax, rate, cg_tax, earlytax, rothearly := ms.IncomeSummary(year, xp)
 		if spendable+0.1 < (*xp)[ms.vindx.S(year)] || spendable-0.1 > (*xp)[ms.vindx.S(year)] {
 			// replace the model ouput with actual value and add star
 			// to indicate that we did so
@@ -199,7 +196,6 @@ func (ms ModelSpecs) printActivitySummary(xp *[]float64) {
 			star = '*'
 		}
 		ms.ao.output(fmt.Sprintf("&@%7.0f%c", s, star))
-		//ao.output("&@%7.0f%c" % (s, star) )
 		ms.ao.output("\n")
 	}
 	ms.activitySummaryHeader(fieldwidth)
@@ -547,7 +543,7 @@ def print_cap_gains_brackets(res):
     printheader_capgains_brackets()
 */
 
-func (ms ModelSpecs) OrdinaryTaxable(year int, xp *[]float64) float64 {
+func (ms ModelSpecs) ordinaryTaxable(year int, xp *[]float64) float64 {
 	withdrawals := 0.0
 	deposits := 0.0
 	for j := 0; j < intMin(2, len(ms.accounttable)); j++ {
@@ -567,9 +563,8 @@ func (ms ModelSpecs) OrdinaryTaxable(year int, xp *[]float64) float64 {
 func (ms ModelSpecs) IncomeSummary(year int, xp *[]float64) (T, spendable, tax, rate, ncgtax, earlytax float64, rothearly bool) {
 	// TODO clean up and simplify this fuction
 	//
-	// return OrdinaryTaxable, Spendable, Tax, Rate, CG_Tax
+	// return ordinaryTaxable, Spendable, Tax, Rate, CG_Tax
 	// Need to account for withdrawals from IRA deposited in Investment account NOT SPENDABLE
-	//age := year + ms.ip.startPlan
 	earlytax = 0.0
 	rothearly = false
 	for j, acc := range ms.accounttable {
@@ -582,7 +577,7 @@ func (ms ModelSpecs) IncomeSummary(year int, xp *[]float64) (T, spendable, tax, 
 			}
 		}
 	}
-	T = ms.OrdinaryTaxable(year, xp)
+	T = ms.ordinaryTaxable(year, xp)
 	ntax := 0.0
 	rate = 0.0
 	for k := 0; k < len(*ms.ti.Taxtable); k++ {

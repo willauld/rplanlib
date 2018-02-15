@@ -362,9 +362,44 @@ func TestDepositAmount(t *testing.T) {
 	}
 }
 
+//TODO complete TestOrdinaryTaxable after more print function are working
 //func (ms ModelSpecs) ordinaryTaxable(year int, xp *[]float64) float64
 func TestOrdinaryTaxable(t *testing.T) {
-	fmt.Printf("Not Yet Implemented\n")
+	tests := []struct {
+		sip    map[string]string
+		sxp    *[]float64
+		year   int
+		expect float64
+	}{
+		{
+			sip:    sipSingle,
+			sxp:    xpSingle,
+			year:   7,
+			expect: 0.0,
+		},
+	}
+	for i, elem := range tests {
+		fmt.Printf("======== CASE %d ========\n", i)
+		ip := NewInputParams(elem.sip)
+		//fmt.Printf("InputParams: %#v\n", ip)
+		ti := NewTaxInfo(ip.filingStatus)
+		taxbins := len(*ti.Taxtable)
+		cgbins := len(*ti.Capgainstable)
+		vindx, err := NewVectorVarIndex(ip.numyr, taxbins,
+			cgbins, ip.accmap, os.Stdout)
+		if err != nil {
+			t.Errorf("TestOrdinaryTaxable case %d: %s", i, err)
+			continue
+		}
+		logfile := os.Stdout
+		csvfile := (*os.File)(nil)
+		ms := NewModelSpecs(vindx, ti, ip, false,
+			false, os.Stderr, logfile, csvfile, logfile)
+		ot := ms.ordinaryTaxable(elem.year, elem.sxp)
+		if ot != elem.expect {
+			t.Errorf("TestOrdinaryTaxable case %d: expected %f, found %f\n", i, elem.expect, ot)
+		}
+	}
 }
 
 //func (ms ModelSpecs) IncomeSummary(year int, xp *[]float64) (T, spendable, tax, rate, ncgtax, earlytax float64, rothearly bool)
@@ -380,7 +415,89 @@ func TestGetResultTotals(t *testing.T) {
 
 //func (ms ModelSpecs) printBaseConfig(xp *[]float64)  // input is res.x
 func TestPrintBaseConfig(t *testing.T) {
-	fmt.Printf("Not Yet Implemented\n")
+	tests := []struct {
+		sip    map[string]string
+		sxp    *[]float64
+		expect string
+	}{
+		{ // case 0
+			sip: sipSingle,
+			sxp: xpSingle,
+			expect: `======
+Optimized for Spending with single status
+	starting at age 65 with an estate of $379_660 liquid and $0 illiquid
+
+No desired minium or maximum amount specified
+
+After tax yearly income: $37_164 adjusting for inflation
+	and final estate at age 76 with $0 liquid and $0 illiquid
+
+total withdrawals: $506_759
+total ordinary taxable income $336_414
+total ordinary tax on all taxable income: $42_825 (12.7%) of taxable income
+total income (withdrawals + other) $506_759
+total cap gains tax: $0
+total all tax on all income: $42_825 (8.5%)
+Total spendable (after tax money): $463_934`,
+		},
+		{ // case 1
+			sip: sipJoint,
+			sxp: xpJoint,
+			expect: `======
+Optimized for Spending with joint status
+	starting at age 65 with an estate of $379_660 liquid and $0 illiquid
+
+No desired minium or maximum amount specified
+
+After tax yearly income: $39_264 adjusting for inflation
+	and final estate at age 76 with $0 liquid and $0 illiquid
+
+total withdrawals: $506_759
+total ordinary taxable income $166_068
+total ordinary tax on all taxable income: $16_607 (10.0%) of taxable income
+total income (withdrawals + other) $506_759
+total cap gains tax: $0
+total all tax on all income: $16_607 (3.3%)
+Total spendable (after tax money): $490_153`,
+		},
+	}
+	for i, elem := range tests {
+		fmt.Printf("======== CASE %d ========\n", i)
+		ip := NewInputParams(elem.sip)
+		//fmt.Printf("InputParams: %#v\n", ip)
+		ti := NewTaxInfo(ip.filingStatus)
+		taxbins := len(*ti.Taxtable)
+		cgbins := len(*ti.Capgainstable)
+		vindx, err := NewVectorVarIndex(ip.numyr, taxbins,
+			cgbins, ip.accmap, os.Stdout)
+		if err != nil {
+			t.Errorf("TestOrdinaryTaxable case %d: %s", i, err)
+			continue
+		}
+		logfile := os.Stdout
+		csvfile := (*os.File)(nil)
+		ms := NewModelSpecs(vindx, ti, ip, false,
+			false, os.Stderr, logfile, csvfile, logfile)
+
+		mychan := make(chan string)
+		DoNothing := false //true
+		oldout, w, err := ms.RedirectModelSpecsTable(mychan, DoNothing)
+		if err != nil {
+			t.Errorf("RedirectModelSpecsTable: %s\n", err)
+			return // should this be continue?
+		}
+
+		ms.printBaseConfig(elem.sxp)
+
+		str := ms.RestoreModelSpecsTable(mychan, oldout, w, DoNothing)
+		strn := strings.TrimSpace(str)
+		//strn := stripWhitespace(str)
+		//ot := ms.ordinaryTaxable(elem.year, elem.sxp)
+		if strn != elem.expect {
+			//showStrMismatch(elem.expect, strn)
+			t.Errorf("TestPrintBaseConfig case %d: expected\n'%s'\nfound '%s'\n", i, elem.expect, strn)
+		}
+	}
 }
 
 //def verifyInputs( c , A , b ):

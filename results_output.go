@@ -143,7 +143,6 @@ func (ms ModelSpecs) activitySummaryHeader(fieldwidth int) {
 	ms.ao.output("\n")
 }
 
-// TODO NEXT UP
 func (ms ModelSpecs) printActivitySummary(xp *[]float64) {
 
 	ms.ao.output("\nActivity Summary:\n")

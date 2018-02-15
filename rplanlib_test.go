@@ -2017,7 +2017,10 @@ func RestoreStdout(mechan chan string, oldStdout *os.File, writePipe *os.File, d
 	return str
 }
 
-func (ms *ModelSpecs) RedirectModelSpecsTable(mechan chan string) (*os.File, *os.File, error) {
+func (ms *ModelSpecs) RedirectModelSpecsTable(mechan chan string, DoNothing bool) (*os.File, *os.File, error) {
+	if DoNothing {
+		return nil, nil, nil
+	}
 	oldtable := ms.ao.tableFile
 	readPipe, writePipe, err := os.Pipe()
 	if err != nil {
@@ -2037,7 +2040,10 @@ func (ms *ModelSpecs) RedirectModelSpecsTable(mechan chan string) (*os.File, *os
 	return oldtable, writePipe, nil
 }
 
-func (ms *ModelSpecs) RestoreModelSpecsTable(mechan chan string, oldtable *os.File, writePipe *os.File) string {
+func (ms *ModelSpecs) RestoreModelSpecsTable(mechan chan string, oldtable *os.File, writePipe *os.File, DoNothing bool) string {
+	if DoNothing {
+		return ""
+	}
 	// Reset the output again
 	writePipe.Close()
 	ms.ao.tableFile = oldtable

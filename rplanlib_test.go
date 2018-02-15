@@ -1868,10 +1868,6 @@ func TestPrintModelRow(t *testing.T) {
 			t.Errorf("PrintModelRow case %d: %s", i, err)
 			continue
 		}
-		numaccounts := 0
-		for _, acc := range ip.accmap {
-			numaccounts += acc
-		}
 		ms := ModelSpecs{
 			ip:      ip,
 			vindx:   vindx,

@@ -273,7 +273,7 @@ retiree1/retiree2
 	}
 }
 
-func showStrMismatch(s1, s2 string) {
+func showStrMismatch(s1, s2 string) { // TODO move to Utility functions
 	for i := 0; i < len(s1); i++ {
 		if s1[i] != s2[i] {
 			fmt.Printf("Char#: %d, CharVals1: %c, CharInts1: %d, CharVals2: %c, CharInts2: %d\n", i, s1[i], s1[i], s2[i], s2[i])
@@ -311,7 +311,55 @@ func TestPrintCapGainsBrackets(t *testing.T) {
 
 //func (ms ModelSpecs) depositAmount(xp *[]float64, year int, index int) float64
 func TestDepositAmount(t *testing.T) {
-	fmt.Printf("Not Yet Implemented\n")
+	tests := []struct {
+		year     int
+		index    int
+		expected float64
+	}{
+		{ // CASE 0
+			year:     5,
+			index:    0,
+			expected: 0.0,
+		},
+		{ // CASE 1
+			year:     5,
+			index:    1,
+			expected: 20000.0,
+		},
+	}
+	for i, elem := range tests {
+		ip := NewInputParams(sipSingle)
+		ti := NewTaxInfo(ip.filingStatus)
+		taxbins := len(*ti.Taxtable)
+		cgbins := len(*ti.Capgainstable)
+		vindx, err := NewVectorVarIndex(ip.numyr, taxbins, cgbins, ip.accmap, os.Stdout)
+		if err != nil {
+			t.Errorf("PrintModelRow case %d: %s", i, err)
+			continue
+		}
+		ms := ModelSpecs{
+			ip:      ip,
+			vindx:   vindx,
+			ti:      ti,
+			logfile: os.Stdout,
+			errfile: os.Stderr,
+			accounttable: []account{
+				{
+					acctype: "IRA",
+				},
+				{
+					acctype: "aftertax",
+				},
+			},
+			assetSale: make([]float64, ip.numyr),
+		}
+		ms.assetSale[5] = 20000
+
+		damount := ms.depositAmount(xpSingle, elem.year, elem.index)
+		if damount != elem.expected {
+			t.Errorf("PrintdepositAmount case %d: expected: %f found %f\n", i, elem.expected, damount)
+		}
+	}
 }
 
 //func (ms ModelSpecs) ordinaryTaxable(year int, xp *[]float64) float64
@@ -529,7 +577,7 @@ func createDefX(xp *[]float64) {
 	fmt.Printf("}\n")
 }
 
-var xpJoint = &[]float64{
+var xpJoint = &[]float64{ // using sipJoint InputParameters
 	13303.039872341637, 0, 0, 0, 0,
 	0, 0, 13635.615869150632, 0, 0,
 	0, 0, 0, 0, 13976.506265879383,
@@ -557,7 +605,7 @@ var xpJoint = &[]float64{
 	0, 0,
 }
 
-var xpSingle = &[]float64{
+var xpSingle = &[]float64{ // using sipSingle input parameters
 	12235.208083996806, 14713.53302947793, 0, 0, 0,
 	0, 0, 12541.088286096725, 15081.371355215406, 0,
 	0, 0, 0, 0, 12854.615493249144,

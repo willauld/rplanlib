@@ -537,7 +537,7 @@ def print_cap_gains_brackets(res):
 func (ms ModelSpecs) depositAmount(xp *[]float64, year int, index int) float64 {
 	amount := (*xp)[ms.vindx.D(year, index)]
 	if ms.accounttable[index].acctype == "aftertax" {
-		amount += ms.assetSale[year]
+		amount += accessVector(ms.assetSale, year)
 	}
 	return amount
 }

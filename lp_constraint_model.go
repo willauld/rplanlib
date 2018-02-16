@@ -41,13 +41,16 @@ type ModelSpecs struct {
 	accounttable           []account
 	retirees               []retiree
 
-	income       []float64
-	SS           []float64
-	SS1          []float64
-	SS2          []float64
-	expenses     []float64
+	SS         [][]float64 // SS[0] is combined, SS[1] for retiree1 ...
+	SStag      []string    // ...
+	income     [][]float64 // income[0] is combined, income[1] first income stream...
+	incometag  []string    // ...
+	assetSale  [][]float64 // assetSale[0] combined, assetSale[1] first asset
+	assettag   []string    // ...
+	expenses   [][]float64 // expenses[0] combined, expensee[1] first expense
+	expensetag []string    // ...
+
 	taxed        []float64
-	assetSale    []float64
 	cgAssetTaxed []float64
 
 	verbose bool
@@ -348,7 +351,8 @@ func NewModelSpecs(vindx VectorVarIndex,
 	if err != nil {
 		fmt.Fprintf(errfile, "BuildVector Failed: %s\n", err)
 	}
-	ms.income = income
+	ms.income = make([][]float64, 0)
+	ms.income = append(ms.income, income)
 
 	/*
 		ms.SS1, err := buildVector(ip.PIA1, ip.SSStart1, ip.endPlan, ip.startPlan, ip.endPlan, ms.ip.iRate, ip.age1)
@@ -364,7 +368,12 @@ func NewModelSpecs(vindx VectorVarIndex,
 			fmt.Fprintf(errfile, "mergeVector Failed: %s\n", err)
 		}
 	*/
-	ms.SS, ms.SS1, ms.SS2 = processSS(&ip)
+	ms.SS = make([][]float64, 0)
+	SS, SS1, SS2 := processSS(&ip)
+	ms.SS = append(ms.SS, SS)
+	ms.SS = append(ms.SS, SS1)
+	ms.SS = append(ms.SS, SS2)
+
 	//fmt.Printf("SS1: %v\n", ms.SS1)
 	//fmt.Printf("SS2: %v\n", ms.SS2)
 	//fmt.Printf("SS: %v\n", ms.SS)
@@ -377,7 +386,8 @@ func NewModelSpecs(vindx VectorVarIndex,
 	if err != nil {
 		fmt.Fprintf(errfile, "BuildVector Failed: %s\n", err)
 	}
-	ms.expenses = expenses
+	ms.expenses = make([][]float64, 0)
+	ms.expenses = append(ms.expenses, expenses)
 
 	//taxed: []float64 // TODO add real income vector, dummy for now
 	tax1 := 0
@@ -394,7 +404,8 @@ func NewModelSpecs(vindx VectorVarIndex,
 	if err != nil {
 		fmt.Fprintf(errfile, "BuildVector Failed: %s\n", err)
 	}
-	ms.assetSale = assetSale
+	ms.assetSale = make([][]float64, 0)
+	ms.assetSale = append(ms.assetSale, assetSale)
 
 	//cg_asset_taxed: []float64 // TODO add real income vector, dummy for now
 	cgtax1 := 0
@@ -503,7 +514,7 @@ func (ms ModelSpecs) BuildModel() ([]float64, [][]float64, []float64, []ModelNot
 		}
 		row[ms.vindx.S(year)] = 1
 		A = append(A, row)
-		b = append(b, accessVector(ms.income, year)+accessVector(ms.SS, year)-accessVector(ms.expenses, year))
+		b = append(b, accessVector(ms.income[0], year)+accessVector(ms.SS[0], year)-accessVector(ms.expenses[0], year))
 	}
 	//
 	// Add constraint (3a')
@@ -690,7 +701,7 @@ func (ms ModelSpecs) BuildModel() ([]float64, [][]float64, []float64, []ModelNot
 			row[ms.vindx.X(year, k)] = -1
 		}
 		A = append(A, row)
-		b = append(b, ms.ti.Stded*adjInf-accessVector(ms.taxed, year)-ms.ti.SStaxable*accessVector(ms.SS, year))
+		b = append(b, ms.ti.Stded*adjInf-accessVector(ms.taxed, year)-ms.ti.SStaxable*accessVector(ms.SS[0], year))
 	}
 	//
 	// Add constraints for (12')
@@ -784,7 +795,7 @@ func (ms ModelSpecs) BuildModel() ([]float64, [][]float64, []float64, []ModelNot
 			// In the event of a sell of an asset for the year
 			temp := 0.0
 			if ms.accounttable[j].acctype == "aftertax" {
-				temp = ms.assetSale[year] * ms.accounttable[j].rRate //TODO test
+				temp = accessVector(ms.assetSale[0], year) * ms.accounttable[j].rRate //TODO test
 			}
 			b = append(b, temp)
 		}
@@ -804,7 +815,7 @@ func (ms ModelSpecs) BuildModel() ([]float64, [][]float64, []float64, []ModelNot
 			A = append(A, row)
 			temp := 0.0
 			if ms.accounttable[j].acctype == "aftertax" {
-				temp = -1 * ms.assetSale[year] * ms.accounttable[j].rRate //TODO test
+				temp = -1 * accessVector(ms.assetSale[0], year) * ms.accounttable[j].rRate //TODO test
 			}
 			b = append(b, temp)
 		}

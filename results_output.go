@@ -178,7 +178,7 @@ func (ms ModelSpecs) printActivitySummary(xp *[]float64) {
 		items := []float64{withdrawal["IRA"] / ms.OneK, deposit["IRA"] / ms.OneK, rmdref / ms.OneK, // IRA
 			withdrawal["roth"] / ms.OneK, deposit["roth"] / ms.OneK, // Roth
 			withdrawal["aftertax"] / ms.OneK, deposit["aftertax"] / ms.OneK, //D, // AftaTax
-			accessVector(ms.income, year) / ms.OneK, accessVector(ms.SS, year) / ms.OneK, accessVector(ms.expenses, year) / ms.OneK,
+			accessVector(ms.income[0], year) / ms.OneK, accessVector(ms.SS[0], year) / ms.OneK, accessVector(ms.expenses[0], year) / ms.OneK,
 			(tax + cgtax + earlytax) / ms.OneK}
 		for _, f := range items {
 			format := fmt.Sprintf("&@%%%d.0f", fieldwidth)
@@ -200,36 +200,93 @@ func (ms ModelSpecs) printActivitySummary(xp *[]float64) {
 	ms.activitySummaryHeader(fieldwidth)
 }
 
-/*
-def print_income_expense_details():
-    def print_income_header(headerlist, map, income_cat, fieldwidth):
-        names = ""
-        if S.secondary != "":
-            names = "{}/{}".format(S.primary, S.secondary)
-            age_width = 8
-        else:
-            if S.primary != "nokey":
-                names = "{}".format(S.primary)
-            age_width = 5
-        ao.output("{:<{width}.{use}s}".format(names, width=age_width, use=age_width))
-        for i in range(len(map)):
-            if map[i]> 0:
-                ats = 1
-                if i > 0:
-                    ats = map[i-1]
-                totalspace = fieldwidth*map[i] + map[i] -1 # -1 is for the &
-                ao.output("&{at:@<{at_width}.{at_width}s}{str:<{width}.{width}s}".format(str=income_cat[i], width=totalspace, at="@", at_width=ats))
-        ao.output("\n")
-        ao.output("{str:>{width}s}".format(width=age_width, str="age ""))
-        for str in headerlist:
-            if str == "nokey": # HAACCKKK
-                str = "SS"
-            ao.output("&@{:>{width}.{width}s}".format(str, width=fieldwidth))
-        ao.output("\n")
+func (ms ModelSpecs) printIncomeHeader(headerkeylist []string, countlist []int, incomeCat []string, fieldwidth int) {
+	if len(countlist) != len(incomeCat) {
+		e := fmt.Errorf("printIncomeHearder: lenth of countlist(%d) != length of incomeCat(%d)", len(countlist), len(incomeCat))
+		panic(e)
+	}
+	atList := "@@@@@@@@@@@@@@@@@@@@"
+	var ageWidth int
+	names := ""
+	if ms.ip.myKey2 != "" && ms.ip.filingStatus == "joint" {
+		names = fmt.Sprintf("%s/%s", ms.ip.myKey1, ms.ip.myKey2)
+		ageWidth = 8
+	} else {
+		if ms.ip.myKey1 != "nokey" {
+			names = fmt.Sprintf("%s", ms.ip.myKey1)
+		}
+		ageWidth = 5
+	}
+	str := fmt.Sprintf("%[1]*.[1]*[2]s", ageWidth, names)
+	ms.ao.output(str)
+	for i := 0; i < len(countlist); i++ {
+		if countlist[i] > 0 {
+			ats := 1 // number of '@' to add
+			if i > 0 {
+				ats = countlist[i-1]
+			}
+			totalspace := fieldwidth*countlist[i] + countlist[i] - 1 // -1 is for the &
+			str = fmt.Sprintf("&%s%-[3]*.[3]*[2]s", atList[:ats], incomeCat[i], totalspace)
+			ms.ao.output(str)
+		}
+	}
+	ms.ao.output("\n")
+	str = fmt.Sprintf("%[1]*[2]s", ageWidth, "age ")
+	ms.ao.output(str)
+	for _, str := range headerkeylist {
+		if str == "nokey" { // HAACCKKK
+			str = "SS"
+		}
+		ms.ao.output(fmt.Sprintf("&@%[2]*.[2]*[1]s", str, fieldwidth))
+	}
+	ms.ao.output("\n")
+}
 
+/**/
+func (ms ModelSpecs) getSSIncomeAssetExpenseList() ([]string, []int, [][]float64) {
+	typeList := []string{"SocialSecurity", "income", "asset", "expense"}
+	headerlist := make([]string, 0)
+	countlist := make([]int, 0)
+	datamatrix := make([][]float64, 0)
+	var vp *[][]float64
+	var vt *[]string
+	for _, t := range typeList {
+		switch t {
+		case "SocialSecurity":
+			vp = &ms.SS
+			vt = &ms.SStag
+		case "income":
+			vp = &ms.income
+			vt = &ms.incometag
+		case "asset":
+			vp = &ms.assetSale
+			vt = &ms.assettag
+		case "expense":
+			vp = &ms.expenses
+			vt = &ms.expensetag
+		}
+		count := 0
+		for elem := 1; elem < len(*vp); elem++ {
+			if len(*vp) != len(*vt) {
+				e := fmt.Errorf("getSSIncomeAssetExpenseList: vector lengths do not match (%d vs. %d)", len(*vp), len(*vt))
+				fmt.Printf("*vp: %#v\n", *vp)
+				fmt.Printf("*vt: %#v\n", *vt)
+				panic(e)
+			}
+			datamatrix = append(datamatrix, (*vp)[elem])
+			headerlist = append(headerlist, (*vt)[elem])
+			count++
+		}
+		countlist = append(countlist, count)
+	}
+	return headerlist, countlist, datamatrix
+}
+
+/*
+func printIncomeExpenseDetails() {
     ao.output("\nIncome and Expense Summary:\n\n")
-    headerlist, map, datamatrix = S.get_SS_income_asset_expense_list()
-    income_cat = ["SSincome:", "Income:", "AssetSale:", "Expense:""]
+    headerlist, map, datamatrix := ms.getSSIncomeAssetExpenseList()
+    income_cat = ["SSincome:", "Income:", "AssetSale:", "Expense:"]
     fieldwidth = 8
     print_income_header(headerlist, map, income_cat, fieldwidth)
 
@@ -242,6 +299,7 @@ def print_income_expense_details():
             ao.output("&@{:{width}.0f}".format(datamatrix[i][year]/ms.OneK, width=fieldwidth))
         ao.output("\n")
     print_income_header(headerlist, map, income_cat, fieldwidth)
+}
 */
 
 /*
@@ -537,7 +595,7 @@ def print_cap_gains_brackets(res):
 func (ms ModelSpecs) depositAmount(xp *[]float64, year int, index int) float64 {
 	amount := (*xp)[ms.vindx.D(year, index)]
 	if ms.accounttable[index].acctype == "aftertax" {
-		amount += accessVector(ms.assetSale, year)
+		amount += accessVector(ms.assetSale[0], year)
 	}
 	return amount
 }
@@ -551,7 +609,7 @@ func (ms ModelSpecs) ordinaryTaxable(year int, xp *[]float64) float64 {
 			deposits += ms.depositAmount(xp, year, j)
 		}
 	}
-	T := withdrawals - deposits + accessVector(ms.taxed, year) + ms.ti.SStaxable*accessVector(ms.SS, year) - (ms.ti.Stded * math.Pow(ms.ip.iRate, float64(ms.ip.prePlanYears+year)))
+	T := withdrawals - deposits + accessVector(ms.taxed, year) + ms.ti.SStaxable*accessVector(ms.SS[0], year) - (ms.ti.Stded * math.Pow(ms.ip.iRate, float64(ms.ip.prePlanYears+year)))
 	if T < 0 {
 		T = 0
 	}
@@ -601,7 +659,7 @@ func (ms ModelSpecs) IncomeSummary(year int, xp *[]float64) (T, spendable, tax, 
 	for j := 0; j < len(ms.accounttable); j++ {
 		totWithdrawals += (*xp)[ms.vindx.W(year, j)]
 	}
-	spendable = totWithdrawals - D + accessVector(ms.income, year) + accessVector(ms.SS, year) - accessVector(ms.expenses, year) - tax - ncgtax - earlytax + accessVector(ms.assetSale, year)
+	spendable = totWithdrawals - D + accessVector(ms.income[0], year) + accessVector(ms.SS[0], year) - accessVector(ms.expenses[0], year) - tax - ncgtax - earlytax + accessVector(ms.assetSale[0], year)
 	return T, spendable, tax, rate, ncgtax, earlytax, rothearly
 }
 
@@ -621,7 +679,7 @@ func (ms ModelSpecs) getResultTotals(xp *[]float64) (twithd, tcombined, tT, ttax
 			totWithdrawals += (*xp)[ms.vindx.W(year, j)]
 		}
 		twithd += totWithdrawals
-		tincome += accessVector(ms.income, year) + accessVector(ms.SS, year) // + withdrawals
+		tincome += accessVector(ms.income[0], year) + accessVector(ms.SS[0], year) // + withdrawals
 		ttax += tax
 		tcgtax += cgtax
 		tearlytax += earlytax

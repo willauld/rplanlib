@@ -273,12 +273,188 @@ retiree1/retiree2
 	}
 }
 
+//func (ms ModelSpecs) printIncomeHeader(headerkeylist []string, countlist []int, incomeCat []string, fieldwidth int)
+func TestPrintIncomeHeader(t *testing.T) {
+	tests := []struct {
+		sip        map[string]string
+		expect     string
+		headerlist []string
+		countlist  []int
+		csvfile    *os.File
+		tablefile  *os.File
+	}{
+		{ //case 0
+			sip:       sipJoint,
+			countlist: []int{0, 0, 0, 0},
+			expect: `retiree1
+    age`,
+			csvfile:   (*os.File)(nil),
+			tablefile: os.Stdout,
+		},
+		{ //case 1
+			sip:       sipSingle,
+			countlist: []int{0, 0, 0, 0},
+			expect: `retir
+ age`,
+			csvfile:   (*os.File)(nil),
+			tablefile: os.Stdout,
+		},
+		{ //case 2
+			sip:        sipJoint,
+			countlist:  []int{1, 0, 0, 0},
+			headerlist: []string{"nokey"},
+			expect: `retiree1 SSincome
+    age        SS`,
+			csvfile:   (*os.File)(nil),
+			tablefile: os.Stdout,
+		},
+		{ //case 3
+			sip:       sipJoint,
+			countlist: []int{3, 3, 3, 3},
+			headerlist: []string{
+				"SS1", "SS2", "SS3", "income1", "income2",
+				"income3", "asset1", "asset2", "asset3",
+				"expense1", "expense2", "expense3",
+			},
+			expect: `retiree1 SSincome:                  Income:                    AssetSale:                 Expense:                  
+    age       SS1      SS2      SS3  income1  income2  income3   asset1   asset2   asset3 expense1 expense2 expense3`,
+			csvfile:   (*os.File)(nil),
+			tablefile: os.Stdout,
+		},
+	}
+	for i, elem := range tests {
+		//fmt.Printf("=============== Case %d =================\n", i)
+		ip := NewInputParams(elem.sip)
+		ms := ModelSpecs{
+			ip:        ip,
+			logfile:   os.Stdout,
+			errfile:   os.Stderr,
+			ao:        NewAppOutput(elem.csvfile, elem.tablefile),
+			assetSale: make([][]float64, 0),
+		}
+		ms.assetSale = append(ms.assetSale, make([]float64, ip.numyr))
+
+		mychan := make(chan string)
+		DoNothing := false //true
+		oldout, w, err := ms.RedirectModelSpecsTable(mychan, DoNothing)
+		if err != nil {
+			t.Errorf("RedirectModelSpecsTable: %s\n", err)
+			return // should this be continue?
+		}
+
+		incomeCat := []string{"SSincome:", "Income:", "AssetSale:", "Expense:"}
+		fieldwidth := 8
+		ms.printIncomeHeader(elem.headerlist, elem.countlist, incomeCat, fieldwidth)
+
+		str := ms.RestoreModelSpecsTable(mychan, oldout, w, DoNothing)
+		strn := strings.TrimSpace(str)
+		if elem.expect != strn {
+			//showStrMismatch(elem.expect, strn)
+			t.Errorf("TestPrintIncomeHeader case %d:  expected output:\n\t '%s'\n\tbut found:\n\t'%s'\n", i, elem.expect, strn)
+		}
+	}
+}
+
+//func (ms ModelSpecs) getSSIncomeAssetExpenseList() ([]string, []int, [][]float64)
+func TestGetIncomeAssetExpenseList(t *testing.T) {
+	tests := []struct {
+		sip map[string]string
+		//expect        string
+		//headerkeylist []string
+		//countlist     []int
+		//csvfile       *os.File
+		//tablefile     *os.File
+		incomeStreams  int
+		expenseStreams int
+		SSStreams      int
+		AssetStreams   int
+	}{
+		{ //case 0
+			incomeStreams:  3,
+			expenseStreams: 3,
+			SSStreams:      3,
+			AssetStreams:   3,
+			sip:            sipJoint,
+			//countlist: []int{0, 0, 0, 0},
+			//expect: ``,
+			//csvfile:   (*os.File)(nil),
+			//tablefile: os.Stdout,
+		},
+	}
+	for i, elem := range tests {
+		fmt.Printf("=============== Case %d =================\n", i)
+		ip := NewInputParams(elem.sip)
+		ms := ModelSpecs{
+			//ip:      ip,
+			//logfile: os.Stdout,
+			//errfile: os.Stderr,
+			//ao:      NewAppOutput(elem.csvfile, elem.tablefile),
+
+			SS:    make([][]float64, 0),
+			SStag: make([]string, 0),
+
+			income:    make([][]float64, 0),
+			incometag: make([]string, 0),
+
+			assetSale: make([][]float64, 0),
+			assettag:  make([]string, 0),
+
+			expenses:   make([][]float64, 0),
+			expensetag: make([]string, 0),
+		}
+		for i := 0; i <= elem.SSStreams; i++ {
+			ms.SS = append(ms.SS, make([]float64, ip.numyr))
+			str := fmt.Sprintf("SS%d", i)
+			ms.SStag = append(ms.SStag, str)
+		}
+		for i := 0; i <= elem.incomeStreams; i++ {
+			ms.income = append(ms.income, make([]float64, ip.numyr))
+			str := fmt.Sprintf("income%d", i)
+			ms.incometag = append(ms.incometag, str)
+		}
+		for i := 0; i <= elem.incomeStreams; i++ {
+			ms.assetSale = append(ms.assetSale, make([]float64, ip.numyr))
+			str := fmt.Sprintf("asset%d", i)
+			ms.assettag = append(ms.assettag, str)
+		}
+		for i := 0; i <= elem.expenseStreams; i++ {
+			ms.expenses = append(ms.expenses, make([]float64, ip.numyr))
+			str := fmt.Sprintf("expense%d", i)
+			ms.expensetag = append(ms.expensetag, str)
+		}
+		ms.assetSale[1][7] = 50000
+
+		mychan := make(chan string)
+		DoNothing := true //false //true
+		oldout, w, err := ms.RedirectModelSpecsTable(mychan, DoNothing)
+		if err != nil {
+			t.Errorf("RedirectModelSpecsTable: %s\n", err)
+			return // should this be continue?
+		}
+
+		headerlist, countlist, matrix := ms.getSSIncomeAssetExpenseList()
+		fmt.Printf("headerlist: %#v\n", headerlist)
+		fmt.Printf("countlist: %#v\n", countlist)
+		fmt.Printf("matrix: %#v\n", matrix)
+
+		//str := ms.RestoreModelSpecsTable(mychan, oldout, w, DoNothing)
+		ms.RestoreModelSpecsTable(mychan, oldout, w, DoNothing)
+		//strn := strings.TrimSpace(str)
+		/*
+			if elem.expect != strn {
+				//showStrMismatch(elem.expect, strn)
+				t.Errorf("TestPrintIncomeHeader case %d:  expected output:\n\t '%s'\n\tbut found:\n\t'%s'\n", i, elem.expect, strn)
+			}
+		*/
+	}
+}
+
 func showStrMismatch(s1, s2 string) { // TODO move to Utility functions
 	for i := 0; i < len(s1); i++ {
 		if s1[i] != s2[i] {
 			fmt.Printf("Char#: %d, CharVals1: %c, CharInts1: %d, CharVals2: %c, CharInts2: %d\n", i, s1[i], s1[i], s2[i], s2[i])
 			fmt.Printf("expect: '%s'\n", s1[:i])
-			fmt.Printf("strnn: '%s'\n", s2[:i])
+			fmt.Printf(" strnn: '%s'\n", s2[:i])
 			break
 		}
 	}
@@ -351,9 +527,10 @@ func TestDepositAmount(t *testing.T) {
 					acctype: "aftertax",
 				},
 			},
-			assetSale: make([]float64, ip.numyr),
+			assetSale: make([][]float64, 0),
 		}
-		ms.assetSale[5] = 20000
+		ms.assetSale = append(ms.assetSale, make([]float64, ip.numyr))
+		ms.assetSale[0][5] = 20000
 
 		damount := ms.depositAmount(xpSingle, elem.year, elem.index)
 		if damount != elem.expected {

@@ -106,6 +106,51 @@ var sipJoint = map[string]string{
 	"eT_rRate":    "6",
 	"eT_maximize": "Spending", // or "PlusEstate"
 }
+var sipSingle3Acc = map[string]string{
+	"setName":                    "activeParams",
+	"filingStatus":               "single",
+	"key1":                       "retiree1",
+	"key2":                       "",
+	"eT_Age1":                    "54",
+	"eT_Age2":                    "",
+	"eT_RetireAge1":              "65",
+	"eT_RetireAge2":              "",
+	"eT_PlanThroughAge1":         "75",
+	"eT_PlanThroughAge2":         "",
+	"eT_PIA1":                    "",
+	"eT_PIA2":                    "",
+	"eT_SS_Start1":               "",
+	"eT_SS_Start2":               "",
+	"eT_TDRA1":                   "200", // 200k
+	"eT_TDRA2":                   "",
+	"eT_TDRA_Rate1":              "",
+	"eT_TDRA_Rate2":              "",
+	"eT_TDRA_Contrib1":           "",
+	"eT_TDRA_Contrib2":           "",
+	"eT_TDRA_ContribStartAge1":   "",
+	"eT_TDRA_ContribStartAge2":   "",
+	"eT_TDRA_ContribEndAge1":     "",
+	"eT_TDRA_ContribEndAge2":     "",
+	"eT_Roth1":                   "10", //50K
+	"eT_Roth2":                   "",
+	"eT_Roth_Rate1":              "",
+	"eT_Roth_Rate2":              "",
+	"eT_Roth_Contrib1":           "",
+	"eT_Roth_Contrib2":           "",
+	"eT_Roth_ContribStartAge1":   "",
+	"eT_Roth_ContribStartAge2":   "",
+	"eT_Roth_ContribEndAge1":     "",
+	"eT_Roth_ContribEndAge2":     "",
+	"eT_Aftatax":                 "50", //200k
+	"eT_Aftatax_Rate":            "",
+	"eT_Aftatax_Contrib":         "",
+	"eT_Aftatax_ContribStartAge": "",
+	"eT_Aftatax_ContribEndAge":   "",
+
+	"eT_iRate":    "2.5",
+	"eT_rRate":    "6",
+	"eT_maximize": "Spending", // or "PlusEstate"
+}
 
 //def precheck_consistancy():
 func TestPreCheckConsistancy(t *testing.T) {
@@ -595,6 +640,64 @@ retir SSincome:         Income:  AssetSale:
 		str := ms.RestoreModelSpecsTable(mychan, oldout, w, DoNothing)
 		strn := strings.TrimSpace(str)
 		if elem.expect != strn {
+			//showStrMismatch(elem.expect, strn)
+			t.Errorf("TestTestPrintIncomeExpenseDetails case %d:  expected output:\n\t '%s'\n\tbut found:\n\t'%s'\n", i, elem.expect, strn)
+		}
+	}
+}
+
+//func printAccHeader()
+func TestPrintAccHeader(t *testing.T) {
+	tests := []struct {
+		sip    map[string]string
+		expect string
+		onek   float64
+	}{
+		{ //case 0
+			sip: sipJoint,
+			expect: `retiree1/retiree2
+    age      IRA    fIRA    tIRA  RMDref`,
+			onek: 1,
+		},
+		{ //case 1
+			sip: sipSingle,
+			expect: `retiree1
+ age      IRA    fIRA    tIRA  RMDref`,
+			onek: 1,
+		},
+		{ //case 2
+			sip: sipSingle3Acc,
+			expect: `retiree1
+ age      IRA    fIRA    tIRA  RMDref    Roth   fRoth   tRoth  AftaTx fAftaTx tAftaTx`,
+			onek: 1,
+		},
+	}
+	for i, elem := range tests {
+		fmt.Printf("=============== Case %d =================\n", i)
+		ip := NewInputParams(elem.sip)
+		csvfile := (*os.File)(nil)
+		tablefile := os.Stdout
+		ms := ModelSpecs{
+			ip:      ip,
+			logfile: os.Stdout,
+			errfile: os.Stderr,
+			ao:      NewAppOutput(csvfile, tablefile),
+			OneK:    elem.onek,
+		}
+
+		mychan := make(chan string)
+		DoNothing := false //true
+		oldout, w, err := ms.RedirectModelSpecsTable(mychan, DoNothing)
+		if err != nil {
+			t.Errorf("RedirectModelSpecsTable: %s\n", err)
+			return // should this be continue?
+		}
+
+		ms.printAccHeader()
+
+		str := ms.RestoreModelSpecsTable(mychan, oldout, w, DoNothing)
+		strn := strings.TrimSpace(str)
+		if elem.expect != strn {
 			showStrMismatch(elem.expect, strn)
 			t.Errorf("TestTestPrintIncomeExpenseDetails case %d:  expected output:\n\t '%s'\n\tbut found:\n\t'%s'\n", i, elem.expect, strn)
 		}
@@ -602,7 +705,7 @@ retir SSincome:         Income:  AssetSale:
 }
 
 func showStrMismatch(s1, s2 string) { // TODO move to Utility functions
-	for i := 0; i < len(s1); i++ {
+	for i := 0; i < intMin(len(s1), len(s2)); i++ {
 		if s1[i] != s2[i] {
 			fmt.Printf("Char#: %d, CharVals1: %c, CharInts1: %d, CharVals2: %c, CharInts2: %d\n", i, s1[i], s1[i], s2[i], s2[i])
 			fmt.Printf("expect: '%s'\n", s1[:i])

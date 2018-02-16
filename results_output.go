@@ -307,27 +307,43 @@ func (ms ModelSpecs) printIncomeExpenseDetails() {
 	ms.printIncomeHeader(headerlist, countlist, incomeCat, fieldwidth)
 }
 
+func (ms ModelSpecs) printAccHeader() {
+	if ms.ip.filingStatus == "joint" && ms.ip.myKey2 != "" {
+		ms.ao.output(fmt.Sprintf("%s/%s\n", ms.ip.myKey1, ms.ip.myKey2))
+		ms.ao.output("    age ")
+	} else {
+		if ms.ip.myKey1 != "nokey" {
+			ms.ao.output(fmt.Sprintf("%s\n", ms.ip.myKey1))
+		}
+		ms.ao.output(" age ")
+	}
+	if ms.ip.accmap["IRA"] > 1 {
+		str := fmt.Sprintf("&@%7s&@%7s&@%7s&@%7s&@%7s&@%7s&@%7s&@%7s",
+			"IRA1", "fIRA1", "tIRA1", "RMDref1", "IRA2", "fIRA2",
+			"tIRA2", "RMDref2")
+		ms.ao.output(str)
+	} else if ms.ip.accmap["IRA"] == 1 {
+		str := fmt.Sprintf("&@%7s&@%7s&@%7s&@%7s",
+			"IRA", "fIRA", "tIRA", "RMDref")
+		ms.ao.output(str)
+	}
+	if ms.ip.accmap["roth"] > 1 {
+		str := fmt.Sprintf("&@%7s&@%7s&@%7s&@%7s&@%7s&@%7s",
+			"Roth1", "fRoth1", "tRoth1", "Roth2", "fRoth2", "tRoth2")
+		ms.ao.output(str)
+	} else if ms.ip.accmap["roth"] == 1 {
+		str := fmt.Sprintf("&@%7s&@%7s&@%7s", "Roth", "fRoth", "tRoth")
+		ms.ao.output(str)
+	}
+	if ms.ip.accmap["aftertax"] == 1 {
+		str := fmt.Sprintf("&@%7s&@%7s&@%7s", "AftaTx", "fAftaTx", "tAftaTx")
+		ms.ao.output(str)
+	}
+	ms.ao.output("\n")
+}
+
 /*
 def print_account_trans(res):
-    def print_acc_header1():
-        if S.secondary != "":
-            ao.output("%s/%s\n" % (S.primary, S.secondary))
-            ao.output("    age ")
-        else:
-            if S.primary != "nokey":
-                ao.output("%s\n" % (S.primary))
-            ao.output(" age ")
-        if S.accmap["IRA"] >1:
-            ao.output(("&@%7s" * 8) % ("IRA1", "fIRA1", "tIRA1", "RMDref1", "IRA2", "fIRA2", "tIRA2", "RMDref2"))
-        elif S.accmap["IRA"] == 1:
-            ao.output(("&@%7s" * 4) % ("IRA", "fIRA", "tIRA", "RMDref"))
-        if S.accmap["roth"] >1:
-            ao.output(("&@%7s" * 6) % ("Roth1", "fRoth1", "tRoth1", "Roth2", "fRoth2", "tRoth2"))
-        elif S.accmap["roth"] == 1:
-            ao.output(("&@%7s" * 3) % ("Roth", "fRoth", "tRoth"))
-        if S.accmap["IRA"]+S.accmap["roth"] == len(S.accounttable)-1:
-            ao.output(("&@%7s" * 3) % ("AftaTx", "fAftaTx", "tAftaTx"))
-        ao.output("\n")
 
     ao.output("\nAccount Transactions Summary:\n\n")
     print_acc_header1()

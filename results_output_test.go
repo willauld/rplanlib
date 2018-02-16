@@ -358,12 +358,7 @@ func TestPrintIncomeHeader(t *testing.T) {
 //func (ms ModelSpecs) getSSIncomeAssetExpenseList() ([]string, []int, [][]float64)
 func TestGetIncomeAssetExpenseList(t *testing.T) {
 	tests := []struct {
-		sip map[string]string
-		//expect        string
-		//headerkeylist []string
-		//countlist     []int
-		//csvfile       *os.File
-		//tablefile     *os.File
+		sip            map[string]string
 		incomeStreams  int
 		expenseStreams int
 		SSStreams      int
@@ -375,14 +370,17 @@ func TestGetIncomeAssetExpenseList(t *testing.T) {
 			SSStreams:      3,
 			AssetStreams:   3,
 			sip:            sipJoint,
-			//countlist: []int{0, 0, 0, 0},
-			//expect: ``,
-			//csvfile:   (*os.File)(nil),
-			//tablefile: os.Stdout,
+		},
+		{ //case 1
+			incomeStreams:  1,
+			expenseStreams: 0,
+			SSStreams:      2,
+			AssetStreams:   4,
+			sip:            sipJoint,
 		},
 	}
 	for i, elem := range tests {
-		fmt.Printf("=============== Case %d =================\n", i)
+		//fmt.Printf("=============== Case %d =================\n", i)
 		ip := NewInputParams(elem.sip)
 		ms := ModelSpecs{
 			//ip:      ip,
@@ -412,7 +410,7 @@ func TestGetIncomeAssetExpenseList(t *testing.T) {
 			str := fmt.Sprintf("income%d", i)
 			ms.incometag = append(ms.incometag, str)
 		}
-		for i := 0; i <= elem.incomeStreams; i++ {
+		for i := 0; i <= elem.AssetStreams; i++ {
 			ms.assetSale = append(ms.assetSale, make([]float64, ip.numyr))
 			str := fmt.Sprintf("asset%d", i)
 			ms.assettag = append(ms.assettag, str)
@@ -424,28 +422,29 @@ func TestGetIncomeAssetExpenseList(t *testing.T) {
 		}
 		ms.assetSale[1][7] = 50000
 
-		mychan := make(chan string)
-		DoNothing := true //false //true
-		oldout, w, err := ms.RedirectModelSpecsTable(mychan, DoNothing)
-		if err != nil {
-			t.Errorf("RedirectModelSpecsTable: %s\n", err)
-			return // should this be continue?
-		}
-
 		headerlist, countlist, matrix := ms.getSSIncomeAssetExpenseList()
-		fmt.Printf("headerlist: %#v\n", headerlist)
-		fmt.Printf("countlist: %#v\n", countlist)
-		fmt.Printf("matrix: %#v\n", matrix)
-
-		//str := ms.RestoreModelSpecsTable(mychan, oldout, w, DoNothing)
-		ms.RestoreModelSpecsTable(mychan, oldout, w, DoNothing)
-		//strn := strings.TrimSpace(str)
-		/*
-			if elem.expect != strn {
-				//showStrMismatch(elem.expect, strn)
-				t.Errorf("TestPrintIncomeHeader case %d:  expected output:\n\t '%s'\n\tbut found:\n\t'%s'\n", i, elem.expect, strn)
-			}
-		*/
+		//fmt.Printf("headerlist: %#v\n", headerlist)
+		//fmt.Printf("countlist: %#v\n", countlist)
+		//fmt.Printf("matrix: %#v\n", matrix)
+		htot := elem.SSStreams + elem.incomeStreams + elem.AssetStreams + elem.expenseStreams
+		if htot != len(headerlist) {
+			t.Errorf("TestGetIncomeAssetExpenseList case %d: expected %d headers but found %d\n", i, htot, len(headerlist))
+		}
+		if htot != len(matrix) {
+			t.Errorf("TestGetIncomeAssetExpenseList case %d: expected %d vectors but found %d\n", i, htot, len(matrix))
+		}
+		if elem.SSStreams != countlist[0] {
+			t.Errorf("TestGetIncomeAssetExpenseList case %d:  expected %d SS streams but found %d streams\n", i, elem.SSStreams, countlist[0])
+		}
+		if elem.incomeStreams != countlist[1] {
+			t.Errorf("TestGetIncomeAssetExpenseList case %d:  expected %d income streams but found %d streams\n", i, elem.SSStreams, countlist[0])
+		}
+		if elem.AssetStreams != countlist[2] {
+			t.Errorf("TestGetIncomeAssetExpenseList case %d:  expected %d asset streams but found %d streams\n", i, elem.SSStreams, countlist[0])
+		}
+		if elem.expenseStreams != countlist[3] {
+			t.Errorf("TestGetIncomeAssetExpenseList case %d:  expected %d expense streams but found %d streams\n", i, elem.SSStreams, countlist[0])
+		}
 	}
 }
 

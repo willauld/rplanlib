@@ -54,6 +54,7 @@ type InputParams struct {
 	prePlanYears int
 	startPlan    int
 	endPlan      int
+	ageDelta     int
 	numyr        int
 	accmap       map[string]int
 	numacc       int
@@ -173,6 +174,7 @@ func NewInputParams(ip map[string]string) InputParams {
 	// the following must be after "joint" section
 	rip.startPlan = rip.prePlanYears + rip.age1
 	rip.endPlan = intMax(through1, through2) + 1 + rip.age1
+	rip.ageDelta = rip.age1 - rip.age2
 	rip.numyr = rip.endPlan - rip.startPlan
 
 	rip.Aftatax = kgetIPIntValue(ip["eT_Aftatax"])

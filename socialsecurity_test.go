@@ -423,8 +423,8 @@ func TestProcessSS(t *testing.T) {
 					t.Errorf("TestProcessSS case %d:  SS[j] must equal SS1[j] + SS2[j]\n", i)
 				}
 			}
-			delta := ip.age2 - ip.age1
-			zeros = ip.SSStart2 - delta - ip.startPlan // convert to prime age
+			//delta := ip.age2 - ip.age1
+			zeros = ip.SSStart2 + ip.ageDelta - ip.startPlan // convert to prime age
 			// Verify years before starting SS have zero SS income
 			for j := 0; j < zeros; j++ {
 				if int(ss2[j]) != 0 {
@@ -440,7 +440,7 @@ func TestProcessSS(t *testing.T) {
 				}
 			}
 			// varify that years after retiree's planthrough have zero SS income
-			r2end := ip.planThroughAge2 - delta - ip.startPlan + 1
+			r2end := ip.planThroughAge2 + ip.ageDelta - ip.startPlan + 1
 			for j := r2end; j < ip.numyr; j++ {
 				if ss2[j] != 0 {
 					t.Errorf("TestProcessSS case %d:  ss2[%d]: %f should equal zero, it's after planThrough age\n", i, j, ss2[j])

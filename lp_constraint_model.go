@@ -891,8 +891,8 @@ func (ms ModelSpecs) convertAge(age int, key string) int {
 	} else if index == 0 {
 		return age
 	}
-	delta := ms.retirees[0].age - ms.retirees[1].age
-	return age + delta
+	//delta := ms.retirees[0].age - ms.retirees[1].age
+	return age + ms.ip.ageDelta
 }
 
 // cgTaxableFraction estimates the portion of capital gains not from basis

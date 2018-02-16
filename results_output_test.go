@@ -457,6 +457,7 @@ func TestPrintIncomeExpenseDetails(t *testing.T) {
 		SSStreams      int
 		AssetStreams   int
 		expect         string
+		onek           float64
 	}{
 		{ //case 0
 			incomeStreams:  3,
@@ -464,24 +465,58 @@ func TestPrintIncomeExpenseDetails(t *testing.T) {
 			SSStreams:      3,
 			AssetStreams:   3,
 			sip:            sipJoint,
-			expect:         ``,
+			expect: `Income and Expense Summary:
+
+retiree1 SSincome:                  Income:                    AssetSale:                 Expense:                  
+    age       SS1      SS2      SS3  income1  income2  income3   asset1   asset2   asset3 expense1 expense2 expense3
+ 65/ 65:        1        2        3        1        2        3        1        2        3        1        2        3
+ 66/ 66:     1000     1000     1000     1000     1000     1000     1000     1000     1000     1000     1000     1000
+ 67/ 67:     2000     2000     2000     2000     2000     2000     2000     2000     2000     2000     2000     2000
+ 68/ 68:     3000     3000     3000     3000     3000     3000     3000     3000     3000     3000     3000     3000
+ 69/ 69:     4000     4000     4000     4000     4000     4000     4000     4000     4000     4000     4000     4000
+ 70/ 70:     5000     5000     5000     5000     5000     5000     5000     5000     5000     5000     5000     5000
+ 71/ 71:     6000     6000     6000     6000     6000     6000     6000     6000     6000     6000     6000     6000
+ 72/ 72:     7000     7000     7000     7000     7000     7000    50000     7000     7000     7000     7000     7000
+ 73/ 73:     8000     8000     8000     8000     8000     8000     8000     8000     8000     8000     8000     8000
+ 74/ 74:     9000     9000     9000     9000     9000     9000     9000     9000     9000     9000     9000     9000
+ 75/ 75:    10000    10000    10000    10000    10000    10000    10000    10000    10000    10000    10000    10000
+retiree1 SSincome:                  Income:                    AssetSale:                 Expense:                  
+    age       SS1      SS2      SS3  income1  income2  income3   asset1   asset2   asset3 expense1 expense2 expense3`,
+			onek: 1,
 		},
 		{ //case 1
 			incomeStreams:  1,
 			expenseStreams: 0,
 			SSStreams:      2,
 			AssetStreams:   4,
-			sip:            sipJoint,
-			expect:         ``,
+			sip:            sipSingle,
+			expect: `Income and Expense Summary:
+
+retir SSincome:         Income:  AssetSale:                         
+ age       SS1      SS2  income1   asset1   asset2   asset3   asset4
+  65:        0        0        0        0        0        0        0
+  66:        1        1        1        1        1        1        1
+  67:        2        2        2        2        2        2        2
+  68:        3        3        3        3        3        3        3
+  69:        4        4        4        4        4        4        4
+  70:        5        5        5        5        5        5        5
+  71:        6        6        6        6        6        6        6
+  72:        7        7        7       50        7        7        7
+  73:        8        8        8        8        8        8        8
+  74:        9        9        9        9        9        9        9
+  75:       10       10       10       10       10       10       10
+retir SSincome:         Income:  AssetSale:                         
+ age       SS1      SS2  income1   asset1   asset2   asset3   asset4`,
+			onek: 1000,
 		},
 	}
 	for i, elem := range tests {
-		fmt.Printf("=============== Case %d =================\n", i)
+		//fmt.Printf("=============== Case %d =================\n", i)
 		ip := NewInputParams(elem.sip)
 		csvfile := (*os.File)(nil)
 		tablefile := os.Stdout
 		ms := ModelSpecs{
-			//ip:      ip,
+			ip:      ip,
 			logfile: os.Stdout,
 			errfile: os.Stderr,
 			ao:      NewAppOutput(csvfile, tablefile),
@@ -497,28 +532,50 @@ func TestPrintIncomeExpenseDetails(t *testing.T) {
 
 			expenses:   make([][]float64, 0),
 			expensetag: make([]string, 0),
+
+			OneK: elem.onek,
 		}
 		for i := 0; i <= elem.SSStreams; i++ {
-			ms.SS = append(ms.SS, make([]float64, ip.numyr))
+			v := make([]float64, ip.numyr)
+			for j := 1; j < ip.numyr; j++ {
+				v[j] = float64(j * 1000)
+			}
+			v[0] = float64(i)
+			ms.SS = append(ms.SS, v)
 			str := fmt.Sprintf("SS%d", i)
 			ms.SStag = append(ms.SStag, str)
 		}
 		for i := 0; i <= elem.incomeStreams; i++ {
-			ms.income = append(ms.income, make([]float64, ip.numyr))
+			v := make([]float64, ip.numyr)
+			for j := 1; j < ip.numyr; j++ {
+				v[j] = float64(j * 1000)
+			}
+			v[0] = float64(i)
+			ms.income = append(ms.income, v)
 			str := fmt.Sprintf("income%d", i)
 			ms.incometag = append(ms.incometag, str)
 		}
 		for i := 0; i <= elem.AssetStreams; i++ {
-			ms.assetSale = append(ms.assetSale, make([]float64, ip.numyr))
+			v := make([]float64, ip.numyr)
+			for j := 1; j < ip.numyr; j++ {
+				v[j] = float64(j * 1000)
+			}
+			v[0] = float64(i)
+			ms.assetSale = append(ms.assetSale, v)
 			str := fmt.Sprintf("asset%d", i)
 			ms.assettag = append(ms.assettag, str)
 		}
 		for i := 0; i <= elem.expenseStreams; i++ {
-			ms.expenses = append(ms.expenses, make([]float64, ip.numyr))
+			v := make([]float64, ip.numyr)
+			for j := 1; j < ip.numyr; j++ {
+				v[j] = float64(j * 1000)
+			}
+			v[0] = float64(i)
+			ms.expenses = append(ms.expenses, v)
 			str := fmt.Sprintf("expense%d", i)
 			ms.expensetag = append(ms.expensetag, str)
 		}
-		ms.assetSale[1][7] = 50000
+		ms.assetSale[1][7] = 50000.0
 
 		//headerlist, countlist, matrix := ms.getSSIncomeAssetExpenseList()
 		//fmt.Printf("headerlist: %#v\n", headerlist)
@@ -526,7 +583,7 @@ func TestPrintIncomeExpenseDetails(t *testing.T) {
 		//fmt.Printf("matrix: %#v\n", matrix)
 
 		mychan := make(chan string)
-		DoNothing := true //false //true
+		DoNothing := false //true
 		oldout, w, err := ms.RedirectModelSpecsTable(mychan, DoNothing)
 		if err != nil {
 			t.Errorf("RedirectModelSpecsTable: %s\n", err)
@@ -537,9 +594,9 @@ func TestPrintIncomeExpenseDetails(t *testing.T) {
 
 		str := ms.RestoreModelSpecsTable(mychan, oldout, w, DoNothing)
 		strn := strings.TrimSpace(str)
-		if elem.expect != strn && i == 10 {
-			//showStrMismatch(elem.expect, strn)
-			t.Errorf("TestPrintIncomeHeader case %d:  expected output:\n\t '%s'\n\tbut found:\n\t'%s'\n", i, elem.expect, strn)
+		if elem.expect != strn {
+			showStrMismatch(elem.expect, strn)
+			t.Errorf("TestTestPrintIncomeExpenseDetails case %d:  expected output:\n\t '%s'\n\tbut found:\n\t'%s'\n", i, elem.expect, strn)
 		}
 	}
 }

@@ -283,12 +283,15 @@ func (ms ModelSpecs) getSSIncomeAssetExpenseList() ([]string, []int, [][]float64
 }
 
 func (ms ModelSpecs) printIncomeExpenseDetails() {
+	if ms.OneK < 1 {
+		e := fmt.Errorf("printIncomeExpenseDetails: ms.OneK is %f which is not allowed", ms.OneK)
+		panic(e)
+	}
 	ms.ao.output("\nIncome and Expense Summary:\n\n")
 	headerlist, countlist, datamatrix := ms.getSSIncomeAssetExpenseList()
 	incomeCat := []string{"SSincome:", "Income:", "AssetSale:", "Expense:"}
 	fieldwidth := 8
 	ms.printIncomeHeader(headerlist, countlist, incomeCat, fieldwidth)
-
 	for year := 0; year < ms.ip.numyr; year++ {
 		if ms.ip.filingStatus == "joint" {
 			ms.ao.output(fmt.Sprintf("%3d/%3d:", year+ms.ip.startPlan, year+ms.ip.startPlan-ms.ip.ageDelta))

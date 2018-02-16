@@ -225,7 +225,7 @@ retiree1/retiree2
 		},
 	}
 	for i, elem := range tests {
-		fmt.Printf("================ CASE %d ==================\n", i)
+		//fmt.Printf("================ CASE %d ==================\n", i)
 		ip := NewInputParams(elem.sip)
 		//fmt.Printf("InputParams: %#v\n", ip)
 		ti := NewTaxInfo(ip.filingStatus)
@@ -638,7 +638,7 @@ Total spendable (after tax money): $490_153`,
 		},
 	}
 	for i, elem := range tests {
-		fmt.Printf("======== CASE %d ========\n", i)
+		//fmt.Printf("======== CASE %d ========\n", i)
 		ip := NewInputParams(elem.sip)
 		//fmt.Printf("InputParams: %#v\n", ip)
 		ti := NewTaxInfo(ip.filingStatus)
@@ -790,7 +790,7 @@ func TestResultsOutput(t *testing.T) {
 		},
 	}
 	for i, elem := range tests {
-		fmt.Printf("======== CASE %d ========\n", i)
+		//fmt.Printf("======== CASE %d ========\n", i)
 		ip := NewInputParams(elem.ip)
 		//fmt.Printf("InputParams: %#v\n", ip)
 		ti := NewTaxInfo(ip.filingStatus)

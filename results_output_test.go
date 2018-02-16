@@ -448,6 +448,102 @@ func TestGetIncomeAssetExpenseList(t *testing.T) {
 	}
 }
 
+//func (ms ModelSpecs) printIncomeExpenseDetails()
+func TestPrintIncomeExpenseDetails(t *testing.T) {
+	tests := []struct {
+		sip            map[string]string
+		incomeStreams  int
+		expenseStreams int
+		SSStreams      int
+		AssetStreams   int
+		expect         string
+	}{
+		{ //case 0
+			incomeStreams:  3,
+			expenseStreams: 3,
+			SSStreams:      3,
+			AssetStreams:   3,
+			sip:            sipJoint,
+			expect:         ``,
+		},
+		{ //case 1
+			incomeStreams:  1,
+			expenseStreams: 0,
+			SSStreams:      2,
+			AssetStreams:   4,
+			sip:            sipJoint,
+			expect:         ``,
+		},
+	}
+	for i, elem := range tests {
+		fmt.Printf("=============== Case %d =================\n", i)
+		ip := NewInputParams(elem.sip)
+		csvfile := (*os.File)(nil)
+		tablefile := os.Stdout
+		ms := ModelSpecs{
+			//ip:      ip,
+			logfile: os.Stdout,
+			errfile: os.Stderr,
+			ao:      NewAppOutput(csvfile, tablefile),
+
+			SS:    make([][]float64, 0),
+			SStag: make([]string, 0),
+
+			income:    make([][]float64, 0),
+			incometag: make([]string, 0),
+
+			assetSale: make([][]float64, 0),
+			assettag:  make([]string, 0),
+
+			expenses:   make([][]float64, 0),
+			expensetag: make([]string, 0),
+		}
+		for i := 0; i <= elem.SSStreams; i++ {
+			ms.SS = append(ms.SS, make([]float64, ip.numyr))
+			str := fmt.Sprintf("SS%d", i)
+			ms.SStag = append(ms.SStag, str)
+		}
+		for i := 0; i <= elem.incomeStreams; i++ {
+			ms.income = append(ms.income, make([]float64, ip.numyr))
+			str := fmt.Sprintf("income%d", i)
+			ms.incometag = append(ms.incometag, str)
+		}
+		for i := 0; i <= elem.AssetStreams; i++ {
+			ms.assetSale = append(ms.assetSale, make([]float64, ip.numyr))
+			str := fmt.Sprintf("asset%d", i)
+			ms.assettag = append(ms.assettag, str)
+		}
+		for i := 0; i <= elem.expenseStreams; i++ {
+			ms.expenses = append(ms.expenses, make([]float64, ip.numyr))
+			str := fmt.Sprintf("expense%d", i)
+			ms.expensetag = append(ms.expensetag, str)
+		}
+		ms.assetSale[1][7] = 50000
+
+		//headerlist, countlist, matrix := ms.getSSIncomeAssetExpenseList()
+		//fmt.Printf("headerlist: %#v\n", headerlist)
+		//fmt.Printf("countlist: %#v\n", countlist)
+		//fmt.Printf("matrix: %#v\n", matrix)
+
+		mychan := make(chan string)
+		DoNothing := true //false //true
+		oldout, w, err := ms.RedirectModelSpecsTable(mychan, DoNothing)
+		if err != nil {
+			t.Errorf("RedirectModelSpecsTable: %s\n", err)
+			return // should this be continue?
+		}
+
+		ms.printIncomeExpenseDetails()
+
+		str := ms.RestoreModelSpecsTable(mychan, oldout, w, DoNothing)
+		strn := strings.TrimSpace(str)
+		if elem.expect != strn && i == 10 {
+			//showStrMismatch(elem.expect, strn)
+			t.Errorf("TestPrintIncomeHeader case %d:  expected output:\n\t '%s'\n\tbut found:\n\t'%s'\n", i, elem.expect, strn)
+		}
+	}
+}
+
 func showStrMismatch(s1, s2 string) { // TODO move to Utility functions
 	for i := 0; i < len(s1); i++ {
 		if s1[i] != s2[i] {
@@ -457,11 +553,6 @@ func showStrMismatch(s1, s2 string) { // TODO move to Utility functions
 			break
 		}
 	}
-}
-
-//def print_income_expense_details():
-func TestIncomeExpenseDetails(t *testing.T) {
-	fmt.Printf("Not Yet Implemented\n")
 }
 
 //def print_account_trans(res):

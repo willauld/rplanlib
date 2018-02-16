@@ -170,8 +170,8 @@ func (ms ModelSpecs) printActivitySummary(xp *[]float64) {
 		}
 
 		if ms.ip.filingStatus == "joint" {
-			delta := ms.ip.age1 - ms.ip.age2
-			ms.ao.output(fmt.Sprintf("%3d/%3d:", year+ms.ip.startPlan, year+ms.ip.startPlan-delta))
+			//delta := ms.ip.age1 - ms.ip.age2
+			ms.ao.output(fmt.Sprintf("%3d/%3d:", year+ms.ip.startPlan, year+ms.ip.startPlan-ms.ip.ageDelta))
 		} else {
 			ms.ao.output(fmt.Sprintf(" %3d:", year+ms.ip.startPlan))
 		}
@@ -282,25 +282,27 @@ func (ms ModelSpecs) getSSIncomeAssetExpenseList() ([]string, []int, [][]float64
 	return headerlist, countlist, datamatrix
 }
 
-/*
-func printIncomeExpenseDetails() {
-    ao.output("\nIncome and Expense Summary:\n\n")
-    headerlist, map, datamatrix := ms.getSSIncomeAssetExpenseList()
-    income_cat = ["SSincome:", "Income:", "AssetSale:", "Expense:"]
-    fieldwidth = 8
-    print_income_header(headerlist, map, income_cat, fieldwidth)
+func (ms ModelSpecs) printIncomeExpenseDetails() {
+	ms.ao.output("\nIncome and Expense Summary:\n\n")
+	headerlist, countlist, datamatrix := ms.getSSIncomeAssetExpenseList()
+	incomeCat := []string{"SSincome:", "Income:", "AssetSale:", "Expense:"}
+	fieldwidth := 8
+	ms.printIncomeHeader(headerlist, countlist, incomeCat, fieldwidth)
 
-    for year in range(S.numyr):
-        if S.secondary != "":
-            ao.output("%3d/%3d:" % (year+S.startage, year+S.startage-S.delta))
-        else:
-            ao.output(" %3d:" % (year+S.startage))
-        for i in range(len(datamatrix)):
-            ao.output("&@{:{width}.0f}".format(datamatrix[i][year]/ms.OneK, width=fieldwidth))
-        ao.output("\n")
-    print_income_header(headerlist, map, income_cat, fieldwidth)
+	for year := 0; year < ms.ip.numyr; year++ {
+		if ms.ip.filingStatus == "joint" {
+			ms.ao.output(fmt.Sprintf("%3d/%3d:", year+ms.ip.startPlan, year+ms.ip.startPlan-ms.ip.ageDelta))
+		} else {
+			ms.ao.output(fmt.Sprintf(" %3d:", year+ms.ip.startPlan))
+		}
+		for i := 0; i < len(datamatrix); i++ {
+			str := fmt.Sprintf("&@%[2]*.0[1]f", datamatrix[i][year]/ms.OneK, fieldwidth)
+			ms.ao.output(str)
+		}
+		ms.ao.output("\n")
+	}
+	ms.printIncomeHeader(headerlist, countlist, incomeCat, fieldwidth)
 }
-*/
 
 /*
 def print_account_trans(res):

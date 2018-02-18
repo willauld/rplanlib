@@ -911,17 +911,17 @@ func TestOrdinaryTaxable(t *testing.T) {
 		sip    map[string]string
 		sxp    *[]float64
 		year   int
-		expect float64
+		expect int
 	}{
 		{
 			sip:    sipSingle,
 			sxp:    xpSingle,
 			year:   7,
-			expect: 0.0,
+			expect: 32033,
 		},
 	}
 	for i, elem := range tests {
-		fmt.Printf("======== CASE %d ========\n", i)
+		//fmt.Printf("======== CASE %d ========\n", i)
 		ip := NewInputParams(elem.sip)
 		//fmt.Printf("InputParams: %#v\n", ip)
 		ti := NewTaxInfo(ip.filingStatus)
@@ -938,8 +938,8 @@ func TestOrdinaryTaxable(t *testing.T) {
 		ms := NewModelSpecs(vindx, ti, ip, false,
 			false, os.Stderr, logfile, csvfile, logfile)
 		ot := ms.ordinaryTaxable(elem.year, elem.sxp)
-		if ot != elem.expect {
-			t.Errorf("TestOrdinaryTaxable case %d: expected %f, found %f\n", i, elem.expect, ot)
+		if int(ot) != elem.expect {
+			t.Errorf("TestOrdinaryTaxable case %d: expected %d, found %d\n", i, elem.expect, int(ot))
 		}
 	}
 }

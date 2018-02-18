@@ -1191,6 +1191,116 @@ retiree1/retiree2
 	}
 }
 
+//def print_cap_gains_brackets(res):
+func TestPrintCapGainsBrackets(t *testing.T) {
+	tests := []struct {
+		sip    map[string]string
+		sxp    *[]float64
+		expect string
+	}{
+		{ // Case 0
+			sip:    sipSingle,
+			sxp:    xpSingle,
+			expect: `Overall Capital Gains Bracket Summary:
+                                    Marginal Rate(%):      0     15     20
+retiree1
+ age  fAftaTx tAftaTx  cgTax% cgTaxbl   T_inc   cgTax brckt0 brckt1 brckt2 brkTot
+  65:       0       0     100       0   26949       0      0      0      0      0
+  66:       0       0     100       0   27622       0      0      0      0      0
+  67:       0       0     100       0   28313       0      0      0      0      0
+  68:       0       0     100       0   29021       0      0      0      0      0
+  69:       0       0     100       0   29746       0      0      0      0      0
+  70:       0       0     100       0   30490       0      0      0      0      0
+  71:       0       0     100       0   31252       0      0      0      0      0
+  72:       0       0     100       0   32034       0      0      0      0      0
+  73:       0       0     100       0   32834       0      0      0      0      0
+  74:       0       0     100       0   33655       0      0      0      0      0
+  75:       0       0     100       0   34497       0      0      0      0      0
+                                    Marginal Rate(%):      0     15     20
+retiree1
+ age  fAftaTx tAftaTx  cgTax% cgTaxbl   T_inc   cgTax brckt0 brckt1 brckt2 brkTot`,
+		},
+		{ // Case 1
+			sip:    sipJoint,
+			sxp:    xpJoint,
+			expect: `Overall Capital Gains Bracket Summary:
+                                       Marginal Rate(%):      0     15     20
+retiree1/retiree2
+    age  fAftaTx tAftaTx  cgTax% cgTaxbl   T_inc   cgTax brckt0 brckt1 brckt2 brkTot
+ 65/ 65:       0       0     100       0   13303       0      0      0      0      0
+ 66/ 66:       0       0     100       0   13636       0      0      0      0      0
+ 67/ 67:       0       0     100       0   13977       0      0      0      0      0
+ 68/ 68:       0       0     100       0   14326       0      0      0      0      0
+ 69/ 69:       0       0     100       0   14684       0      0      0      0      0
+ 70/ 70:       0       0     100       0   15051       0      0      0      0      0
+ 71/ 71:       0       0     100       0   15427       0      0      0      0      0
+ 72/ 72:       0       0     100       0   15813       0      0      0      0      0
+ 73/ 73:       0       0     100       0   16208       0      0      0      0      0
+ 74/ 74:       0       0     100       0   16614       0      0      0      0      0
+ 75/ 75:       0       0     100       0   17029       0      0      0      0      0
+                                       Marginal Rate(%):      0     15     20
+retiree1/retiree2
+    age  fAftaTx tAftaTx  cgTax% cgTaxbl   T_inc   cgTax brckt0 brckt1 brckt2 brkTot`,
+		},
+		{ // Case 2
+			sip:    sipSingle3Acc,
+			sxp:    xpSingle3Acc,
+			expect: `Overall Capital Gains Bracket Summary:
+                                    Marginal Rate(%):      0     15     20
+retiree1
+ age  fAftaTx tAftaTx  cgTax% cgTaxbl   T_inc   cgTax brckt0 brckt1 brckt2 brkTot
+  65:       0       0     100       0   41276       0      0      0      0      0
+  66:       0       0     100       0   42308       0      0      0      0      0
+  67:      -0       0     100       0   43366       0      0      0      0      0
+  68:      -0       0     100       0   44450       0      0      0      0      0
+  69:       0      -0     100       0   45561       0      0      0      0      0
+  70:   24225       0     100   24225   16093       0  24225      0      0  24225
+  71:   28627       0     100   28627   14189       0  28627      0      0  28627
+  72:   29343       0     100   29343   14544       0  29343      0      0  29343
+  73:   30076       0     100   30076   14907       0  30076      0      0  30076
+  74:   30828       0     100   30828   15280       0  30828      0      0  30828
+  75:       0       0     100       0   15662       0      0      0      0      0
+                                    Marginal Rate(%):      0     15     20
+retiree1
+ age  fAftaTx tAftaTx  cgTax% cgTaxbl   T_inc   cgTax brckt0 brckt1 brckt2 brkTot`,
+		},
+	}
+	for i, elem := range tests {
+		//fmt.Printf("=============== Case %d =================\n", i)
+		ip := NewInputParams(elem.sip)
+		ti := NewTaxInfo(ip.filingStatus)
+		taxbins := len(*ti.Taxtable)
+		cgbins := len(*ti.Capgainstable)
+		vindx, err := NewVectorVarIndex(ip.numyr, taxbins,
+			cgbins, ip.accmap, os.Stdout)
+		if err != nil {
+			t.Errorf("TestPrintTaxBrackets case %d: %s", i, err)
+			continue
+		}
+		logfile := os.Stdout
+		csvfile := (*os.File)(nil)
+		ms := NewModelSpecs(vindx, ti, ip, false,
+			false, os.Stderr, logfile, csvfile, logfile)
+
+		mychan := make(chan string)
+		DoNothing := false //true
+		oldout, w, err := ms.RedirectModelSpecsTable(mychan, DoNothing)
+		if err != nil {
+			t.Errorf("RedirectModelSpecsTable: %s\n", err)
+			return // should this be continue?
+		}
+
+		ms.printCapGainsBrackets(elem.sxp)
+
+		str := ms.RestoreModelSpecsTable(mychan, oldout, w, DoNothing)
+		strn := strings.TrimSpace(str)
+		if elem.expect != strn {
+			showStrMismatch(elem.expect, strn)
+			t.Errorf("TestPrintCapGainsBrackets case %d:  expected output:\n\t '%s'\n\tbut found:\n\t'%s'\n", i, elem.expect, strn)
+		}
+	}
+}
+
 func showStrMismatch(s1, s2 string) { // TODO move to Utility functions
 	for i := 0; i < intMin(len(s1), len(s2)); i++ {
 		if s1[i] != s2[i] {
@@ -1200,11 +1310,6 @@ func showStrMismatch(s1, s2 string) { // TODO move to Utility functions
 			break
 		}
 	}
-}
-
-//def print_cap_gains_brackets(res):
-func TestPrintCapGainsBrackets(t *testing.T) {
-	fmt.Printf("Not Yet Implemented\n")
 }
 
 //func (ms ModelSpecs) depositAmount(xp *[]float64, year int, index int) float64

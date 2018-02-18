@@ -649,66 +649,69 @@ func (ms ModelSpecs) printHeaderCapgainsBrackets() {
 	ms.ao.output("&@brkTot\n")
 }
 
-/*
-def print_cap_gains_brackets(res):
-    ao.output("\nOverall Capital Gains Bracket Summary:\n")
-    printheader_capgains_brackets()
-    for year in range(S.numyr):
-        age = year + S.startage
-        i_mul = S.i_rate ** (S.preplanyears+year)
-        f = 1
-        atw = 0
-        atd = 0
-        att = 0
-        if S.accmap['aftertax'] > 0:
-            f = model.cg_taxable_fraction(year)
-            j = len(S.accounttable)-1 # Aftertax / investment account always the last entry when present
-            atw = res.x[vindx.w(year,j)]/ms.OneK # Aftertax / investment account
-            atd = depositAmount(S, res, year, j)/ms.OneK # Aftertax / investment account
-            #
-            # OK, this next bit can be confusing. In the line above atd
-            # includes both the D(i,j) and net amount from sell of assets
-            # like homes or real estate. But the sale of these illiquid assets
-            # does not use the aftertax account basis. They have been handled
-            # separately in S.cg_asset_taxed. Given this we only ad to
-            # cg_taxable the withdrawals over deposits, as is normal, plus
-            # the taxable amounts from asset sales.
-            att = ((f*(res.x[vindx.w(year,j)]-res.x[vindx.D(year,j)]))+S.cg_asset_taxed[year])/ms.OneK # non-basis fraction / cg taxable $
-            if atd > atw:
-                att = S.cg_asset_taxed[year]/ms.OneK # non-basis fraction / cg taxable $
-        T,spendable,tax,rate,cg_tax,earlytax,rothearly = IncomeSummary(year)
-        ttax = tax + cg_tax
-        if S.secondary != "":
-            ao.output("%3d/%3d:" % (year+S.startage, year+S.startage-S.delta))
-        else:
-            ao.output(" %3d:" % (year+S.startage))
-        ao.output(("&@%7.0f" * 6 ) %
-              (
-              atw, atd, # Aftertax / investment account
-              f*100, att, # non-basis fraction / cg taxable $
-              T/ms.OneK, cg_tax/ms.OneK))
-        bt = 0
-        bttax = 0
-        for l in range(len(taxinfo.capgainstable)):
-            ty = 0
-            if S.accmap['aftertax'] > 0:
-                ty = res.x[vindx.y(year,l)]
-            ao.output("&@%6.0f" % ty)
-            bt += ty
-            bttax += ty * taxinfo.capgainstable[l][2]
-        ao.output("&@%6.0f\n" % bt)
-        if args.verbosewga:
-            print(" cg bracket ttax %6.0f " % bttax, end='')
-            print("x->y[1]: %6.0f "% (res.x[vindx.x(year,0)]+res.x[vindx.x(year,1)]),end='')
-            print("x->y[2]: %6.0f "% (res.x[vindx.x(year,2)]+ res.x[vindx.x(year,3)]+ res.x[vindx.x(year,4)]+res.x[vindx.x(year,5)]),end='')
-            print("x->y[3]: %6.0f"% res.x[vindx.x(year,6)])
-        # TODO move to consistancy_check()
-        #if (taxinfo.capgainstable[0][1]*i_mul -(res.x[vindx.x(year,0)]+res.x[vindx.x(year,1)])) <= res.x[vindx.y(year,1)]:
-        #    print("y[1]remain: %6.0f "% (taxinfo.capgainstable[0][1]*i_mul -(res.x[vindx.x(year,0)]+res.x[vindx.x(year,1)])))
-        #if (taxinfo.capgainstable[1][1]*i_mul - (res.x[vindx.x(year,2)]+ res.x[vindx.x(year,3)]+ res.x[vindx.x(year,4)]+res.x[vindx.x(year,5)])) <= res.x[vindx.y(year,2)]:
-        #    print("y[2]remain: %6.0f " % (taxinfo.capgainstable[1][1]*i_mul - (res.x[vindx.x(year,2)]+ res.x[vindx.x(year,3)]+ res.x[vindx.x(year,4)]+res.x[vindx.x(year,5)])))
-    printheader_capgains_brackets()
-*/
+func (ms ModelSpecs) printCapGainsBrackets(xp *[]float64) {
+	ms.ao.output("\nOverall Capital Gains Bracket Summary:\n")
+	ms.printHeaderCapgainsBrackets()
+	for year := 0; year < ms.ip.numyr; year++ {
+		age := year + ms.ip.startPlan
+		//iMul := math.Pow(ms.ip.iRate, float64(ms.ip.prePlanYears+year))
+		f := 1.0
+		atw := 0.0
+		atd := 0.0
+		att := 0.0
+		if ms.ip.accmap["aftertax"] > 0 {
+			f = ms.cgTaxableFraction(year)
+			j := len(ms.accounttable) - 1                 // Aftertax / investment account always the last entry when present
+			atw = (*xp)[ms.vindx.W(year, j)] / ms.OneK    // Aftertax / investment account
+			atd = ms.depositAmount(xp, year, j) / ms.OneK // Aftertax / investment account
+			//
+			// OK, this next bit can be confusing. In the line above atd
+			// includes both the D(i,j) and net amount from sell of assets
+			// like homes or real estate. But the sale of these illiquid assets
+			// does not use the aftertax account basis. They have been handled
+			// separately in S.cg_asset_taxed. Given this we only ad to
+			// cg_taxable the withdrawals over deposits, as is normal, plus
+			// the taxable amounts from asset sales.
+			att = (f * ((*xp)[ms.vindx.W(year, j)] - (*xp)[ms.vindx.D(year, j)])) + accessVector(ms.cgAssetTaxed, year)/ms.OneK // non-basis fraction / cg taxable $
+			if atd > atw {
+				att = accessVector(ms.cgAssetTaxed, year) / ms.OneK // non-basis fraction / cg taxable $
+			}
+		}
+		//T, spendable, tax, rate, cgtax, earlytax, rothearly := ms.IncomeSummary(year, xp)
+		T, _, _, _, cgtax, _, _ := ms.IncomeSummary(year, xp)
+		//ttax := tax + cgtax
+		if ms.ip.myKey2 != "" && ms.ip.filingStatus == "joint" {
+			ms.ao.output(fmt.Sprintf("%3d/%3d:", age, age-ms.ip.ageDelta))
+		} else {
+			ms.ao.output(fmt.Sprintf(" %3d:", age))
+		}
+		str := fmt.Sprintf("&@%7.0f&@%7.0f&@%7.0f&@%7.0f&@%7.0f&@%7.0f",
+			atw, atd, // Aftertax / investment account
+			f*100, att, // non-basis fraction / cg taxable $
+			T/ms.OneK, cgtax/ms.OneK)
+		ms.ao.output(str)
+		bt := 0.0
+		bttax := 0.0
+		for l := 0; l < len(*ms.ti.Capgainstable); l++ {
+			ty := 0.0
+			if ms.ip.accmap["aftertax"] > 0 {
+				ty = (*xp)[ms.vindx.Y(year, l)]
+			}
+			ms.ao.output(fmt.Sprintf("&@%6.0f", ty))
+			bt += ty
+			bttax += ty * (*ms.ti.Capgainstable)[l][2]
+		}
+		ms.ao.output(fmt.Sprintf("&@%6.0f\n", bt))
+		/*
+		   if args.verbosewga:
+		       print(" cg bracket ttax %6.0f " % bttax, end='')
+		       print("x->y[1]: %6.0f "% (res.x[vindx.x(year,0)]+res.x[vindx.x(year,1)]),end='')
+		       print("x->y[2]: %6.0f "% (res.x[vindx.x(year,2)]+ res.x[vindx.x(year,3)]+ res.x[vindx.x(year,4)]+res.x[vindx.x(year,5)]),end='')
+		       print("x->y[3]: %6.0f"% res.x[vindx.x(year,6)])
+		*/
+	}
+	ms.printHeaderCapgainsBrackets()
+}
 
 func (ms ModelSpecs) depositAmount(xp *[]float64, year int, index int) float64 {
 	amount := (*xp)[ms.vindx.D(year, index)]

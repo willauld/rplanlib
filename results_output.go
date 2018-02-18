@@ -544,20 +544,15 @@ func (ms ModelSpecs) printTax(xp *[]float64) {
 func (ms ModelSpecs) printHeaderTaxBrackets() {
 	ampv := "&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&"
 	atv := "@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@"
-	var spaces int
+	spaces := 44
 	if ms.ip.myKey2 != "" && ms.ip.filingStatus == "joint" {
 		//ao.output("@@@@@@@%64s" % "Marginal Rate(%):")
 		spaces = 47
-	} else {
-		//ao.output("@@@@@@@%61s" % "Marginal Rate(%):")
-		spaces = 44
 	}
-	//width := 17
 	ampWidth := spaces
 	atWidth := 7
 	str := fmt.Sprintf("%s%sMarginal Rate(%s):", ampv[:ampWidth], atv[:atWidth], "%%")
 	ms.ao.output(str)
-	//ms.ao.output("{amp:&<{amp_width}.{amp_width}s}{at:@<{at_width}.{at_width}s}{str:<{width}.{width}s}".format(str="Marginal Rate(%):", width=17, amp='&', amp_width=spaces, at='@', at_width=7))
 	for k := 0; k < len(*ms.ti.Taxtable); k++ {
 		//(cut, size, rate, base) = ms.ti.taxtable[k]
 		rate := (*ms.ti.Taxtable)[k][2]
@@ -620,30 +615,42 @@ func (ms ModelSpecs) printTaxBrackets(xp *[]float64) {
 	ms.printHeaderTaxBrackets()
 }
 
+func (ms ModelSpecs) printHeaderCapgainsBrackets() {
+	ampv := "&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&"
+	atv := "@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@"
+	spaces := 36
+	if ms.ip.myKey2 != "" && ms.ip.filingStatus == "joint" {
+		spaces = 39
+	}
+	ampWidth := spaces
+	atWidth := 6
+	ms.ao.output(fmt.Sprintf("%s%sMarginal Rate(%s):", ampv[:ampWidth], atv[:atWidth], "%%"))
+	for l := 0; l < len(*ms.ti.Capgainstable); l++ {
+		rate := (*ms.ti.Capgainstable)[l][2]
+		ms.ao.output(fmt.Sprintf("&@%6.0f", rate*100))
+	}
+	ms.ao.output("\n")
+	if ms.ip.myKey2 != "" && ms.ip.filingStatus == "joint" {
+		ms.ao.output(fmt.Sprintf("%s/%s\n", ms.ip.myKey1, ms.ip.myKey2))
+		ms.ao.output("    age ")
+	} else {
+		if ms.ip.myKey1 != "nokey" {
+			ms.ao.output(fmt.Sprintf("%s\n", ms.ip.myKey1))
+		}
+		ms.ao.output(" age ")
+	}
+	str := fmt.Sprintf("&@%7s&@%7s&@%8s&@%7s&@%7s&@%7s",
+		"fAftaTx", "tAftaTx", "cgTax%%", "cgTaxbl",
+		"T_inc", "cgTax")
+	ms.ao.output(str)
+	for l := 0; l < len(*ms.ti.Capgainstable); l++ {
+		ms.ao.output(fmt.Sprintf("&@brckt%d", l))
+	}
+	ms.ao.output("&@brkTot\n")
+}
+
 /*
 def print_cap_gains_brackets(res):
-    def printheader_capgains_brackets():
-        if S.secondary != "":
-            spaces = 39
-        else:
-            spaces = 36
-        ao.output("{amp:&<{amp_width}.{amp_width}s}{at:@<{at_width}.{at_width}s}{str:<{width}.{width}s}".format(str="Marginal Rate(%):", width=17, amp='&', amp_width=spaces, at='@', at_width=6))
-        for l in range(len(taxinfo.capgainstable)):
-            (cut, size, rate) = taxinfo.capgainstable[l]
-            ao.output("&@%6.0f" % (rate*100))
-        ao.output("\n")
-        if S.secondary != "":
-            ao.output("%s/%s\n" % (S.primary, S.secondary))
-            ao.output("    age ")
-        else:
-            if S.primary != 'nokey':
-                ao.output("%s\n" % (S.primary))
-            ao.output(" age ")
-        ao.output(("&@%7s" * 6) % ("fAftaTx", "tAftaTx", "cgTax%", "cgTaxbl", "T_inc", "cgTax"))
-        for l in range(len(taxinfo.capgainstable)):
-            ao.output("&@brckt%d" % l)
-        ao.output("&@brkTot\n")
-
     ao.output("\nOverall Capital Gains Bracket Summary:\n")
     printheader_capgains_brackets()
     for year in range(S.numyr):

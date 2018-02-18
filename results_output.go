@@ -475,7 +475,7 @@ func (ms ModelSpecs) printAccountTrans(xp *[]float64) {
 	ms.printAccHeader()
 }
 
-func (ms ModelSpecs) printheaderTax() {
+func (ms ModelSpecs) printHeaderTax() {
 	if ms.ip.myKey2 != "" && ms.ip.filingStatus == "joint" {
 		ms.ao.output(fmt.Sprintf("%s/%s\n", ms.ip.myKey1, ms.ip.myKey2))
 		ms.ao.output("    age ")
@@ -485,7 +485,7 @@ func (ms ModelSpecs) printheaderTax() {
 		}
 		ms.ao.output(" age ")
 	}
-	str := fmt.Sprintf("&@%7s&@%7s&@%7s&@%7s&@%7s&@%7s&@%7s&@%7s&@%7s&@%7s&@%7s&@%7s&@%7s&@%7s&@%7s",
+	str := fmt.Sprintf("&@%7s&@%7s&@%7s&@%7s&@%7s&@%7s&@%7s&@%7s&@%8s&@%7s&@%7s&@%8s&@%7s&@%7s&@%7s",
 		"fIRA", "tIRA", "TxbleO", "TxbleSS", "deduct",
 		"T_inc", "earlyP", "fedtax", "mTaxB%%", "fAftaTx",
 		"tAftaTx", "cgTax%%", "cgTax", "TFedTax", "spndble")
@@ -493,39 +493,53 @@ func (ms ModelSpecs) printheaderTax() {
 	ms.ao.output("\n")
 }
 
-/*
-def print_tax(res):
-
-    ao.output("\nTax Summary:\n\n")
-    printheader_tax()
-    for year in range(S.numyr):
-        age = year + S.startage
-        i_mul = S.i_rate ** (S.preplanyears+year)
-        T,spendable,tax,rate,cg_tax,earlytax,rothearly = IncomeSummary(year)
-        f = model.cg_taxable_fraction(year)
-        ttax = tax + cg_tax +earlytax
-        withdrawal = {'IRA': 0, 'roth': 0, 'aftertax': 0}
-        deposit = {'IRA': 0, 'roth': 0, 'aftertax': 0}
-        for j in range(len(S.accounttable)):
-            withdrawal[S.accounttable[j]['acctype']] += res.x[vindx.w(year,j)]
-            deposit[S.accounttable[j]['acctype']] += depositAmount(S, res, year,j)
-        if S.secondary != "":
-            ao.output("%3d/%3d:" % (year+S.startage, year+S.startage-S.delta))
-        else:
-            ao.output(" %3d:" % (year+S.startage))
-        star = ' '
-        if rothearly:
-            star = '*'
-        ao.output(("&@%7.0f" * 6 + "&@%6.0f%c" * 1 + "&@%7.0f" * 8 ) %
-              ( withdrawal['IRA']/ms.OneK, deposit['IRA']/ms.OneK, # sum IRA
-              S.taxed[year]/ms.OneK, taxinfo.SS_taxable*S.SS[year]/ms.OneK,
-              taxinfo.stded*i_mul/ms.OneK, T/ms.OneK, earlytax/ms.OneK, star, tax/ms.OneK, rate*100,
-                withdrawal['aftertax']/ms.OneK, deposit['aftertax']/ms.OneK,#Aftertax
-              f*100, cg_tax/ms.OneK,
-              ttax/ms.OneK, res.x[vindx.s(year)]/ms.OneK ))
-        ao.output("\n")
-    printheader_tax()
-*/
+func (ms ModelSpecs) printTax(xp *[]float64) {
+	ms.ao.output("\nTax Summary:\n\n")
+	ms.printHeaderTax()
+	for year := 0; year < ms.ip.numyr; year++ {
+		age := year + ms.ip.startPlan
+		iMul := math.Pow(ms.ip.iRate, float64(ms.ip.prePlanYears+year))
+		//T, spendable, tax, rate, cgtax, earlytax, rothearly := ms.IncomeSummary(year, xp)
+		T, _, tax, rate, cgtax, earlytax, rothearly := ms.IncomeSummary(year, xp)
+		f := ms.cgTaxableFraction(year)
+		ttax := tax + cgtax + earlytax
+		withdrawal := map[string]float64{"IRA": 0, "roth": 0, "aftertax": 0}
+		deposit := map[string]float64{"IRA": 0, "roth": 0, "aftertax": 0}
+		for j := 0; j < len(ms.accounttable); j++ {
+			withdrawal[ms.accounttable[j].acctype] += (*xp)[ms.vindx.W(year, j)]
+			deposit[ms.accounttable[j].acctype] += ms.depositAmount(xp, year, j)
+		}
+		if ms.ip.myKey2 != "" && ms.ip.filingStatus == "joint" {
+			ms.ao.output(fmt.Sprintf("%3d/%3d:", age, age-ms.ip.ageDelta))
+		} else {
+			ms.ao.output(fmt.Sprintf(" %3d:", year+ms.ip.startPlan))
+		}
+		star := ' '
+		if rothearly {
+			star = '*'
+		}
+		str := fmt.Sprintf("&@%7.0f&@%7.0f&@%7.0f&@%7.0f&@%7.0f&@%7.0f",
+			withdrawal["IRA"]/ms.OneK,
+			deposit["IRA"]/ms.OneK,
+			accessVector(ms.taxed, year)/ms.OneK,
+			ms.ti.SStaxable*accessVector(ms.SS[0], year)/ms.OneK,
+			ms.ti.Stded*iMul/ms.OneK,
+			T/ms.OneK)
+		str += fmt.Sprintf("&@%6.0f%c", earlytax/ms.OneK, star)
+		str += fmt.Sprintf("&@%7.0f&@%7.0f&@%7.0f&@%7.0f&@%7.0f&@%7.0f&@%7.0f&@%7.0f",
+			tax/ms.OneK,
+			rate*100,
+			withdrawal["aftertax"]/ms.OneK,
+			deposit["aftertax"]/ms.OneK,
+			f*100,
+			cgtax/ms.OneK,
+			ttax/ms.OneK,
+			(*xp)[ms.vindx.S(year)]/ms.OneK)
+		ms.ao.output(str)
+		ms.ao.output("\n")
+	}
+	ms.printHeaderTax()
+}
 
 /*
 def print_tax_brackets(res):

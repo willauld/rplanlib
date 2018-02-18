@@ -832,12 +832,12 @@ func TestPrintHeaderTax(t *testing.T) {
 		{ // Case 0
 			sip: sipSingle,
 			expect: `retiree1
- age     fIRA    tIRA  TxbleO TxbleSS  deduct   T_inc  earlyP  fedtax mTaxB% fAftaTx tAftaTx cgTax%   cgTax TFedTax spndble`,
+ age     fIRA    tIRA  TxbleO TxbleSS  deduct   T_inc  earlyP  fedtax  mTaxB% fAftaTx tAftaTx  cgTax%   cgTax TFedTax spndble`,
 		},
 		{ // Case 1
 			sip: sipJoint,
 			expect: `retiree1/retiree2
-    age     fIRA    tIRA  TxbleO TxbleSS  deduct   T_inc  earlyP  fedtax mTaxB% fAftaTx tAftaTx cgTax%   cgTax TFedTax spndble`,
+    age     fIRA    tIRA  TxbleO TxbleSS  deduct   T_inc  earlyP  fedtax  mTaxB% fAftaTx tAftaTx  cgTax%   cgTax TFedTax spndble`,
 		},
 	}
 	for i, elem := range tests {
@@ -860,7 +860,7 @@ func TestPrintHeaderTax(t *testing.T) {
 			return // should this be continue?
 		}
 
-		ms.printheaderTax()
+		ms.printHeaderTax()
 
 		str := ms.RestoreModelSpecsTable(mychan, oldout, w, DoNothing)
 		strn := strings.TrimSpace(str)
@@ -873,7 +873,109 @@ func TestPrintHeaderTax(t *testing.T) {
 
 //def print_tax(res):
 func TestPrintTax(t *testing.T) {
-	fmt.Printf("Not Yet Implemented\n")
+	tests := []struct {
+		sip    map[string]string
+		sxp    *[]float64
+		expect string
+	}{
+		{ // Case 0
+			sip: sipSingle,
+			sxp: xpSingle,
+			expect: `Tax Summary:
+
+retiree1
+ age     fIRA    tIRA  TxbleO TxbleSS  deduct   T_inc  earlyP  fedtax  mTaxB% fAftaTx tAftaTx  cgTax%   cgTax TFedTax spndble
+  65:   40594       0       0       0   13646   26949      0     3431      15       0       0     100       0    3431   37164
+  66:   41609       0       0       0   13987   27622      0     3516      15       0       0     100       0    3516   38093
+  67:   42650       0       0       0   14337   28313      0     3604      15       0       0     100       0    3604   39045
+  68:   43716       0       0       0   14695   29021      0     3694      15       0       0     100       0    3694   40021
+  69:   44809       0       0       0   15062   29746      0     3787      15       0       0     100       0    3787   41022
+  70:   45929       0       0       0   15439   30490      0     3881      15       0       0     100       0    3881   42048
+  71:   47077       0       0       0   15825   31252      0     3978      15       0       0     100       0    3978   43099
+  72:   48254       0       0       0   16220   32034      0     4078      15       0       0     100       0    4078   44176
+  73:   49460       0       0       0   16626   32834      0     4180      15       0       0     100       0    4180   45281
+  74:   50697       0       0       0   17042   33655      0     4284      15       0       0     100       0    4284   46413
+  75:   51964       0       0       0   17468   34497      0     4391      15       0       0     100       0    4391   47573
+retiree1
+ age     fIRA    tIRA  TxbleO TxbleSS  deduct   T_inc  earlyP  fedtax  mTaxB% fAftaTx tAftaTx  cgTax%   cgTax TFedTax spndble`,
+		},
+		{ // Case 1
+			sip: sipJoint,
+			sxp: xpJoint,
+			expect: `Tax Summary:
+
+retiree1/retiree2
+    age     fIRA    tIRA  TxbleO TxbleSS  deduct   T_inc  earlyP  fedtax  mTaxB% fAftaTx tAftaTx  cgTax%   cgTax TFedTax spndble
+ 65/ 65:   40594       0       0       0   27291   13303      0     1330      10       0       0     100       0    1330   39264
+ 66/ 66:   41609       0       0       0   27974   13636      0     1364      10       0       0     100       0    1364   40246
+ 67/ 67:   42650       0       0       0   28673   13977      0     1398      10       0       0     100       0    1398   41252
+ 68/ 68:   43716       0       0       0   29390   14326      0     1433      10       0       0     100       0    1433   42283
+ 69/ 69:   44809       0       0       0   30125   14684      0     1468      10       0       0     100       0    1468   43340
+ 70/ 70:   45929       0       0       0   30878   15051      0     1505      10       0       0     100       0    1505   44424
+ 71/ 71:   47077       0       0       0   31650   15427      0     1543      10       0       0     100       0    1543   45534
+ 72/ 72:   48254       0       0       0   32441   15813      0     1581      10       0       0     100       0    1581   46673
+ 73/ 73:   49460       0       0       0   33252   16208      0     1621      10       0       0     100       0    1621   47840
+ 74/ 74:   50697       0       0       0   34083   16614      0     1661      10       0       0     100       0    1661   49036
+ 75/ 75:   51964       0       0       0   34935   17029      0     1703      10       0       0     100       0    1703   50261
+retiree1/retiree2
+    age     fIRA    tIRA  TxbleO TxbleSS  deduct   T_inc  earlyP  fedtax  mTaxB% fAftaTx tAftaTx  cgTax%   cgTax TFedTax spndble`,
+		},
+		{ // Case 2
+			sip: sipSingle3Acc,
+			sxp: xpSingle3Acc,
+			expect: `Tax Summary:
+
+retiree1
+ age     fIRA    tIRA  TxbleO TxbleSS  deduct   T_inc  earlyP  fedtax  mTaxB% fAftaTx tAftaTx  cgTax%   cgTax TFedTax spndble
+  65:   54922       0       0       0   13646   41276      0     5580      15       0       0     100       0    5580   49342
+  66:   56295       0       0       0   13987   42308      0     5719      15       0       0     100       0    5719   50576
+  67:   57702       0       0       0   14337   43366      0     5862      15      -0       0     100       0    5862   51840
+  68:   59145       0       0       0   14695   44450      0     6009      15      -0       0     100       0    6009   53136
+  69:   60623       0       0       0   15062   45561      0     6159      15       0      -0     100       0    6159   54465
+  70:   31531       0       0       0   15439   16093      0     1722      15   24225       0     100       0    1722   55826
+  71:   30014       0       0       0   15825   14189      0     1419      10   28627       0     100       0    1419   57222
+  72:   30764       0       0       0   16220   14544      0     1454      10   29343       0     100       0    1454   58652
+  73:   31533       0       0       0   16626   14907      0     1491      10   30076       0     100       0    1491   60119
+  74:   32322       0       0       0   17042   15280      0     1528      10   30828       0     100       0    1528   61622
+  75:   33130       0       0       0   17468   15662      0     1566      10       0       0     100       0    1566   63162
+retiree1
+ age     fIRA    tIRA  TxbleO TxbleSS  deduct   T_inc  earlyP  fedtax  mTaxB% fAftaTx tAftaTx  cgTax%   cgTax TFedTax spndble`,
+		},
+	}
+	for i, elem := range tests {
+		//fmt.Printf("=============== Case %d =================\n", i)
+		ip := NewInputParams(elem.sip)
+		ti := NewTaxInfo(ip.filingStatus)
+		taxbins := len(*ti.Taxtable)
+		cgbins := len(*ti.Capgainstable)
+		vindx, err := NewVectorVarIndex(ip.numyr, taxbins,
+			cgbins, ip.accmap, os.Stdout)
+		if err != nil {
+			t.Errorf("TestPrintAccountTrans case %d: %s", i, err)
+			continue
+		}
+		logfile := os.Stdout
+		csvfile := (*os.File)(nil)
+		ms := NewModelSpecs(vindx, ti, ip, false,
+			false, os.Stderr, logfile, csvfile, logfile)
+
+		mychan := make(chan string)
+		DoNothing := false //true
+		oldout, w, err := ms.RedirectModelSpecsTable(mychan, DoNothing)
+		if err != nil {
+			t.Errorf("RedirectModelSpecsTable: %s\n", err)
+			return // should this be continue?
+		}
+
+		ms.printTax(elem.sxp)
+
+		str := ms.RestoreModelSpecsTable(mychan, oldout, w, DoNothing)
+		strn := strings.TrimSpace(str)
+		if elem.expect != strn {
+			showStrMismatch(elem.expect, strn)
+			t.Errorf("TestPrintTax case %d:  expected output:\n\t '%s'\n\tbut found:\n\t'%s'\n", i, elem.expect, strn)
+		}
+	}
 }
 
 func showStrMismatch(s1, s2 string) { // TODO move to Utility functions

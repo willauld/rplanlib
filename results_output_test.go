@@ -1199,8 +1199,8 @@ func TestPrintCapGainsBrackets(t *testing.T) {
 		expect string
 	}{
 		{ // Case 0
-			sip:    sipSingle,
-			sxp:    xpSingle,
+			sip: sipSingle,
+			sxp: xpSingle,
 			expect: `Overall Capital Gains Bracket Summary:
                                     Marginal Rate(%):      0     15     20
 retiree1
@@ -1221,8 +1221,8 @@ retiree1
  age  fAftaTx tAftaTx  cgTax% cgTaxbl   T_inc   cgTax brckt0 brckt1 brckt2 brkTot`,
 		},
 		{ // Case 1
-			sip:    sipJoint,
-			sxp:    xpJoint,
+			sip: sipJoint,
+			sxp: xpJoint,
 			expect: `Overall Capital Gains Bracket Summary:
                                        Marginal Rate(%):      0     15     20
 retiree1/retiree2
@@ -1243,8 +1243,8 @@ retiree1/retiree2
     age  fAftaTx tAftaTx  cgTax% cgTaxbl   T_inc   cgTax brckt0 brckt1 brckt2 brkTot`,
 		},
 		{ // Case 2
-			sip:    sipSingle3Acc,
-			sxp:    xpSingle3Acc,
+			sip: sipSingle3Acc,
+			sxp: xpSingle3Acc,
 			expect: `Overall Capital Gains Bracket Summary:
                                     Marginal Rate(%):      0     15     20
 retiree1
@@ -1509,7 +1509,7 @@ func TestVerifyInputs(t *testing.T) {
 	fmt.Printf("Not Yet Implemented\n")
 }
 
-func TestResultsOutput(t *testing.T) {
+func /*Test*/ ResultsOutput(t *testing.T) {
 	tests := []struct {
 		ip            map[string]string
 		verbose       bool
@@ -1666,8 +1666,11 @@ func TestResultsOutput(t *testing.T) {
 		fmt.Printf("Called LPSimplex() for m:%d x n:%d model\n", len(a), len(a[0]))
 
 		ms.printActivitySummary(&res.X)
-		//ms.printIncomeExpenseDetails()
+		ms.printIncomeExpenseDetails()
 		ms.printAccountTrans(&res.X)
+		ms.printTax(&res.X)
+		ms.printTaxBrackets(&res.X)
+		ms.printCapGainsBrackets(&res.X)
 		/*
 			//ms.print_model_results(res.x)
 				        if args.verboseincome:

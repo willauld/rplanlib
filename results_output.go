@@ -264,7 +264,7 @@ func (ms ModelSpecs) getSSIncomeAssetExpenseList() ([]string, []int, [][]float64
 		count := 0
 		for elem := 1; elem < len(*vp); elem++ {
 			if len(*vp) != len(*vt) {
-				e := fmt.Errorf("getSSIncomeAssetExpenseList: vector lengths do not match (%d vs. %d)", len(*vp), len(*vt))
+				e := fmt.Errorf("getSSIncomeAssetExpenseList: %s vector lengths do not match (%d vs. %d)", t, len(*vp), len(*vt))
 				fmt.Printf("*vp: %#v\n", *vp)
 				fmt.Printf("*vt: %#v\n", *vt)
 				panic(e)

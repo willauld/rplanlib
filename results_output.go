@@ -541,32 +541,50 @@ func (ms ModelSpecs) printTax(xp *[]float64) {
 	ms.printHeaderTax()
 }
 
+func (ms ModelSpecs) printHeaderTaxBrackets() {
+	ampv := "&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&"
+	atv := "@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@"
+	var spaces int
+	if ms.ip.myKey2 != "" && ms.ip.filingStatus == "joint" {
+		//ao.output("@@@@@@@%64s" % "Marginal Rate(%):")
+		spaces = 47
+	} else {
+		//ao.output("@@@@@@@%61s" % "Marginal Rate(%):")
+		spaces = 44
+	}
+	//width := 17
+	ampWidth := spaces
+	atWidth := 7
+	str := fmt.Sprintf("%s%sMarginal Rate(%s):", ampv[:ampWidth], atv[:atWidth], "%%")
+	ms.ao.output(str)
+	//ms.ao.output("{amp:&<{amp_width}.{amp_width}s}{at:@<{at_width}.{at_width}s}{str:<{width}.{width}s}".format(str="Marginal Rate(%):", width=17, amp='&', amp_width=spaces, at='@', at_width=7))
+	for k := 0; k < len(*ms.ti.Taxtable); k++ {
+		//(cut, size, rate, base) = ms.ti.taxtable[k]
+		rate := (*ms.ti.Taxtable)[k][2]
+		ms.ao.output(fmt.Sprintf("&@%6.0f", rate*100))
+	}
+	ms.ao.output("\n")
+	if ms.ip.myKey2 != "" && ms.ip.filingStatus == "joint" {
+		ms.ao.output(fmt.Sprintf("%s/%s\n", ms.ip.myKey1, ms.ip.myKey2))
+		ms.ao.output("    age ")
+	} else {
+		if ms.ip.myKey1 != "nokey" {
+			ms.ao.output(fmt.Sprintf("%s\n", ms.ip.myKey1))
+		}
+		ms.ao.output(" age ")
+	}
+	str = fmt.Sprintf("&@%7s&@%7s&@%7s&@%7s&@%7s&@%7s&@%7s",
+		"fIRA", "tIRA", "TxbleO", "TxbleSS", "deduct",
+		"T_inc", "fedtax")
+	ms.ao.output(str)
+	for k := 0; k < len(*ms.ti.Taxtable); k++ {
+		ms.ao.output(fmt.Sprintf("&@brckt%d", k))
+	}
+	ms.ao.output("&@brkTot\n")
+}
+
 /*
 def print_tax_brackets(res):
-    def printheader_tax_brackets():
-        if S.secondary != "":
-            #ao.output("@@@@@@@%64s" % "Marginal Rate(%):")
-            spaces = 47
-        else:
-            #ao.output("@@@@@@@%61s" % "Marginal Rate(%):")
-            spaces = 44
-        ao.output("{amp:&<{amp_width}.{amp_width}s}{at:@<{at_width}.{at_width}s}{str:<{width}.{width}s}".format(str="Marginal Rate(%):", width=17, amp='&', amp_width=spaces, at='@', at_width=7))
-        for k in range(len(taxinfo.taxtable)):
-            (cut, size, rate, base) = taxinfo.taxtable[k]
-            ao.output("&@%6.0f" % (rate*100))
-        ao.output("\n")
-        if S.secondary != "":
-            ao.output("%s/%s\n" % (S.primary, S.secondary))
-            ao.output("    age ")
-        else:
-            if S.primary != 'nokey':
-                ao.output("%s\n" % (S.primary))
-            ao.output(" age ")
-        ao.output(("&@%7s" * 7) % ("fIRA", "tIRA", "TxbleO", "TxbleSS", "deduct", "T_inc", "fedtax"))
-        for k in range(len(taxinfo.taxtable)):
-            ao.output("&@brckt%d" % k)
-        ao.output("&@brkTot\n")
-
     ao.output("\nOverall Tax Bracket Summary:\n")
     printheader_tax_brackets()
     for year in range(S.numyr):

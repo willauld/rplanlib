@@ -978,6 +978,58 @@ retiree1
 	}
 }
 
+//func (ms ModelSpecs) printHeaderTaxBrackets()
+func TestPrintHeaderTaxBrackets(t *testing.T) {
+	tests := []struct {
+		sip    map[string]string
+		expect string
+	}{
+		{ // Case 0
+			sip: sipSingle,
+			expect: `Marginal Rate(%):     10     15     25     28     33     35     40
+retiree1
+ age     fIRA    tIRA  TxbleO TxbleSS  deduct   T_inc  fedtax brckt0 brckt1 brckt2 brckt3 brckt4 brckt5 brckt6 brkTot`,
+		},
+		{ // Case 1
+			sip: sipJoint,
+			expect: `Marginal Rate(%):     10     15     25     28     33     35     40
+retiree1/retiree2
+    age     fIRA    tIRA  TxbleO TxbleSS  deduct   T_inc  fedtax brckt0 brckt1 brckt2 brckt3 brckt4 brckt5 brckt6 brkTot`,
+		},
+	}
+	for i, elem := range tests {
+		fmt.Printf("=============== Case %d =================\n", i)
+		ip := NewInputParams(elem.sip)
+		ti := NewTaxInfo(ip.filingStatus)
+		csvfile := (*os.File)(nil)
+		tablefile := os.Stdout
+		ms := ModelSpecs{
+			ip:      ip,
+			ti:      ti,
+			logfile: os.Stdout,
+			errfile: os.Stderr,
+			ao:      NewAppOutput(csvfile, tablefile),
+		}
+
+		mychan := make(chan string)
+		DoNothing := false //true
+		oldout, w, err := ms.RedirectModelSpecsTable(mychan, DoNothing)
+		if err != nil {
+			t.Errorf("RedirectModelSpecsTable: %s\n", err)
+			return // should this be continue?
+		}
+
+		ms.printHeaderTaxBrackets()
+
+		str := ms.RestoreModelSpecsTable(mychan, oldout, w, DoNothing)
+		strn := strings.TrimSpace(str)
+		if elem.expect != strn {
+			showStrMismatch(elem.expect, strn)
+			t.Errorf("TestPrintHeaderTaxBrackests case %d:  expected output:\n\t '%s'\n\tbut found:\n\t'%s'\n", i, elem.expect, strn)
+		}
+	}
+}
+
 func showStrMismatch(s1, s2 string) { // TODO move to Utility functions
 	for i := 0; i < intMin(len(s1), len(s2)); i++ {
 		if s1[i] != s2[i] {

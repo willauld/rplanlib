@@ -104,21 +104,21 @@ func TestMaxContribution(t *testing.T) {
 			year:         5,
 			irate:        1.025,
 		},
-		{ // case 0
+		{ // case 1
 			filingStatus: "mseparate",
 			retireeindx:  1,
 			year:         5,
 			irate:        1.025,
 		},
-		{ // case 0
+		{ // case 2
 			filingStatus: "joint",
 			retireeindx:  1,
 			year:         5,
 			irate:        1.025,
 		},
-		{ // case 0
+		{ // case 3
 			filingStatus: "joint",
-			retireeindx:  2, // pass in an empty key
+			retireeindx:  -1, // pass in an empty key
 			year:         5,
 			irate:        1.025,
 		},
@@ -141,25 +141,21 @@ func TestMaxContribution(t *testing.T) {
 			definedContributionPlan: false,
 			dcpBuckets:              nil,
 		},
-		{ // retireeindx == 2 // fake retiree for getting empty mykey
-			age:        0,
-			ageAtStart: 0,
-			throughAge: 0,
-			mykey:      "", // empty mykey
-			definedContributionPlan: false,
-			dcpBuckets:              nil,
-		},
 	}
 	for i, elem := range tests {
 		ti := NewTaxInfo(elem.filingStatus)
-		retiree := retirees[elem.retireeindx]
-		prePlanYears := retiree.ageAtStart - retiree.age
-		m := ti.maxContribution(elem.year, prePlanYears+elem.year, retirees, retiree.mykey, elem.irate)
+		retireekey := ""
+		if elem.retireeindx > 0 {
+			retireekey = retirees[elem.retireeindx].mykey
+		}
+		prePlanYears := retirees[0].ageAtStart - retirees[0].age
+		m := ti.maxContribution(elem.year, prePlanYears+elem.year, 
+								retirees, retireekey, elem.irate)
 		//fmt.Printf("m: %f, year: %d, prePlanYears: %d, key: %s, irate: %f\n", m, elem.year, prePlanYears, retiree.mykey, elem.irate)
-		inflateYears := retiree.ageAtStart - retiree.age + elem.year
+		inflateYears := prePlanYears + elem.year
 		memax := ti.Contribspecs["TDRA"] + ti.Contribspecs["TDRACatchup"]
 		emax := memax * math.Pow(elem.irate, float64(inflateYears)) // adjust for inflation ??? current ????
-		if retiree.mykey == "" {
+		if retireekey == "" {
 			emax *= 2
 		}
 		//fmt.Printf("memax: %f, emax: %f\n", memax, emax)

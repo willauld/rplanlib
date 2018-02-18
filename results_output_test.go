@@ -998,7 +998,7 @@ retiree1/retiree2
 		},
 	}
 	for i, elem := range tests {
-		fmt.Printf("=============== Case %d =================\n", i)
+		//fmt.Printf("=============== Case %d =================\n", i)
 		ip := NewInputParams(elem.sip)
 		ti := NewTaxInfo(ip.filingStatus)
 		csvfile := (*os.File)(nil)
@@ -1030,6 +1030,116 @@ retiree1/retiree2
 	}
 }
 
+//def print_tax_brackets(res):
+func TestPrintTaxBrackets(t *testing.T) {
+	tests := []struct {
+		sip    map[string]string
+		sxp    *[]float64
+		expect string
+	}{
+		{ // Case 0
+			sip: sipSingle,
+			sxp: xpSingle,
+			expect: `Overall Tax Bracket Summary:
+                                            Marginal Rate(%):     10     15     25     28     33     35     40
+retiree1
+ age     fIRA    tIRA  TxbleO TxbleSS  deduct   T_inc  fedtax brckt0 brckt1 brckt2 brckt3 brckt4 brckt5 brckt6 brkTot
+  65:   40594       0       0       0   13646   26949    3431  12235  14714      0      0      0      0      0  26949
+  66:   41609       0       0       0   13987   27622    3516  12541  15081      0      0      0      0      0  27622
+  67:   42650       0       0       0   14337   28313    3604  12855  15458      0      0      0      0      0  28313
+  68:   43716       0       0       0   14695   29021    3694  13176  15845      0      0      0      0      0  29021
+  69:   44809       0       0       0   15062   29746    3787  13505  16241      0      0      0      0      0  29746
+  70:   45929       0       0       0   15439   30490    3881  13843  16647      0      0      0      0      0  30490
+  71:   47077       0       0       0   15825   31252    3978  14189  17063      0      0      0      0      0  31252
+  72:   48254       0       0       0   16220   32034    4078  14544  17490      0      0      0      0      0  32034
+  73:   49460       0       0       0   16626   32834    4180  14907  17927      0      0      0      0      0  32834
+  74:   50697       0       0       0   17042   33655    4284  15280  18375      0      0      0      0      0  33655
+  75:   51964       0       0       0   17468   34497    4391  15662  18835      0      0      0      0      0  34497
+                                            Marginal Rate(%):     10     15     25     28     33     35     40
+retiree1
+ age     fIRA    tIRA  TxbleO TxbleSS  deduct   T_inc  fedtax brckt0 brckt1 brckt2 brckt3 brckt4 brckt5 brckt6 brkTot`,
+		},
+		{ // Case 1
+			sip: sipJoint,
+			sxp: xpJoint,
+			expect: `Overall Tax Bracket Summary:
+                                               Marginal Rate(%):     10     15     25     28     33     35     40
+retiree1/retiree2
+    age     fIRA    tIRA  TxbleO TxbleSS  deduct   T_inc  fedtax brckt0 brckt1 brckt2 brckt3 brckt4 brckt5 brckt6 brkTot
+ 65/ 65:   40594       0       0       0   27291   13303    1330  13303      0      0      0      0      0      0  13303
+ 66/ 66:   41609       0       0       0   27974   13636    1364  13636      0      0      0      0      0      0  13636
+ 67/ 67:   42650       0       0       0   28673   13977    1398  13977      0      0      0      0      0      0  13977
+ 68/ 68:   43716       0       0       0   29390   14326    1433  14326      0      0      0      0      0      0  14326
+ 69/ 69:   44809       0       0       0   30125   14684    1468  14684      0      0      0      0      0      0  14684
+ 70/ 70:   45929       0       0       0   30878   15051    1505  15051      0      0      0      0      0      0  15051
+ 71/ 71:   47077       0       0       0   31650   15427    1543  15427      0      0      0      0      0      0  15427
+ 72/ 72:   48254       0       0       0   32441   15813    1581  15813      0      0      0      0      0      0  15813
+ 73/ 73:   49460       0       0       0   33252   16208    1621  16208      0      0      0      0      0      0  16208
+ 74/ 74:   50697       0       0       0   34083   16614    1661  16614      0      0      0      0      0      0  16614
+ 75/ 75:   51964       0       0       0   34935   17029    1703  17029      0      0      0      0      0      0  17029
+                                               Marginal Rate(%):     10     15     25     28     33     35     40
+retiree1/retiree2
+    age     fIRA    tIRA  TxbleO TxbleSS  deduct   T_inc  fedtax brckt0 brckt1 brckt2 brckt3 brckt4 brckt5 brckt6 brkTot`,
+		},
+		{ // Case 2
+			sip: sipSingle3Acc,
+			sxp: xpSingle3Acc,
+			expect: `Overall Tax Bracket Summary:
+                                            Marginal Rate(%):     10     15     25     28     33     35     40
+retiree1
+ age     fIRA    tIRA  TxbleO TxbleSS  deduct   T_inc  fedtax brckt0 brckt1 brckt2 brckt3 brckt4 brckt5 brckt6 brkTot
+  65:   54922       0       0       0   13646   41276    5580  12235  29041      0      0      0      0      0  41276
+  66:   56295       0       0       0   13987   42308    5719  12541  29767      0      0      0      0      0  42308
+  67:   57702       0       0       0   14337   43366    5862  12855  30511      0      0      0      0      0  43366
+  68:   59145       0       0       0   14695   44450    6009  13176  31274      0      0      0      0      0  44450
+  69:   60623       0       0       0   15062   45561    6159  13505  32056      0      0      0      0      0  45561
+  70:   31531       0       0       0   15439   16093    1722  13843   2250      0      0      0      0      0  16093
+  71:   30014       0       0       0   15825   14189    1419  14189      0      0      0      0      0      0  14189
+  72:   30764       0       0       0   16220   14544    1454  14544      0      0      0      0      0      0  14544
+  73:   31533       0       0       0   16626   14907    1491  14907      0      0      0      0      0      0  14907
+  74:   32322       0       0       0   17042   15280    1528  15280      0      0      0      0      0      0  15280
+  75:   33130       0       0       0   17468   15662    1566  15662      0      0      0      0      0      0  15662
+                                            Marginal Rate(%):     10     15     25     28     33     35     40
+retiree1
+ age     fIRA    tIRA  TxbleO TxbleSS  deduct   T_inc  fedtax brckt0 brckt1 brckt2 brckt3 brckt4 brckt5 brckt6 brkTot`,
+		},
+	}
+	for i, elem := range tests {
+		//fmt.Printf("=============== Case %d =================\n", i)
+		ip := NewInputParams(elem.sip)
+		ti := NewTaxInfo(ip.filingStatus)
+		taxbins := len(*ti.Taxtable)
+		cgbins := len(*ti.Capgainstable)
+		vindx, err := NewVectorVarIndex(ip.numyr, taxbins,
+			cgbins, ip.accmap, os.Stdout)
+		if err != nil {
+			t.Errorf("TestPrintTaxBrackets case %d: %s", i, err)
+			continue
+		}
+		logfile := os.Stdout
+		csvfile := (*os.File)(nil)
+		ms := NewModelSpecs(vindx, ti, ip, false,
+			false, os.Stderr, logfile, csvfile, logfile)
+
+		mychan := make(chan string)
+		DoNothing := false //true
+		oldout, w, err := ms.RedirectModelSpecsTable(mychan, DoNothing)
+		if err != nil {
+			t.Errorf("RedirectModelSpecsTable: %s\n", err)
+			return // should this be continue?
+		}
+
+		ms.printTaxBrackets(elem.sxp)
+
+		str := ms.RestoreModelSpecsTable(mychan, oldout, w, DoNothing)
+		strn := strings.TrimSpace(str)
+		if elem.expect != strn {
+			showStrMismatch(elem.expect, strn)
+			t.Errorf("TestPrintTax case %d:  expected output:\n\t '%s'\n\tbut found:\n\t'%s'\n", i, elem.expect, strn)
+		}
+	}
+}
+
 func showStrMismatch(s1, s2 string) { // TODO move to Utility functions
 	for i := 0; i < intMin(len(s1), len(s2)); i++ {
 		if s1[i] != s2[i] {
@@ -1039,11 +1149,6 @@ func showStrMismatch(s1, s2 string) { // TODO move to Utility functions
 			break
 		}
 	}
-}
-
-//def print_tax_brackets(res):
-func TestPrintTaxBrackets(t *testing.T) {
-	fmt.Printf("Not Yet Implemented\n")
 }
 
 //def print_cap_gains_brackets(res):

@@ -583,36 +583,42 @@ func (ms ModelSpecs) printHeaderTaxBrackets() {
 	ms.ao.output("&@brkTot\n")
 }
 
-/*
-def print_tax_brackets(res):
-    ao.output("\nOverall Tax Bracket Summary:\n")
-    printheader_tax_brackets()
-    for year in range(S.numyr):
-        age = year + S.startage
-        i_mul = S.i_rate ** (S.preplanyears+year)
-        T,spendable,tax,rate,cg_tax,earlytax,rothearly = IncomeSummary(year)
-        ttax = tax + cg_tax
-        if S.secondary != "":
-            ao.output("%3d/%3d:" % (year+S.startage, year+S.startage-S.delta))
-        else:
-            ao.output(" %3d:" % (year+S.startage))
-        withdrawal = {'IRA': 0, 'roth': 0, 'aftertax': 0}
-        deposit = {'IRA': 0, 'roth': 0, 'aftertax': 0}
-        for j in range(len(S.accounttable)):
-            withdrawal[S.accounttable[j]['acctype']] += res.x[vindx.w(year,j)]
-            deposit[S.accounttable[j]['acctype']] += depositAmount(S, res, year, j)
-        ao.output(("&@%7.0f" * 7 ) %
-              (
-              withdrawal['IRA']/ms.OneK, deposit['IRA']/ms.OneK, # IRA
-              S.taxed[year]/ms.OneK, taxinfo.SS_taxable*S.SS[year]/ms.OneK,
-              taxinfo.stded*i_mul/ms.OneK, T/ms.OneK, tax/ms.OneK) )
-        bt = 0
-        for k in range(len(taxinfo.taxtable)):
-            ao.output("&@%6.0f" % res.x[vindx.x(year,k)])
-            bt += res.x[vindx.x(year,k)]
-        ao.output("&@%6.0f\n" % bt)
-    printheader_tax_brackets()
-*/
+func (ms ModelSpecs) printTaxBrackets(xp *[]float64) {
+	ms.ao.output("\nOverall Tax Bracket Summary:\n")
+	ms.printHeaderTaxBrackets()
+	for year := 0; year < ms.ip.numyr; year++ {
+		age := year + ms.ip.startPlan
+		iMul := math.Pow(ms.ip.iRate, float64(ms.ip.prePlanYears+year))
+		//T, spendable, tax, rate, cgtax, earlytax, rothearly := ms.IncomeSummary(year, xp)
+		T, _, tax, _, _, _, _ := ms.IncomeSummary(year, xp)
+		//ttax := tax + cgtax
+		if ms.ip.myKey2 != "" && ms.ip.filingStatus == "joint" {
+			ms.ao.output(fmt.Sprintf("%3d/%3d:", age, age-ms.ip.ageDelta))
+		} else {
+			ms.ao.output(fmt.Sprintf(" %3d:", age))
+		}
+		withdrawal := map[string]float64{"IRA": 0, "roth": 0, "aftertax": 0}
+		deposit := map[string]float64{"IRA": 0, "roth": 0, "aftertax": 0}
+		for j := 0; j < len(ms.accounttable); j++ {
+			withdrawal[ms.accounttable[j].acctype] += (*xp)[ms.vindx.W(year, j)]
+			deposit[ms.accounttable[j].acctype] += ms.depositAmount(xp, year, j)
+		}
+		str := fmt.Sprintf("&@%7.0f&@%7.0f&@%7.0f&@%7.0f&@%7.0f&@%7.0f&@%7.0f",
+			withdrawal["IRA"]/ms.OneK,
+			deposit["IRA"]/ms.OneK,
+			accessVector(ms.taxed, year)/ms.OneK,
+			ms.ti.SStaxable*accessVector(ms.SS[0], year)/ms.OneK,
+			ms.ti.Stded*iMul/ms.OneK, T/ms.OneK, tax/ms.OneK)
+		ms.ao.output(str)
+		bt := 0.0
+		for k := 0; k < len(*ms.ti.Taxtable); k++ {
+			ms.ao.output(fmt.Sprintf("&@%6.0f", (*xp)[ms.vindx.X(year, k)]))
+			bt += (*xp)[ms.vindx.X(year, k)]
+		}
+		ms.ao.output(fmt.Sprintf("&@%6.0f\n", bt))
+	}
+	ms.printHeaderTaxBrackets()
+}
 
 /*
 def print_cap_gains_brackets(res):

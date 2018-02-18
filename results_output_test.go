@@ -131,7 +131,7 @@ var sipSingle3Acc = map[string]string{
 	"eT_TDRA_ContribStartAge2":   "",
 	"eT_TDRA_ContribEndAge1":     "",
 	"eT_TDRA_ContribEndAge2":     "",
-	"eT_Roth1":                   "10", //50K
+	"eT_Roth1":                   "10", //10K
 	"eT_Roth2":                   "",
 	"eT_Roth_Rate1":              "",
 	"eT_Roth_Rate2":              "",
@@ -141,7 +141,7 @@ var sipSingle3Acc = map[string]string{
 	"eT_Roth_ContribStartAge2":   "",
 	"eT_Roth_ContribEndAge1":     "",
 	"eT_Roth_ContribEndAge2":     "",
-	"eT_Aftatax":                 "50", //200k
+	"eT_Aftatax":                 "50", //50k
 	"eT_Aftatax_Rate":            "",
 	"eT_Aftatax_Contrib":         "",
 	"eT_Aftatax_ContribStartAge": "",
@@ -673,7 +673,7 @@ func TestPrintAccHeader(t *testing.T) {
 		},
 	}
 	for i, elem := range tests {
-		fmt.Printf("=============== Case %d =================\n", i)
+		//fmt.Printf("=============== Case %d =================\n", i)
 		ip := NewInputParams(elem.sip)
 		csvfile := (*os.File)(nil)
 		tablefile := os.Stdout
@@ -704,6 +704,125 @@ func TestPrintAccHeader(t *testing.T) {
 	}
 }
 
+//func (ms ModelSpecs) printAccountTrans(xp *[]float64)
+func TestPrintAccountTrans(t *testing.T) {
+	tests := []struct {
+		sip    map[string]string
+		sxp    *[]float64
+		expect string
+	}{
+		{ //case 0
+			sip: sipJoint,
+			sxp: xpJoint,
+			expect: `Account Transactions Summary:
+
+retiree1/retiree2
+    age      IRA    fIRA    tIRA  RMDref
+ 54/ 54:  200000       0       0       0
+Plan Start: ---------
+ 65/ 65:  379660   40594       0       0
+ 66/ 66:  359409   41609       0       0
+ 67/ 67:  336868   42650       0       0
+ 68/ 68:  311871   43716       0       0
+ 69/ 69:  284245   44809       0       0
+ 70/ 70:  253803   45929       0    9263
+ 71/ 71:  220346   47077       0    8315
+ 72/ 72:  183665   48254       0    7174
+ 73/ 73:  143536   49460       0    5811
+ 74/ 74:   99720   50697       0    4190
+ 75/ 75:   51964   51964       0    2269
+Plan End: -----------
+ 76/ 76:       0       0       0       0
+retiree1/retiree2
+    age      IRA    fIRA    tIRA  RMDref`,
+		},
+		{ //case 1
+			sip: sipSingle,
+			sxp: xpSingle,
+			expect: `Account Transactions Summary:
+
+retiree1
+ age      IRA    fIRA    tIRA  RMDref
+  54:  200000       0       0       0
+Plan Start: ---------
+  65:  379660   40594       0       0
+  66:  359409   41609       0       0
+  67:  336868   42650       0       0
+  68:  311871   43716       0       0
+  69:  284245   44809       0       0
+  70:  253803   45929       0    9263
+  71:  220346   47077       0    8315
+  72:  183665   48254       0    7174
+  73:  143536   49460       0    5811
+  74:   99720   50697       0    4190
+  75:   51964   51964       0    2269
+Plan End: -----------
+  76:       0       0       0       0
+retiree1
+ age      IRA    fIRA    tIRA  RMDref`,
+		},
+		{ //case 2
+			sip: sipSingle3Acc,
+			sxp: xpSingle3Acc,
+			expect: `Account Transactions Summary:
+
+retiree1
+ age      IRA    fIRA    tIRA  RMDref    Roth   fRoth   tRoth  AftaTx fAftaTx tAftaTx
+  54:  200000       0       0       0   10000       0       0   50000       0       0
+Plan Start: ---------
+  65:  379660   54922       0       0   18983       0       0   94915       0       0
+  66:  344222   56295       0       0   20122       0       0  100610       0       0
+  67:  305203   57702       0       0   21329       0       0  106646      -0       0
+  68:  262350   59145       0       0   22609       0       0  113045      -0       0
+  69:  215398   60623       0       0   23966       0       0  119828       0      -0
+  70:  164061   31531       0    5988   25404    1791       0  127018   24225       0
+  71:  140481   30014       0    5301   25029       0       0  108960   28627       0
+  72:  117095   30764       0    4574   26531       0       0   85153   29343       0
+  73:   91511   31533       0    3705   28123       0       0   59159   30076       0
+  74:   63576   32322       0    2671   29810       0       0   30828   30828       0
+  75:   33130   33130       0    1447   31599   31599       0       0       0       0
+Plan End: -----------
+  76:       0       0       0       0       0       0       0       0       0       0
+retiree1
+ age      IRA    fIRA    tIRA  RMDref    Roth   fRoth   tRoth  AftaTx fAftaTx tAftaTx`,
+		},
+	}
+	for i, elem := range tests {
+		//fmt.Printf("=============== Case %d =================\n", i)
+		ip := NewInputParams(elem.sip)
+		ti := NewTaxInfo(ip.filingStatus)
+		taxbins := len(*ti.Taxtable)
+		cgbins := len(*ti.Capgainstable)
+		vindx, err := NewVectorVarIndex(ip.numyr, taxbins,
+			cgbins, ip.accmap, os.Stdout)
+		if err != nil {
+			t.Errorf("TestPrintAccountTrans case %d: %s", i, err)
+			continue
+		}
+		logfile := os.Stdout
+		csvfile := (*os.File)(nil)
+		ms := NewModelSpecs(vindx, ti, ip, false,
+			false, os.Stderr, logfile, csvfile, logfile)
+
+		mychan := make(chan string)
+		DoNothing := false //true
+		oldout, w, err := ms.RedirectModelSpecsTable(mychan, DoNothing)
+		if err != nil {
+			t.Errorf("RedirectModelSpecsTable: %s\n", err)
+			return // should this be continue?
+		}
+
+		ms.printAccountTrans(elem.sxp)
+
+		str := ms.RestoreModelSpecsTable(mychan, oldout, w, DoNothing)
+		strn := strings.TrimSpace(str)
+		if elem.expect != strn {
+			showStrMismatch(elem.expect, strn)
+			t.Errorf("TestPrintAccountTrans case %d:  expected output:\n\t '%s'\n\tbut found:\n\t'%s'\n", i, elem.expect, strn)
+		}
+	}
+}
+
 func showStrMismatch(s1, s2 string) { // TODO move to Utility functions
 	for i := 0; i < intMin(len(s1), len(s2)); i++ {
 		if s1[i] != s2[i] {
@@ -716,10 +835,6 @@ func showStrMismatch(s1, s2 string) { // TODO move to Utility functions
 }
 
 //def print_account_trans(res):
-func TestPrintAccountTrans(t *testing.T) {
-	fmt.Printf("Not Yet Implemented\n")
-}
-
 //def print_tax(res):
 func TestPrintTax(t *testing.T) {
 	fmt.Printf("Not Yet Implemented\n")
@@ -1041,7 +1156,7 @@ func TestResultsOutput(t *testing.T) {
 		},
 	}
 	for i, elem := range tests {
-		//fmt.Printf("======== CASE %d ========\n", i)
+		fmt.Printf("======== CASE %d ========\n", i)
 		ip := NewInputParams(elem.ip)
 		//fmt.Printf("InputParams: %#v\n", ip)
 		ti := NewTaxInfo(ip.filingStatus)
@@ -1086,9 +1201,11 @@ func TestResultsOutput(t *testing.T) {
 		fmt.Printf(str)
 		str = fmt.Sprintf("Time: LPSimplex() took %s\n", elapsed)
 		fmt.Printf(str)
-		fmt.Printf("Calling LPSimplex() for m:%d x n:%d model\n", len(a), len(a[0]))
+		fmt.Printf("Called LPSimplex() for m:%d x n:%d model\n", len(a), len(a[0]))
 
 		ms.printActivitySummary(&res.X)
+		//ms.printIncomeExpenseDetails()
+		ms.printAccountTrans(&res.X)
 		/*
 			//ms.print_model_results(res.x)
 				        if args.verboseincome:
@@ -1175,4 +1292,52 @@ var xpSingle = &[]float64{ // using sipSingle input parameters
 	47572.92322883549, 0, 0, 0, 0,
 	0, 0, 0, 0, 0,
 	0, 0,
+}
+
+var xpSingle3Acc = &[]float64{
+	12235.208083996806, 29040.983272280755, 0, 0, 0,
+	0, 0, 12541.088286096725, 29767.007854088544, 0,
+	0, 0, 0, 0, 12854.615493249143,
+	30511.18305044068, 0, 0, 0, 0,
+	0, 13175.98088058037, 31273.96262670182, 0, 0,
+	0, 0, 0, 13505.380402594881, 32055.811692369327,
+	0, 0, 0, 0, 0,
+	13843.014912659752, 2249.6221275416715, 0, 0, 0,
+	0, 0, 14189.090285476243, 0, 0,
+	0, 0, 0, 0, 14543.81754261315,
+	0, 0, 0, 0, 0,
+	0, 14907.412981178479, 0, 0, 0,
+	0, 0, 0, 15280.09830570794, 0,
+	0, 0, 0, 0, 0,
+	15662.100763350636, 0, 0, 0, 0,
+	0, 0, 0, 0, 0,
+	0, 0, 0, 0, 0,
+	0, 0, 0, 0, 0,
+	0, 0, 24225.29974225708, 0, 0,
+	28626.84158540119, 0, 0, 29342.512625036125, 0,
+	0, 30076.075440661876, 0, 0, 30827.977326678607,
+	0, 0, 0, 0, 0,
+	54921.89259741077, 0, 0, 56294.93991234677, 0,
+	0, 57702.313410155344, 0, -6.322885561649867e-13, 59144.87124540936,
+	0, -2.692016170914929e-13, 60623.49302654456, 0, 0,
+	31531.495495071264, 1791.147386309299, 24225.29974225708, 30013.920201717847, 0,
+	28626.84158540119, 30764.268206760797, 0, 29342.512625036125, 31533.374911929805,
+	0, 30076.075440661876, 32321.709284728055, 0, 30827.977326678607,
+	33129.75201684625, 31598.676759845548, 0, 379659.71166708524, 18982.98558335426,
+	94914.92791677131, 344222.088213855, 20121.96471835553, 100609.82359177759, 305202.7771995983,
+	21329.28260145675, 106646.41300728427, 262350.49161680974, 22609.03955754421, 113045.19778772136,
+	215397.95759368438, 23965.581930996854, 119827.90965498464, 164060.93244116823, 25403.51684685662,
+	127017.58423428373, 140481.2031628629, 25029.1116281802, 108959.82156154828, 117095.31993881382,
+	26530.858325871006, 85152.95877471592, 91510.91483597607, 28122.709825423255, 59159.07291866057,
+	63576.192319488706, 29810.072414948645, 30827.97732667861, 33129.752016846294, 31598.676759845548,
+	0, 0, 0, 0, 49342.22429816952,
+	50575.779905623785, 51840.17440326433, 53136.17876334605, 54464.583232429664, 55826.19781324043,
+	57221.8527585714, 58652.39907753561, 60118.709054473824, 61621.67678083585, 63162.21870035677,
+	0, 0, 3.637978807091714e-12, 0, 0,
+	0, 0, 0, 0, 0,
+	0, 0, 0, 0, -2.2240121136268788e-13,
+	0, 0, 0, 0, 0,
+	0, 0, 0, 0, 0,
+	0, 0, 0, 0, 0,
+	0, 0, 0,
 }

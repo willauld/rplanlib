@@ -342,93 +342,138 @@ func (ms ModelSpecs) printAccHeader() {
 	ms.ao.output("\n")
 }
 
-/*
-def print_account_trans(res):
+func (ms ModelSpecs) printAccountTrans(xp *[]float64) {
 
-    ao.output("\nAccount Transactions Summary:\n\n")
-    print_acc_header1()
-    #
-    # Print pre-plan info
-    #
-    if S.secondary != "":
-        ao.output("%3d/%3d:" % (S.primAge, S.primAge-S.delta))
-    else:
-        ao.output(" %3d:" % (S.primAge))
-    for i in range(S.accmap["IRA"]):
-        ao.output(("&@%7.0f" * 4) % (
-              S.accounttable[i]["origbal"]/ms.OneK, 0, S.accounttable[i]["contrib"]/ms.OneK, 0)) # IRAn
-    for i in range(S.accmap["roth"]):
-        index = S.accmap["IRA"] + i
-        ao.output(("&@%7.0f" * 3) % (
-              S.accounttable[index]["origbal"]/ms.OneK, 0, S.accounttable[index]["contrib"]/ms.OneK)) # rothn
-    index = S.accmap["IRA"] + S.accmap["roth"]
-    if index == len(S.accounttable)-1:
-        ao.output(("&@%7.0f" * 3) % (
-                S.accounttable[index]["origbal"]/ms.OneK, 0, S.accounttable[index]["contrib"]/ms.OneK)) # aftertax
-    ao.output("\n")
-    ao.output("Plan Start: ---------\n")
-    #
-    # Print plan info for each year
-    # TODO clean up the if/else below to follow the above forloop pattern
-    #
-    for year in range(S.numyr):
-        rmdref = [0,0]
-        for j in range(min(2,len(S.accounttable))): # only first two accounts are type IRA w/ RMD
-            if S.accounttable[j]['acctype'] == 'IRA':
-                rmd = S.rmd_needed(year,S.accounttable[j]['mykey'])
-                if rmd > 0:
-                    rmdref[j] = res.x[vindx.b(year,j)]/rmd
+	ms.ao.output("\nAccount Transactions Summary:\n\n")
+	ms.printAccHeader()
+	//
+	// Print pre-plan info
+	//
+	var index int
+	if ms.ip.filingStatus == "joint" {
+		ms.ao.output(fmt.Sprintf("%3d/%3d:", ms.ip.age1, ms.ip.age1-ms.ip.ageDelta))
+	} else {
+		ms.ao.output(fmt.Sprintf(" %3d:", ms.ip.age1))
+	}
+	for i := 0; i < ms.ip.accmap["IRA"]; i++ {
+		str := fmt.Sprintf("&@%7.0f&@%7.0f&@%7.0f&@%7.0f",
+			ms.accounttable[i].origbal/ms.OneK, 0.0,
+			ms.accounttable[i].contrib/ms.OneK, 0.0) // IRAn
+		ms.ao.output(str)
+	}
+	for i := 0; i < ms.ip.accmap["roth"]; i++ {
+		index = ms.ip.accmap["IRA"] + i
+		str := fmt.Sprintf("&@%7.0f&@%7.0f&@%7.0f",
+			ms.accounttable[index].origbal/ms.OneK, 0.0,
+			ms.accounttable[index].contrib/ms.OneK) // rothn
+		ms.ao.output(str)
+	}
+	index = ms.ip.accmap["IRA"] + ms.ip.accmap["roth"]
+	if index == len(ms.accounttable)-1 {
+		str := fmt.Sprintf("&@%7.0f&@%7.0f&@%7.0f",
+			ms.accounttable[index].origbal/ms.OneK, 0.0,
+			ms.accounttable[index].contrib/ms.OneK) // aftertax
+		ms.ao.output(str)
+	}
+	ms.ao.output("\n")
+	ms.ao.output("Plan Start: ---------\n")
+	//
+	// Print plan info for each year
+	// TODO clean up the if/else below to follow the above forloop pattern
+	//
+	for year := 0; year < ms.ip.numyr; year++ {
+		rmdref := make([]float64, 2)
+		for j := 0; j < intMin(2, len(ms.accounttable)); j++ { // only first two accounts are type IRA w/ RMD
+			if ms.accounttable[j].acctype == "IRA" {
+				rmd := ms.ti.rmdNeeded(year, ms.matchRetiree(ms.accounttable[j].mykey))
+				if rmd > 0 {
+					rmdref[j] = (*xp)[ms.vindx.B(year, j)] / rmd
+				}
+			}
+		}
 
-        if S.secondary != "":
-            ao.output("%3d/%3d:" % (year+S.startage, year+S.startage-S.delta))
-        else:
-            ao.output(" %3d:" % (year+S.startage))
-        if S.accmap['IRA'] >1:
-            ao.output(("&@%7.0f" * 8) % (
-              res.x[vindx.b(year,0)]/ms.OneK, res.x[vindx.w(year,0)]/ms.OneK, depositAmount(S, res, year, 0)/ms.OneK, rmdref[0]/ms.OneK, # IRA1
-              res.x[vindx.b(year,1)]/ms.OneK, res.x[vindx.w(year,1)]/ms.OneK, depositAmount(S, res, year, 1)/ms.OneK, rmdref[1]/ms.OneK)) # IRA2
-        elif S.accmap['IRA'] == 1:
-            ao.output(("&@%7.0f" * 4) % (
-              res.x[vindx.b(year,0)]/ms.OneK, res.x[vindx.w(year,0)]/ms.OneK, depositAmount(S, res, year, 0)/ms.OneK, rmdref[0]/ms.OneK)) # IRA1
-        index = S.accmap['IRA']
-        if S.accmap['roth'] >1:
-            ao.output(("&@%7.0f" * 6) % (
-              res.x[vindx.b(year,index)]/ms.OneK, res.x[vindx.w(year,index)]/ms.OneK, depositAmount(S, res, year, index)/ms.OneK, # roth1
-              res.x[vindx.b(year,index+1)]/ms.OneK, res.x[vindx.w(year,index+1)]/ms.OneK, depositAmount(S, res, year, index+1)/ms.OneK)) # roth2
-        elif S.accmap['roth'] == 1:
-            ao.output(("&@%7.0f" * 3) % (
-              res.x[vindx.b(year,index)]/ms.OneK, res.x[vindx.w(year,index)]/ms.OneK, depositAmount(S, res, year, index)/ms.OneK)) # roth1
-        index = S.accmap['IRA'] + S.accmap['roth']
-        #assert index == len(S.accounttable)-1
-        if index == len(S.accounttable)-1:
-            ao.output(("&@%7.0f" * 3) % (
-                res.x[vindx.b(year,index)]/ms.OneK,
-                res.x[vindx.w(year,index)]/ms.OneK,
-                depositAmount(S, res, year, index)/ms.OneK)) # aftertax account
-        ao.output("\n")
-    ao.output("Plan End: -----------\n")
-    #
-    # Post plan info
-    #
-    year = S.numyr
-    if S.secondary != "":
-        ao.output("%3d/%3d:" % (year+S.startage, S.numyr+S.startage-S.delta))
-    else:
-        ao.output(" %3d:" % (year+S.startage))
-    for i in range(S.accmap['IRA']):
-        ao.output(("&@%7.0f" * 4) % (
-              res.x[vindx.b(year,i)]/ms.OneK, 0, 0, 0)) # IRAn
-    for i in range(S.accmap['roth']):
-        index = S.accmap['IRA'] + i
-        ao.output(("&@%7.0f" * 3) % (
-              res.x[vindx.b(year,index)]/ms.OneK, 0, 0)) # rothn
-    index = S.accmap['IRA'] + S.accmap['roth']
-    if index == len(S.accounttable)-1:
-        ao.output(("&@%7.0f" * 3) % (
-              res.x[vindx.b(year,index)]/ms.OneK, 0, 0)) # aftertax
-    ao.output("\n")
-    print_acc_header1()
-*/
+		if ms.ip.filingStatus == "joint" {
+			ms.ao.output(fmt.Sprintf("%3d/%3d:", year+ms.ip.startPlan, year+ms.ip.startPlan-ms.ip.ageDelta))
+		} else {
+			ms.ao.output(fmt.Sprintf(" %3d:", year+ms.ip.startPlan))
+		}
+		if ms.ip.accmap["IRA"] > 1 {
+			str := fmt.Sprintf("&@%7.0f&@%7.0f&@%7.0f&@%7.0f&@%7.0f&@%7.0f&@%7.0f&@%7.0f",
+				(*xp)[ms.vindx.B(year, 0)]/ms.OneK,
+				(*xp)[ms.vindx.W(year, 0)]/ms.OneK,
+				ms.depositAmount(xp, year, 0)/ms.OneK,
+				rmdref[0]/ms.OneK, // IRA1
+				(*xp)[ms.vindx.B(year, 1)]/ms.OneK,
+				(*xp)[ms.vindx.W(year, 1)]/ms.OneK,
+				ms.depositAmount(xp, year, 1)/ms.OneK,
+				rmdref[1]/ms.OneK) // IRA2
+			ms.ao.output(str)
+		} else if ms.ip.accmap["IRA"] == 1 {
+			str := fmt.Sprintf("&@%7.0f&@%7.0f&@%7.0f&@%7.0f",
+				(*xp)[ms.vindx.B(year, 0)]/ms.OneK,
+				(*xp)[ms.vindx.W(year, 0)]/ms.OneK,
+				ms.depositAmount(xp, year, 0)/ms.OneK,
+				rmdref[0]/ms.OneK) // IRA1
+			ms.ao.output(str)
+		}
+		index := ms.ip.accmap["IRA"]
+		if ms.ip.accmap["roth"] > 1 {
+			str := fmt.Sprintf("&@%7.0f&@%7.0f&@%7.0f&@%7.0f&@%7.0f&@%7.0f",
+				(*xp)[ms.vindx.B(year, index)]/ms.OneK,
+				(*xp)[ms.vindx.W(year, index)]/ms.OneK,
+				ms.depositAmount(xp, year, index)/ms.OneK, // roth1
+				(*xp)[ms.vindx.B(year, index+1)]/ms.OneK,
+				(*xp)[ms.vindx.W(year, index+1)]/ms.OneK,
+				ms.depositAmount(xp, year, index+1)/ms.OneK) // roth2
+			ms.ao.output(str)
+		} else if ms.ip.accmap["roth"] == 1 {
+			str := fmt.Sprintf("&@%7.0f&@%7.0f&@%7.0f",
+				(*xp)[ms.vindx.B(year, index)]/ms.OneK,
+				(*xp)[ms.vindx.W(year, index)]/ms.OneK,
+				ms.depositAmount(xp, year, index)/ms.OneK) // roth1
+			ms.ao.output(str)
+		}
+		index = ms.ip.accmap["IRA"] + ms.ip.accmap["roth"]
+		//assert index == len(S.accounttable)-1
+		if index == len(ms.accounttable)-1 {
+			str := fmt.Sprintf("&@%7.0f&@%7.0f&@%7.0f",
+				(*xp)[ms.vindx.B(year, index)]/ms.OneK,
+				(*xp)[ms.vindx.W(year, index)]/ms.OneK,
+				ms.depositAmount(xp, year, index)/ms.OneK) // aftertax account
+			ms.ao.output(str)
+		}
+		ms.ao.output("\n")
+	}
+	ms.ao.output("Plan End: -----------\n")
+	//
+	// Post plan info
+	//
+	year := ms.ip.numyr
+	if ms.ip.filingStatus == "joint" {
+		ms.ao.output(fmt.Sprintf("%3d/%3d:", year+ms.ip.startPlan, ms.ip.numyr+ms.ip.startPlan-ms.ip.ageDelta))
+	} else {
+		ms.ao.output(fmt.Sprintf(" %3d:", year+ms.ip.startPlan))
+	}
+	for i := 0; i < ms.ip.accmap["IRA"]; i++ {
+		str := fmt.Sprintf("&@%7.0f&@%7.0f&@%7.0f&@%7.0f",
+			(*xp)[ms.vindx.B(year, i)]/ms.OneK, 0.0, 0.0, 0.0) // IRAn
+		ms.ao.output(str)
+	}
+	for i := 0; i < ms.ip.accmap["roth"]; i++ {
+		index = ms.ip.accmap["IRA"] + i
+		str := fmt.Sprintf("&@%7.0f&@%7.0f&@%7.0f",
+			(*xp)[ms.vindx.B(year, index)]/ms.OneK, 0.0, 0.0) // rothn
+		ms.ao.output(str)
+	}
+	index = ms.ip.accmap["IRA"] + ms.ip.accmap["roth"]
+	if index == len(ms.accounttable)-1 {
+		str := fmt.Sprintf("&@%7.0f&@%7.0f&@%7.0f",
+			(*xp)[ms.vindx.B(year, index)]/ms.OneK, 0.0, 0.0) // aftertax
+		ms.ao.output(str)
+	}
+	ms.ao.output("\n")
+	ms.printAccHeader()
+}
 
 /*
 def print_tax(res):

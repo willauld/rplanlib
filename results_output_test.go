@@ -823,6 +823,59 @@ retiree1
 	}
 }
 
+//func (ms ModelSpecs) printheaderTax()
+func TestPrintHeaderTax(t *testing.T) {
+	tests := []struct {
+		sip    map[string]string
+		expect string
+	}{
+		{ // Case 0
+			sip: sipSingle,
+			expect: `retiree1
+ age     fIRA    tIRA  TxbleO TxbleSS  deduct   T_inc  earlyP  fedtax mTaxB% fAftaTx tAftaTx cgTax%   cgTax TFedTax spndble`,
+		},
+		{ // Case 1
+			sip: sipJoint,
+			expect: `retiree1/retiree2
+    age     fIRA    tIRA  TxbleO TxbleSS  deduct   T_inc  earlyP  fedtax mTaxB% fAftaTx tAftaTx cgTax%   cgTax TFedTax spndble`,
+		},
+	}
+	for i, elem := range tests {
+		//fmt.Printf("=============== Case %d =================\n", i)
+		ip := NewInputParams(elem.sip)
+		csvfile := (*os.File)(nil)
+		tablefile := os.Stdout
+		ms := ModelSpecs{
+			ip:      ip,
+			logfile: os.Stdout,
+			errfile: os.Stderr,
+			ao:      NewAppOutput(csvfile, tablefile),
+		}
+
+		mychan := make(chan string)
+		DoNothing := false //true
+		oldout, w, err := ms.RedirectModelSpecsTable(mychan, DoNothing)
+		if err != nil {
+			t.Errorf("RedirectModelSpecsTable: %s\n", err)
+			return // should this be continue?
+		}
+
+		ms.printheaderTax()
+
+		str := ms.RestoreModelSpecsTable(mychan, oldout, w, DoNothing)
+		strn := strings.TrimSpace(str)
+		if elem.expect != strn {
+			showStrMismatch(elem.expect, strn)
+			t.Errorf("TestPrintHeaderTax case %d:  expected output:\n\t '%s'\n\tbut found:\n\t'%s'\n", i, elem.expect, strn)
+		}
+	}
+}
+
+//def print_tax(res):
+func TestPrintTax(t *testing.T) {
+	fmt.Printf("Not Yet Implemented\n")
+}
+
 func showStrMismatch(s1, s2 string) { // TODO move to Utility functions
 	for i := 0; i < intMin(len(s1), len(s2)); i++ {
 		if s1[i] != s2[i] {
@@ -832,12 +885,6 @@ func showStrMismatch(s1, s2 string) { // TODO move to Utility functions
 			break
 		}
 	}
-}
-
-//def print_account_trans(res):
-//def print_tax(res):
-func TestPrintTax(t *testing.T) {
-	fmt.Printf("Not Yet Implemented\n")
 }
 
 //def print_tax_brackets(res):

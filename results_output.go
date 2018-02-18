@@ -475,19 +475,26 @@ func (ms ModelSpecs) printAccountTrans(xp *[]float64) {
 	ms.printAccHeader()
 }
 
+func (ms ModelSpecs) printheaderTax() {
+	if ms.ip.myKey2 != "" && ms.ip.filingStatus == "joint" {
+		ms.ao.output(fmt.Sprintf("%s/%s\n", ms.ip.myKey1, ms.ip.myKey2))
+		ms.ao.output("    age ")
+	} else {
+		if ms.ip.myKey1 != "nokey" {
+			ms.ao.output(fmt.Sprintf("%s\n", ms.ip.myKey1))
+		}
+		ms.ao.output(" age ")
+	}
+	str := fmt.Sprintf("&@%7s&@%7s&@%7s&@%7s&@%7s&@%7s&@%7s&@%7s&@%7s&@%7s&@%7s&@%7s&@%7s&@%7s&@%7s",
+		"fIRA", "tIRA", "TxbleO", "TxbleSS", "deduct",
+		"T_inc", "earlyP", "fedtax", "mTaxB%%", "fAftaTx",
+		"tAftaTx", "cgTax%%", "cgTax", "TFedTax", "spndble")
+	ms.ao.output(str)
+	ms.ao.output("\n")
+}
+
 /*
 def print_tax(res):
-    def printheader_tax():
-        if S.secondary != "":
-            ao.output("%s/%s\n" % (S.primary, S.secondary))
-            ao.output("    age ")
-        else:
-            if S.primary != 'nokey':
-                ao.output("%s\n" % (S.primary))
-            ao.output(" age ")
-        ao.output(("&@%7s" * 15) %
-          ("fIRA", "tIRA", "TxbleO", "TxbleSS", "deduct", "T_inc", "earlyP", "fedtax", "mTaxB%", "fAftaTx", "tAftaTx", "cgTax%", "cgTax", "TFedTax", "spndble" ))
-        ao.output("\n")
 
     ao.output("\nTax Summary:\n\n")
     printheader_tax()

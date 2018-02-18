@@ -1,6 +1,9 @@
 package rplanlib
 
-import "math"
+import (
+	"fmt"
+	"math"
+)
 
 type tableref2d *[][]float64
 type tableref1d *[]float64
@@ -171,17 +174,17 @@ func expandYears(numyr, ageAtStart, agestr) ([]float64) {
 func (ti Taxinfo) maxContribution(year int, yearsToInflateBy int, retirees []retiree, retireekey string, iRate float64) float64 {
 	//FIXME: not currently handling 401K max contributions TODO
 	max := 0.0
-	for i := 0; i < 2; i++ {
-		v := retirees[i]
+	for _, v := range retirees {
+		//v := retirees[i]
 		if retireekey == "" || v.mykey == retireekey { // if "", Sum all retiree
 			max += ti.Contribspecs["TDRA"]
-			startage := v.ageAtStart // TODO: Fixme remove startage not needed
-			age := startage + year
+			fmt.Printf("max += tiContribspecs[TDRA]: %f\n", ti.Contribspecs["TDRA"])
+			age := v.ageAtStart + year
 			if age >= int(ti.Contribspecs["CatchupAge"]) {
 				max += ti.Contribspecs["TDRACatchup"]
+				fmt.Printf("max += tiContribspecs[TDRACatchup]: %f\n", ti.Contribspecs["TDRACatchup"])
 			}
-			havePlan := v.definedContributionPlan // TODO remove havePlan not needed
-			if havePlan {
+			if v.definedContributionPlan {
 				a := v.dcpBuckets
 				/* no lazy expantion in golang implementation, created in NewModelSpecs()
 				                    if a == nil {
@@ -200,7 +203,7 @@ func (ti Taxinfo) maxContribution(year int, yearsToInflateBy int, retirees []ret
 		}
 	}
 	max *= math.Pow(iRate, float64(yearsToInflateBy))
-	//print('maxContribution: %6.0f' % max, retireekey)
+	fmt.Printf("maxContribution: %6.0f, key: %s\n", max, retireekey)
 	return max
 }
 

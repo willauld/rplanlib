@@ -5,16 +5,13 @@ import (
 	"math"
 )
 
+const (
+	// used for formating with appoutput.output
+	ampv = "&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&"
+	atv  = "@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@"
+)
+
 /*
-import time
-import argparse
-import scipy.optimize
-import taxinfo as tif
-import tomldata
-import vector_var_index as vvar
-import app_output as app_out
-import lp_constraint_model as lp
-import modelio
 const __version__ = "0.3-rc2"
 */
 
@@ -205,7 +202,6 @@ func (ms ModelSpecs) printIncomeHeader(headerkeylist []string, countlist []int, 
 		e := fmt.Errorf("printIncomeHearder: lenth of countlist(%d) != length of incomeCat(%d)", len(countlist), len(incomeCat))
 		panic(e)
 	}
-	atList := "@@@@@@@@@@@@@@@@@@@@"
 	var ageWidth int
 	names := ""
 	if ms.ip.myKey2 != "" && ms.ip.filingStatus == "joint" {
@@ -226,7 +222,7 @@ func (ms ModelSpecs) printIncomeHeader(headerkeylist []string, countlist []int, 
 				ats = countlist[i-1]
 			}
 			totalspace := fieldwidth*countlist[i] + countlist[i] - 1 // -1 is for the &
-			str = fmt.Sprintf("&%s%-[3]*.[3]*[2]s", atList[:ats], incomeCat[i], totalspace)
+			str = fmt.Sprintf("&%s%-[3]*.[3]*[2]s", atv[:ats], incomeCat[i], totalspace)
 			ms.ao.output(str)
 		}
 	}
@@ -542,8 +538,6 @@ func (ms ModelSpecs) printTax(xp *[]float64) {
 }
 
 func (ms ModelSpecs) printHeaderTaxBrackets() {
-	ampv := "&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&"
-	atv := "@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@"
 	spaces := 44
 	if ms.ip.myKey2 != "" && ms.ip.filingStatus == "joint" {
 		//ao.output("@@@@@@@%64s" % "Marginal Rate(%):")
@@ -616,8 +610,6 @@ func (ms ModelSpecs) printTaxBrackets(xp *[]float64) {
 }
 
 func (ms ModelSpecs) printHeaderCapgainsBrackets() {
-	ampv := "&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&"
-	atv := "@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@"
 	spaces := 36
 	if ms.ip.myKey2 != "" && ms.ip.filingStatus == "joint" {
 		spaces = 39
@@ -787,12 +779,7 @@ func (ms ModelSpecs) IncomeSummary(year int, xp *[]float64) (T, spendable, tax, 
 //func (ro ResultsOutput) getResultTotals(x []float64)
 func (ms ModelSpecs) getResultTotals(xp *[]float64) (twithd, tcombined, tT, ttax, tcgtax, tearlytax, tspendable, tbeginbal, tendbal float64) {
 	tincome := 0.0
-	//pv_tincome := 0.0
-	//pv_twithd := 0.0
-	//pv_ttax := 0.0
-	//pv_tT := 0.0
 	for year := 0; year < ms.ip.numyr; year++ {
-		//i_mul := math.Pow(ms.ip.iRate, float64(ms.ip.prePlanYears+year))
 		//T, spendable, tax, rate, cg_tax, earlytax, rothearly := ms.IncomeSummary(year, xp)
 		T, spendable, tax, _, cgtax, earlytax, _ := ms.IncomeSummary(year, xp)
 		totWithdrawals := 0.0

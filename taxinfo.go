@@ -175,7 +175,6 @@ func (ti Taxinfo) maxContribution(year int, yearsToInflateBy int, retirees []ret
 	//FIXME: not currently handling 401K max contributions TODO
 	max := 0.0
 	for _, v := range retirees {
-		//v := retirees[i]
 		if retireekey == "" || v.mykey == retireekey { // if "", Sum all retiree
 			max += ti.Contribspecs["TDRA"]
 			fmt.Printf("max += tiContribspecs[TDRA]: %f\n", ti.Contribspecs["TDRA"])

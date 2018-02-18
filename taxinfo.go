@@ -1,7 +1,6 @@
 package rplanlib
 
 import (
-	"fmt"
 	"math"
 )
 
@@ -177,11 +176,11 @@ func (ti Taxinfo) maxContribution(year int, yearsToInflateBy int, retirees []ret
 	for _, v := range retirees {
 		if retireekey == "" || v.mykey == retireekey { // if "", Sum all retiree
 			max += ti.Contribspecs["TDRA"]
-			fmt.Printf("max += tiContribspecs[TDRA]: %f\n", ti.Contribspecs["TDRA"])
+			//fmt.Printf("max += tiContribspecs[TDRA]: %f\n", ti.Contribspecs["TDRA"])
 			age := v.ageAtStart + year
 			if age >= int(ti.Contribspecs["CatchupAge"]) {
 				max += ti.Contribspecs["TDRACatchup"]
-				fmt.Printf("max += tiContribspecs[TDRACatchup]: %f\n", ti.Contribspecs["TDRACatchup"])
+				//fmt.Printf("max += tiContribspecs[TDRACatchup]: %f\n", ti.Contribspecs["TDRACatchup"])
 			}
 			if v.definedContributionPlan {
 				a := v.dcpBuckets
@@ -202,7 +201,7 @@ func (ti Taxinfo) maxContribution(year int, yearsToInflateBy int, retirees []ret
 		}
 	}
 	max *= math.Pow(iRate, float64(yearsToInflateBy))
-	fmt.Printf("maxContribution: %6.0f, key: %s\n", max, retireekey)
+	//fmt.Printf("maxContribution: %6.0f, key: %s\n", max, retireekey)
 	return max
 }
 

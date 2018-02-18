@@ -21,6 +21,7 @@ type account struct {
 	origbasis float64
 	//estateTax     float64
 	contributions []float64
+	contrib       float64
 	rRate         float64
 	acctype       string
 	mykey         string
@@ -234,19 +235,21 @@ func NewModelSpecs(vindx VectorVarIndex,
 			definedContributionPlan: false,
 			dcpBuckets:              nil,
 		},
-		{
+	}
+	if ip.filingStatus == "joint" {
+		r2 := retiree{
 			age:        ip.age2,
 			ageAtStart: ip.age2 + ip.prePlanYears,
 			throughAge: ip.planThroughAge2,
 			mykey:      ip.myKey2,
 			definedContributionPlan: false,
 			dcpBuckets:              nil,
-		},
+		}
+		retirees = append(retirees, r2)
 	}
 	ms.retirees = retirees
 	//fmt.Fprintf(ms.logfile, "NewModelSpec: numacc: %d, accmap: %v\n", ms.ip.numacc, ms.ip.accmap)
 
-	//build accounttable: []map[string]string
 	var err error
 	var dbal float64
 	const maxPossibleAccounts = 5
@@ -259,7 +262,11 @@ func NewModelSpecs(vindx VectorVarIndex,
 		a.acctype = "IRA"
 		a.mykey = "retiree1" // need to make this definable for pc versions
 		a.origbal = float64(ip.TDRA1)
-		a.contributions, dbal, _, err = genContrib(ip.TDRAContrib1, ms.convertAge(ip.TDRAContribStart1, a.mykey), ms.convertAge(ip.TDRAContribEnd1, a.mykey), ip.startPlan, ip.endPlan, ip.iRate, a.rRate, ip.age1)
+		a.contrib = float64(ip.TDRAContrib1)
+		a.contributions, dbal, _, err = genContrib(ip.TDRAContrib1,
+			ms.convertAge(ip.TDRAContribStart1, a.mykey),
+			ms.convertAge(ip.TDRAContribEnd1, a.mykey),
+			ip.startPlan, ip.endPlan, ip.iRate, a.rRate, ip.age1)
 		if err != nil {
 			panic(err)
 		}
@@ -268,15 +275,18 @@ func NewModelSpecs(vindx VectorVarIndex,
 	}
 	if ip.TDRA2 > 0 {
 		a := account{}
-		a.rRate = ms.ip.rRate
+		a.rRate = ip.rRate
 		if ip.TDRARate2 != 0 {
 			a.rRate = ip.TDRARate2
 		}
 		a.acctype = "IRA"
 		a.mykey = "retiree2" // need to make this definable for pc versions
 		a.origbal = float64(ip.TDRA2)
-		//a.contributions, err = buildVector(ip.TDRAContrib2, ip.TDRAContribStart2, ip.TDRAContribEnd2, ip.startPlan, ip.endPlan, ms.ip.iRate, ip.age1)
-		a.contributions, dbal, _, err = genContrib(ip.TDRAContrib2, ms.convertAge(ip.TDRAContribStart2, a.mykey), ms.convertAge(ip.TDRAContribEnd2, a.mykey), ip.startPlan, ip.endPlan, ip.iRate, a.rRate, ip.age1)
+		a.contrib = float64(ip.TDRAContrib2)
+		a.contributions, dbal, _, err = genContrib(ip.TDRAContrib2,
+			ms.convertAge(ip.TDRAContribStart2, a.mykey),
+			ms.convertAge(ip.TDRAContribEnd2, a.mykey),
+			ip.startPlan, ip.endPlan, ip.iRate, a.rRate, ip.age1)
 		if err != nil {
 			panic(err)
 		}
@@ -285,15 +295,18 @@ func NewModelSpecs(vindx VectorVarIndex,
 	}
 	if ip.Roth1 > 0 {
 		a := account{}
-		a.rRate = ms.ip.rRate
+		a.rRate = ip.rRate
 		if ip.RothRate1 != 0 {
 			a.rRate = ip.RothRate1
 		}
 		a.acctype = "roth"
 		a.mykey = "retiree1" // need to make this definable for pc versions
 		a.origbal = float64(ip.Roth1)
-		//a.contributions, err = buildVector(ip.RothContrib1, ip.RothContribStart1, ip.RothContribEnd1, ip.startPlan, ip.endPlan, ms.ip.iRate, ip.age1)
-		a.contributions, dbal, _, err = genContrib(ip.RothContrib1, ip.RothContribStart1, ip.RothContribEnd1, ip.startPlan, ip.endPlan, ip.iRate, a.rRate, ip.age1)
+		a.contrib = float64(ip.RothContrib1)
+		a.contributions, dbal, _, err = genContrib(ip.RothContrib1,
+			ms.convertAge(ip.RothContribStart1, a.mykey),
+			ms.convertAge(ip.RothContribEnd1, a.mykey),
+			ip.startPlan, ip.endPlan, ip.iRate, a.rRate, ip.age1)
 		if err != nil {
 			panic(err)
 		}
@@ -302,15 +315,18 @@ func NewModelSpecs(vindx VectorVarIndex,
 	}
 	if ip.Roth2 > 0 {
 		a := account{}
-		a.rRate = ms.ip.rRate
+		a.rRate = ip.rRate
 		if ip.RothRate2 != 0 {
 			a.rRate = ip.RothRate2
 		}
 		a.acctype = "roth"
 		a.mykey = "retiree2" // need to make this definable for pc versions
 		a.origbal = float64(ip.Roth2)
-		//a.contributions, err = buildVector(ip.RothContrib2, ip.RothContribStart2, ip.RothContribEnd2, ip.startPlan, ip.endPlan, ms.ip.iRate, ip.age1)
-		a.contributions, dbal, _, err = genContrib(ip.RothContrib1, ms.convertAge(ip.RothContribStart2, a.mykey), ms.convertAge(ip.RothContribEnd2, a.mykey), ip.startPlan, ip.endPlan, ip.iRate, a.rRate, ip.age1)
+		a.contrib = float64(ip.RothContrib2)
+		a.contributions, dbal, _, err = genContrib(ip.RothContrib1,
+			ms.convertAge(ip.RothContribStart2, a.mykey),
+			ms.convertAge(ip.RothContribEnd2, a.mykey),
+			ip.startPlan, ip.endPlan, ip.iRate, a.rRate, ip.age1)
 		if err != nil {
 			panic(err)
 		}
@@ -324,18 +340,21 @@ func NewModelSpecs(vindx VectorVarIndex,
 		if ip.AftataxRate != 0 {
 			a.rRate = ip.AftataxRate
 		}
-		a.rRate = ip.AftataxRate
 		a.acctype = "aftertax"
 		a.mykey = "" // need to make this definable for pc versions
 		a.origbal = float64(ip.Aftatax)
 		a.origbasis = float64(ip.AftataxBasis)
-		//a.contributions, err = buildVector(ip.AftataxContrib, ip.AftataxContribStart, ip.AftataxContribEnd, ip.startPlan, ip.endPlan, ms.ip.iRate, ip.age1)
-		a.contributions, dbal, dbasis, err = genContrib(ip.AftataxContrib, ip.AftataxContribStart, ip.AftataxContribEnd, ip.startPlan, ip.endPlan, ip.iRate, a.rRate, ip.age1)
+		a.contrib = float64(ip.AftataxContrib)
+		a.contributions, dbal, dbasis, err = genContrib(ip.AftataxContrib,
+			ms.convertAge(ip.AftataxContribStart, a.mykey),
+			ms.convertAge(ip.AftataxContribEnd, a.mykey),
+			ip.startPlan, ip.endPlan, ip.iRate, a.rRate, ip.age1)
 		if err != nil {
 			panic(err)
 		}
 		a.bal = a.origbal*math.Pow(a.rRate, float64(ip.prePlanYears)) + dbal
 		a.basis = a.origbasis + dbasis
+		fmt.Printf("aftertax: %#v\n", a)
 		ms.accounttable = append(ms.accounttable, a)
 	}
 	if len(ms.accounttable) != ms.ip.numacc {
@@ -590,6 +609,7 @@ func (ms ModelSpecs) BuildModel() ([]float64, [][]float64, []float64, []ModelNot
 	notes = append(notes, ModelNote{len(A), "Constraints 7':"})
 	for year := 0; year < ms.ip.numyr; year++ {
 		// TODO this is not needed when there is only one retiree
+		infyears := ms.ip.prePlanYears + year
 		for _, v := range ms.retirees {
 			row := make([]float64, nvars)
 			for j := 0; j < len(ms.accounttable); j++ {
@@ -601,7 +621,6 @@ func (ms ModelSpecs) BuildModel() ([]float64, [][]float64, []float64, []ModelNot
 				}
 			}
 			A = append(A, row)
-			infyears := ms.ip.prePlanYears + year
 			b = append(b, ms.ti.maxContribution(year, infyears, ms.retirees, v.mykey, ms.ip.iRate))
 		}
 	}

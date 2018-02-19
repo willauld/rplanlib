@@ -309,7 +309,11 @@ func TestNewInputParams(t *testing.T) {
 		},
 	}
 	for i, elem := range tests {
-		modelip := NewInputParams(elem.ip)
+		modelip, err := NewInputParams(elem.ip)
+		if err != nil {
+			fmt.Printf("TestNewInputParents: %s\n", err)
+			continue
+		}
 		if modelip.prePlanYears != elem.prePlanYears {
 			t.Errorf("NewInputParams case %d: Failed - prePlanYears Expected %v but found %v\n", i, elem.prePlanYears, modelip.prePlanYears)
 		}

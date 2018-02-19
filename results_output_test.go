@@ -154,12 +154,12 @@ var sipSingle3Acc = map[string]string{
 
 //def precheck_consistancy():
 func TestPreCheckConsistancy(t *testing.T) {
-	fmt.Printf("Not Yet Implemented\n")
+	fmt.Printf("TestPreCheckConsistancy() Not Yet Implemented\n")
 }
 
 //def consistancy_check(res, years, taxbins, cgbins, accounts, accmap, vindx):
 func TestCheckConsistancy(t *testing.T) {
-	fmt.Printf("Not Yet Implemented\n")
+	fmt.Printf("TestCheckConsistancy() Not Yet Implemented\n")
 }
 
 //func (ms ModelSpecs) activitySummaryHeader(fieldwidth int)
@@ -180,7 +180,10 @@ func TestActivitySummaryHeader(t *testing.T) {
 		},
 	}
 	for i, elem := range tests {
-		ip := NewInputParams(elem.sip)
+		ip, err := NewInputParams(elem.sip)
+		if err != nil {
+			fmt.Printf("TestResultOutput: %s\n", err)
+		}
 		//fmt.Printf("InputParams: %#v\n", ip)
 		ti := NewTaxInfo(ip.filingStatus)
 		taxbins := len(*ti.Taxtable)
@@ -195,7 +198,7 @@ func TestActivitySummaryHeader(t *testing.T) {
 		verbose := false
 		allowDeposits := false
 		logfile := os.Stdout
-		ms := NewModelSpecs(vindx, ti, ip, verbose,
+		ms := NewModelSpecs(vindx, ti, *ip, verbose,
 			allowDeposits, os.Stderr, logfile, csvfile, logfile)
 
 		mychan := make(chan string)
@@ -271,7 +274,10 @@ retiree1/retiree2
 	}
 	for i, elem := range tests {
 		//fmt.Printf("================ CASE %d ==================\n", i)
-		ip := NewInputParams(elem.sip)
+		ip, err := NewInputParams(elem.sip)
+		if err != nil {
+			fmt.Printf("TestResultOutput: %s\n", err)
+		}
 		//fmt.Printf("InputParams: %#v\n", ip)
 		ti := NewTaxInfo(ip.filingStatus)
 		taxbins := len(*ti.Taxtable)
@@ -286,7 +292,7 @@ retiree1/retiree2
 		verbose := false
 		allowDeposits := false
 		logfile := os.Stdout
-		ms := NewModelSpecs(vindx, ti, ip, verbose,
+		ms := NewModelSpecs(vindx, ti, *ip, verbose,
 			allowDeposits, os.Stderr, logfile, csvfile, logfile)
 
 		mychan := make(chan string)
@@ -369,9 +375,12 @@ func TestPrintIncomeHeader(t *testing.T) {
 	}
 	for i, elem := range tests {
 		//fmt.Printf("=============== Case %d =================\n", i)
-		ip := NewInputParams(elem.sip)
+		ip, err := NewInputParams(elem.sip)
+		if err != nil {
+			fmt.Printf("TestResultOutput: %s\n", err)
+		}
 		ms := ModelSpecs{
-			ip:        ip,
+			ip:        *ip,
 			logfile:   os.Stdout,
 			errfile:   os.Stderr,
 			ao:        NewAppOutput(elem.csvfile, elem.tablefile),
@@ -426,7 +435,10 @@ func TestGetIncomeAssetExpenseList(t *testing.T) {
 	}
 	for i, elem := range tests {
 		//fmt.Printf("=============== Case %d =================\n", i)
-		ip := NewInputParams(elem.sip)
+		ip, err := NewInputParams(elem.sip)
+		if err != nil {
+			fmt.Printf("TestResultOutput: %s\n", err)
+		}
 		ms := ModelSpecs{
 			//ip:      ip,
 			//logfile: os.Stdout,
@@ -557,11 +569,14 @@ retir SSincome:         Income:  AssetSale:
 	}
 	for i, elem := range tests {
 		//fmt.Printf("=============== Case %d =================\n", i)
-		ip := NewInputParams(elem.sip)
+		ip, err := NewInputParams(elem.sip)
+		if err != nil {
+			fmt.Printf("TestResultOutput: %s\n", err)
+		}
 		csvfile := (*os.File)(nil)
 		tablefile := os.Stdout
 		ms := ModelSpecs{
-			ip:      ip,
+			ip:      *ip,
 			logfile: os.Stdout,
 			errfile: os.Stderr,
 			ao:      NewAppOutput(csvfile, tablefile),
@@ -674,11 +689,14 @@ func TestPrintAccHeader(t *testing.T) {
 	}
 	for i, elem := range tests {
 		//fmt.Printf("=============== Case %d =================\n", i)
-		ip := NewInputParams(elem.sip)
+		ip, err := NewInputParams(elem.sip)
+		if err != nil {
+			fmt.Printf("TestResultOutput: %s\n", err)
+		}
 		csvfile := (*os.File)(nil)
 		tablefile := os.Stdout
 		ms := ModelSpecs{
-			ip:      ip,
+			ip:      *ip,
 			logfile: os.Stdout,
 			errfile: os.Stderr,
 			ao:      NewAppOutput(csvfile, tablefile),
@@ -789,7 +807,10 @@ retiree1
 	}
 	for i, elem := range tests {
 		//fmt.Printf("=============== Case %d =================\n", i)
-		ip := NewInputParams(elem.sip)
+		ip, err := NewInputParams(elem.sip)
+		if err != nil {
+			fmt.Printf("TestResultOutput: %s\n", err)
+		}
 		ti := NewTaxInfo(ip.filingStatus)
 		taxbins := len(*ti.Taxtable)
 		cgbins := len(*ti.Capgainstable)
@@ -801,7 +822,7 @@ retiree1
 		}
 		logfile := os.Stdout
 		csvfile := (*os.File)(nil)
-		ms := NewModelSpecs(vindx, ti, ip, false,
+		ms := NewModelSpecs(vindx, ti, *ip, false,
 			false, os.Stderr, logfile, csvfile, logfile)
 
 		mychan := make(chan string)
@@ -842,11 +863,14 @@ func TestPrintHeaderTax(t *testing.T) {
 	}
 	for i, elem := range tests {
 		//fmt.Printf("=============== Case %d =================\n", i)
-		ip := NewInputParams(elem.sip)
+		ip, err := NewInputParams(elem.sip)
+		if err != nil {
+			fmt.Printf("TestResultOutput: %s\n", err)
+		}
 		csvfile := (*os.File)(nil)
 		tablefile := os.Stdout
 		ms := ModelSpecs{
-			ip:      ip,
+			ip:      *ip,
 			logfile: os.Stdout,
 			errfile: os.Stderr,
 			ao:      NewAppOutput(csvfile, tablefile),
@@ -944,7 +968,10 @@ retiree1
 	}
 	for i, elem := range tests {
 		//fmt.Printf("=============== Case %d =================\n", i)
-		ip := NewInputParams(elem.sip)
+		ip, err := NewInputParams(elem.sip)
+		if err != nil {
+			fmt.Printf("TestResultOutput: %s\n", err)
+		}
 		ti := NewTaxInfo(ip.filingStatus)
 		taxbins := len(*ti.Taxtable)
 		cgbins := len(*ti.Capgainstable)
@@ -956,7 +983,7 @@ retiree1
 		}
 		logfile := os.Stdout
 		csvfile := (*os.File)(nil)
-		ms := NewModelSpecs(vindx, ti, ip, false,
+		ms := NewModelSpecs(vindx, ti, *ip, false,
 			false, os.Stderr, logfile, csvfile, logfile)
 
 		mychan := make(chan string)
@@ -999,12 +1026,15 @@ retiree1/retiree2
 	}
 	for i, elem := range tests {
 		//fmt.Printf("=============== Case %d =================\n", i)
-		ip := NewInputParams(elem.sip)
+		ip, err := NewInputParams(elem.sip)
+		if err != nil {
+			fmt.Printf("TestResultOutput: %s\n", err)
+		}
 		ti := NewTaxInfo(ip.filingStatus)
 		csvfile := (*os.File)(nil)
 		tablefile := os.Stdout
 		ms := ModelSpecs{
-			ip:      ip,
+			ip:      *ip,
 			ti:      ti,
 			logfile: os.Stdout,
 			errfile: os.Stderr,
@@ -1106,7 +1136,10 @@ retiree1
 	}
 	for i, elem := range tests {
 		//fmt.Printf("=============== Case %d =================\n", i)
-		ip := NewInputParams(elem.sip)
+		ip, err := NewInputParams(elem.sip)
+		if err != nil {
+			fmt.Printf("TestResultOutput: %s\n", err)
+		}
 		ti := NewTaxInfo(ip.filingStatus)
 		taxbins := len(*ti.Taxtable)
 		cgbins := len(*ti.Capgainstable)
@@ -1118,7 +1151,7 @@ retiree1
 		}
 		logfile := os.Stdout
 		csvfile := (*os.File)(nil)
-		ms := NewModelSpecs(vindx, ti, ip, false,
+		ms := NewModelSpecs(vindx, ti, *ip, false,
 			false, os.Stderr, logfile, csvfile, logfile)
 
 		mychan := make(chan string)
@@ -1160,12 +1193,15 @@ retiree1/retiree2
 	}
 	for i, elem := range tests {
 		//fmt.Printf("=============== Case %d =================\n", i)
-		ip := NewInputParams(elem.sip)
+		ip, err := NewInputParams(elem.sip)
+		if err != nil {
+			fmt.Printf("TestResultOutput: %s\n", err)
+		}
 		ti := NewTaxInfo(ip.filingStatus)
 		csvfile := (*os.File)(nil)
 		tablefile := os.Stdout
 		ms := ModelSpecs{
-			ip:      ip,
+			ip:      *ip,
 			ti:      ti,
 			logfile: os.Stdout,
 			errfile: os.Stderr,
@@ -1267,7 +1303,10 @@ retiree1
 	}
 	for i, elem := range tests {
 		//fmt.Printf("=============== Case %d =================\n", i)
-		ip := NewInputParams(elem.sip)
+		ip, err := NewInputParams(elem.sip)
+		if err != nil {
+			fmt.Printf("TestResultOutput: %s\n", err)
+		}
 		ti := NewTaxInfo(ip.filingStatus)
 		taxbins := len(*ti.Taxtable)
 		cgbins := len(*ti.Capgainstable)
@@ -1279,7 +1318,7 @@ retiree1
 		}
 		logfile := os.Stdout
 		csvfile := (*os.File)(nil)
-		ms := NewModelSpecs(vindx, ti, ip, false,
+		ms := NewModelSpecs(vindx, ti, *ip, false,
 			false, os.Stderr, logfile, csvfile, logfile)
 
 		mychan := make(chan string)
@@ -1331,7 +1370,10 @@ func TestDepositAmount(t *testing.T) {
 		},
 	}
 	for i, elem := range tests {
-		ip := NewInputParams(sipSingle)
+		ip, err := NewInputParams(sipSingle)
+		if err != nil {
+			fmt.Printf("TestResultOutput: %s\n", err)
+		}
 		ti := NewTaxInfo(ip.filingStatus)
 		taxbins := len(*ti.Taxtable)
 		cgbins := len(*ti.Capgainstable)
@@ -1341,7 +1383,7 @@ func TestDepositAmount(t *testing.T) {
 			continue
 		}
 		ms := ModelSpecs{
-			ip:      ip,
+			ip:      *ip,
 			vindx:   vindx,
 			ti:      ti,
 			logfile: os.Stdout,
@@ -1384,7 +1426,10 @@ func TestOrdinaryTaxable(t *testing.T) {
 	}
 	for i, elem := range tests {
 		//fmt.Printf("======== CASE %d ========\n", i)
-		ip := NewInputParams(elem.sip)
+		ip, err := NewInputParams(elem.sip)
+		if err != nil {
+			fmt.Printf("TestResultOutput: %s\n", err)
+		}
 		//fmt.Printf("InputParams: %#v\n", ip)
 		ti := NewTaxInfo(ip.filingStatus)
 		taxbins := len(*ti.Taxtable)
@@ -1397,7 +1442,7 @@ func TestOrdinaryTaxable(t *testing.T) {
 		}
 		logfile := os.Stdout
 		csvfile := (*os.File)(nil)
-		ms := NewModelSpecs(vindx, ti, ip, false,
+		ms := NewModelSpecs(vindx, ti, *ip, false,
 			false, os.Stderr, logfile, csvfile, logfile)
 		ot := ms.ordinaryTaxable(elem.year, elem.sxp)
 		if int(ot) != elem.expect {
@@ -1408,13 +1453,13 @@ func TestOrdinaryTaxable(t *testing.T) {
 
 //func (ms ModelSpecs) IncomeSummary(year int, xp *[]float64) (T, spendable, tax, rate, ncgtax, earlytax float64, rothearly bool)
 func TestIncomeSummary(t *testing.T) {
-	fmt.Printf("Not Yet Implemented\n")
+	fmt.Printf("TestIncomeSummary() Not Yet Implemented\n")
 }
 
 //func (ms ModelSpecs) getResultTotals(xp *[]float64) (twithd, tcombined, tT, ttax, tcgtax, tearlytax, tspendable, tbeginbal, tendbal float64)
 
 func TestGetResultTotals(t *testing.T) {
-	fmt.Printf("Not Yet Implemented\n")
+	fmt.Printf("TestGetResultTotals() Not Yet Implemented\n")
 }
 
 //func (ms ModelSpecs) printBaseConfig(xp *[]float64)  // input is res.x
@@ -1467,7 +1512,10 @@ Total spendable (after tax money): $490_153`,
 	}
 	for i, elem := range tests {
 		//fmt.Printf("======== CASE %d ========\n", i)
-		ip := NewInputParams(elem.sip)
+		ip, err := NewInputParams(elem.sip)
+		if err != nil {
+			fmt.Printf("TestResultOutput: %s\n", err)
+		}
 		//fmt.Printf("InputParams: %#v\n", ip)
 		ti := NewTaxInfo(ip.filingStatus)
 		taxbins := len(*ti.Taxtable)
@@ -1480,7 +1528,7 @@ Total spendable (after tax money): $490_153`,
 		}
 		logfile := os.Stdout
 		csvfile := (*os.File)(nil)
-		ms := NewModelSpecs(vindx, ti, ip, false,
+		ms := NewModelSpecs(vindx, ti, *ip, false,
 			false, os.Stderr, logfile, csvfile, logfile)
 
 		mychan := make(chan string)
@@ -1506,7 +1554,7 @@ Total spendable (after tax money): $490_153`,
 
 //def verifyInputs( c , A , b ):
 func TestVerifyInputs(t *testing.T) {
-	fmt.Printf("Not Yet Implemented\n")
+	fmt.Printf("TestVerifyInputs() Not Yet Implemented\n")
 }
 
 func TestResultsOutput(t *testing.T) {
@@ -1528,7 +1576,7 @@ func TestResultsOutput(t *testing.T) {
 				"eT_RetireAge2":              "65",
 				"eT_PlanThroughAge1":         "75",
 				"eT_PlanThroughAge2":         "75",
-				"eT_PIA1":                    "",
+				"eT_PIA1":                    "20", //20K
 				"eT_PIA2":                    "",
 				"eT_SS_Start1":               "",
 				"eT_SS_Start2":               "",
@@ -1617,9 +1665,19 @@ func TestResultsOutput(t *testing.T) {
 			iRate:         1.025,
 		},
 	}
+	if !(testing.Short() && testing.Verbose()) { //Skip unless set "-v -short"
+		t.Skip("TestResultsOutput(): skipping unless set '-v -short'")
+	}
 	for i, elem := range tests {
+		if i > 0 {
+			continue
+		}
 		fmt.Printf("======== CASE %d ========\n", i)
-		ip := NewInputParams(elem.ip)
+		ip, err := NewInputParams(elem.ip)
+		if err != nil {
+			t.Errorf("TestResultsOutput case %d: %s", i, err)
+			continue
+		}
 		//fmt.Printf("InputParams: %#v\n", ip)
 		ti := NewTaxInfo(ip.filingStatus)
 		taxbins := len(*ti.Taxtable)
@@ -1636,12 +1694,12 @@ func TestResultsOutput(t *testing.T) {
 			continue
 		}
 		csvfile := (*os.File)(nil)
-		ms := NewModelSpecs(vindx, ti, ip, elem.verbose,
+		ms := NewModelSpecs(vindx, ti, *ip, elem.verbose,
 			elem.allowDeposits, os.Stderr, logfile, csvfile, logfile)
-		/**/
+
 		c, a, b, notes := ms.BuildModel()
 		ms.printModelMatrix(c, a, b, notes, nil, false)
-		/**/
+
 		tol := 1.0e-7
 
 		bland := false

@@ -368,7 +368,11 @@ func TestProcessSS(t *testing.T) {
 			}
 			fmt.Printf("\nCase %d::\n", i)
 		*/
-		ip := NewInputParams(elem.ip)
+		ip, err := NewInputParams(elem.ip)
+		if err != nil {
+			t.Errorf("TestProcessSS: %s\n", err)
+			continue
+		}
 
 		doNothing := false // Turn on/off Stdio redirection
 		mychan := make(chan string)
@@ -377,7 +381,7 @@ func TestProcessSS(t *testing.T) {
 			t.Errorf("RedirectStdout: %s\n", err)
 			return // should this be continue?
 		}
-		ss, ss1, ss2, tags := processSS(&ip)
+		ss, ss1, ss2, tags := processSS(ip)
 
 		str := RestoreStdout(mychan, oldout, w, doNothing)
 		strn := stripWhitespace(str)

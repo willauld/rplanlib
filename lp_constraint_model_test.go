@@ -455,8 +455,15 @@ func TestNewModelSpecs(t *testing.T) {
 			iRate:         1.025,
 		},
 	}
+	if !(testing.Short() && testing.Verbose()) { //Skip unless set "-v -short"
+		t.Skip("TestNewModelSpecs(): skipping unless set '-v -short'")
+	}
 	for i, elem := range tests {
-		ip := NewInputParams(elem.ip)
+		ip, err := NewInputParams(elem.ip)
+		if err != nil {
+			fmt.Printf("TestNewModelSpecs: %s\n", err)
+			continue
+		}
 		ti := NewTaxInfo(ip.filingStatus)
 		taxbins := len(*ti.Taxtable)
 		cgbins := len(*ti.Capgainstable)
@@ -465,7 +472,7 @@ func TestNewModelSpecs(t *testing.T) {
 			t.Errorf("TestNewModelSpecs case %d: %s", i, err)
 			continue
 		}
-		ms := NewModelSpecs(vindx, ti, ip, elem.verbose,
+		ms := NewModelSpecs(vindx, ti, *ip, elem.verbose,
 			elem.allowDeposits, os.Stderr, os.Stdout, nil, nil)
 		if ms.ip.iRate != elem.iRate {
 			t.Errorf("TestNewModelSpecs case %d: iRate expected %f, found %f", i, elem.iRate, ms.ip.iRate)
@@ -527,9 +534,16 @@ func TestBuildModel(t *testing.T) {
 			iRate:         1.025,
 		},
 	}
+	if !(testing.Short() && testing.Verbose()) { //Skip unless set "-v -short"
+		t.Skip("TestBuildModel(): skipping unless set '-v -short'")
+	}
 	for i, elem := range tests {
 		ti := NewTaxInfo(elem.ip["filingStatus"])
-		ip := NewInputParams(elem.ip)
+		ip, err := NewInputParams(elem.ip)
+		if err != nil {
+			fmt.Printf("TestNewModelSpecs: %s\n", err)
+			continue
+		}
 		taxbins := len(*ti.Taxtable)
 		cgbins := len(*ti.Capgainstable)
 		vindx, err := NewVectorVarIndex(ip.numyr, taxbins,
@@ -539,7 +553,7 @@ func TestBuildModel(t *testing.T) {
 			continue
 		}
 		logfile, err := os.Create("ModelMatixPP.log")
-		ms := NewModelSpecs(vindx, ti, ip, elem.verbose,
+		ms := NewModelSpecs(vindx, ti, *ip, elem.verbose,
 			elem.allowDeposits, os.Stderr, logfile, nil, nil)
 		/**/
 		c, A, b, notes := ms.BuildModel()
@@ -908,7 +922,11 @@ func TestPrintModelMatrix(t *testing.T) {
 		},
 	}
 	for i, elem := range tests {
-		ip := NewInputParams(elem.ip)
+		ip, err := NewInputParams(elem.ip)
+		if err != nil {
+			fmt.Printf("TestNewModelSpecs: %s\n", err)
+			continue
+		}
 		ti := NewTaxInfo(ip.filingStatus)
 		taxbins := len(*ti.Taxtable)
 		cgbins := len(*ti.Capgainstable)
@@ -922,7 +940,7 @@ func TestPrintModelMatrix(t *testing.T) {
 			numaccounts += acc
 		}
 		ms := ModelSpecs{
-			ip:      ip,
+			ip:      *ip,
 			vindx:   vindx,
 			ti:      ti,
 			logfile: os.Stdout,
@@ -1095,7 +1113,11 @@ func TestPrintConstraint(t *testing.T) {
 		},
 	}
 	for i, elem := range tests {
-		ip := NewInputParams(elem.ip)
+		ip, err := NewInputParams(elem.ip)
+		if err != nil {
+			fmt.Printf("TestNewModelSpecs: %s\n", err)
+			continue
+		}
 		ti := NewTaxInfo(ip.filingStatus)
 		taxbins := len(*ti.Taxtable)
 		cgbins := len(*ti.Capgainstable)
@@ -1109,7 +1131,7 @@ func TestPrintConstraint(t *testing.T) {
 			numaccounts += acc
 		}
 		ms := ModelSpecs{
-			ip:      ip,
+			ip:      *ip,
 			vindx:   vindx,
 			ti:      ti,
 			logfile: os.Stdout,
@@ -1256,7 +1278,11 @@ func TestPrintModelRow(t *testing.T) {
 		},
 	}
 	for i, elem := range tests {
-		ip := NewInputParams(elem.ip)
+		ip, err := NewInputParams(elem.ip)
+		if err != nil {
+			fmt.Printf("TestNewModelSpecs: %s\n", err)
+			continue
+		}
 		ti := NewTaxInfo(ip.filingStatus)
 		taxbins := len(*ti.Taxtable)
 		cgbins := len(*ti.Capgainstable)
@@ -1266,7 +1292,7 @@ func TestPrintModelRow(t *testing.T) {
 			continue
 		}
 		ms := ModelSpecs{
-			ip:      ip,
+			ip:      *ip,
 			vindx:   vindx,
 			ti:      ti,
 			logfile: os.Stdout,

@@ -1,6 +1,7 @@
 package rplanlib
 
 import (
+	"fmt"
 	"strconv"
 )
 
@@ -90,10 +91,18 @@ func getIPFloatValue(str string) float64 {
 	}
 	return n
 }
+func verifyFilingStatus(s string) error {
+	e := error(nil)
+	if s != "joint" && s != "mseparate" && s != "single" {
+		e = fmt.Errorf("verifyFilingStatus: %s is not a valid option", s)
+	}
+	return e
+}
 
 // NewInputParams takes string inputs and converts them to model inputs
-func NewInputParams(ip map[string]string) InputParams {
+func NewInputParams(ip map[string]string) (*InputParams, error) {
 
+	var err error
 	rip := InputParams{}
 
 	rip.rRate = 1.06  // = getIPFloatValue(ip["eT_Gen_rRate"]) // TODO add to mobile
@@ -104,6 +113,10 @@ func NewInputParams(ip map[string]string) InputParams {
 	rip.maximize = "Spending" // = ip["eT_Maximize"] // TODO add to mobile
 
 	rip.accmap = map[string]int{"IRA": 0, "roth": 0, "aftertax": 0}
+	err = verifyFilingStatus(ip["filingStatus"])
+	if err != nil {
+		return nil, err
+	}
 	rip.filingStatus = ip["filingStatus"]
 	rip.myKey1 = ip["key1"] // TODO: these two should come from ip FIXME
 	rip.age1 = getIPIntValue(ip["eT_Age1"])
@@ -193,5 +206,5 @@ func NewInputParams(ip map[string]string) InputParams {
 
 	//fmt.Printf("\n&&&&\n%v\n&&&&\n", rip)
 
-	return rip
+	return &rip, nil
 }

@@ -377,7 +377,7 @@ func TestProcessSS(t *testing.T) {
 			t.Errorf("RedirectStdout: %s\n", err)
 			return // should this be continue?
 		}
-		ss, ss1, ss2 := processSS(&ip)
+		ss, ss1, ss2, tags := processSS(&ip)
 
 		str := RestoreStdout(mychan, oldout, w, doNothing)
 		strn := stripWhitespace(str)
@@ -396,12 +396,20 @@ func TestProcessSS(t *testing.T) {
 			fmt.Printf("ss: %#v\n", ss)
 			fmt.Printf("ss1: %#v\n", ss1)
 			fmt.Printf("ss2: %#v\n", ss2)
+			fmt.Printf("tags: %#v\n", tags)
 		*/
 		if len(ss) != len(ss1) {
 			t.Errorf("TestProcessSS case %d: Social Security vectors are not the same lengths as required\n", i)
 		}
 		zeros := ip.SSStart1 - ip.startPlan
 		//fmt.Printf("zeros: %d, SSstart1: %d, startPlan: %d, endPlan: %d, planthrough1: %d\n", zeros, ip.SSStart1, ip.startPlan, ip.endPlan, ip.planThroughAge1)
+		expt := "combined"
+		if tags[0] != expt {
+			t.Errorf("TestProcessSS case %d:  tags[0] should be (%s) but is (%s)\n", i, expt, tags[0])
+		}
+		if tags[1] != ip.myKey1 {
+			t.Errorf("TestProcessSS case %d:  tags[1] should be (%s) but is (%s)\n", i, ip.myKey1, tags[1])
+		}
 		// Verify years before starting SS have zero SS income
 		for j := 0; j < zeros; j++ {
 			if ss1[j] != 0 {
@@ -415,6 +423,9 @@ func TestProcessSS(t *testing.T) {
 				}
 			}
 		} else { // is "joint"
+			if tags[2] != ip.myKey2 {
+				t.Errorf("TestProcessSS case %d:  tags[2] should be (%s) but is (%s)\n", i, ip.myKey2, tags[2])
+			}
 			if len(ss) != len(ss2) {
 				t.Errorf("TestProcessSS case %d: Social Security vectors are not the same lengths as required\n", i)
 			}

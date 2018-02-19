@@ -42,14 +42,14 @@ type ModelSpecs struct {
 	accounttable           []account
 	retirees               []retiree
 
-	SS         [][]float64 // SS[0] is combined, SS[1] for retiree1 ...
-	SStag      []string    // ...
-	income     [][]float64 // income[0] is combined, income[1] first income stream...
-	incometag  []string    // ...
-	assetSale  [][]float64 // assetSale[0] combined, assetSale[1] first asset
-	assettag   []string    // ...
-	expenses   [][]float64 // expenses[0] combined, expensee[1] first expense
-	expensetag []string    // ...
+	SS          [][]float64 // SS[0] is combined, SS[1] for retiree1 ...
+	SStags      []string    // ...
+	income      [][]float64 // income[0] is combined, income[1] first income stream...
+	incometags  []string    // ...
+	assetSale   [][]float64 // assetSale[0] combined, assetSale[1] first asset
+	assettags   []string    // ...
+	expenses    [][]float64 // expenses[0] combined, expensee[1] first expense
+	expensetags []string    // ...
 
 	taxed        []float64
 	cgAssetTaxed []float64
@@ -387,10 +387,11 @@ func NewModelSpecs(vindx VectorVarIndex,
 		}
 	*/
 	ms.SS = make([][]float64, 0)
-	SS, SS1, SS2 := processSS(&ip)
+	SS, SS1, SS2, tags := processSS(&ip)
 	ms.SS = append(ms.SS, SS)
 	ms.SS = append(ms.SS, SS1)
 	ms.SS = append(ms.SS, SS2)
+	ms.SStags = tags
 
 	//fmt.Printf("SS1: %v\n", ms.SS1)
 	//fmt.Printf("SS2: %v\n", ms.SS2)
@@ -532,7 +533,10 @@ func (ms ModelSpecs) BuildModel() ([]float64, [][]float64, []float64, []ModelNot
 		}
 		row[ms.vindx.S(year)] = 1
 		A = append(A, row)
-		b = append(b, accessVector(ms.income[0], year)+accessVector(ms.SS[0], year)-accessVector(ms.expenses[0], year))
+		inc := accessVector(ms.income[0], year)
+		ss := accessVector(ms.SS[0], year)
+		exp := accessVector(ms.expenses[0], year)
+		b = append(b, inc+ss-exp)
 	}
 	//
 	// Add constraint (3a')

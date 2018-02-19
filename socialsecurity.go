@@ -60,15 +60,18 @@ type ssI struct {
 	bucket     []float64
 }
 
-func processSS(ip *InputParams) (SS, SS1, SS2 []float64) {
+func processSS(ip *InputParams) (SS, SS1, SS2 []float64, tags []string) {
 
 	//fmt.Printf("PIA1: %d, PIA2: %d\n", ip.PIA1, ip.PIA2)
 	ssi := make([]ssI, 2)
 	if ip.PIA1 <= 0 && ip.PIA2 <= 0 {
 		//e := fmt.Errorf("processSS: both PIA1: %d and PIA2: %d non-positive", ip.PIA1, ip.PIA2)
-		return nil, nil, nil
+		return nil, nil, nil, nil
 	}
 	SS = make([]float64, ip.numyr) // = [0] * self.numyr
+	tags = make([]string, 2)
+	tags[0] = "combined"
+	tags[1] = ip.myKey1
 
 	index := 0
 	sections := 1
@@ -100,6 +103,7 @@ func processSS(ip *InputParams) (SS, SS1, SS2 []float64) {
 			currAge:    ip.age2,
 		}
 		ssi[index] = dt
+		tags = append(tags, ip.myKey2)
 	}
 	//fmt.Printf("ssi[0]: %#v\n", ssi[0])
 	//fmt.Printf("ssi[1]: %#v\n", ssi[1])
@@ -201,5 +205,5 @@ func processSS(ip *InputParams) (SS, SS1, SS2 []float64) {
 		SS1 = ssi[1].bucket
 		SS2 = ssi[0].bucket
 	}
-	return SS, SS1, SS2
+	return SS, SS1, SS2, tags
 }

@@ -433,37 +433,37 @@ func TestGetIncomeAssetExpenseList(t *testing.T) {
 			//errfile: os.Stderr,
 			//ao:      NewAppOutput(elem.csvfile, elem.tablefile),
 
-			SS:    make([][]float64, 0),
-			SStag: make([]string, 0),
+			SS:     make([][]float64, 0),
+			SStags: make([]string, 0),
 
-			income:    make([][]float64, 0),
-			incometag: make([]string, 0),
+			income:     make([][]float64, 0),
+			incometags: make([]string, 0),
 
 			assetSale: make([][]float64, 0),
-			assettag:  make([]string, 0),
+			assettags: make([]string, 0),
 
-			expenses:   make([][]float64, 0),
-			expensetag: make([]string, 0),
+			expenses:    make([][]float64, 0),
+			expensetags: make([]string, 0),
 		}
 		for i := 0; i <= elem.SSStreams; i++ {
 			ms.SS = append(ms.SS, make([]float64, ip.numyr))
 			str := fmt.Sprintf("SS%d", i)
-			ms.SStag = append(ms.SStag, str)
+			ms.SStags = append(ms.SStags, str)
 		}
 		for i := 0; i <= elem.incomeStreams; i++ {
 			ms.income = append(ms.income, make([]float64, ip.numyr))
 			str := fmt.Sprintf("income%d", i)
-			ms.incometag = append(ms.incometag, str)
+			ms.incometags = append(ms.incometags, str)
 		}
 		for i := 0; i <= elem.AssetStreams; i++ {
 			ms.assetSale = append(ms.assetSale, make([]float64, ip.numyr))
 			str := fmt.Sprintf("asset%d", i)
-			ms.assettag = append(ms.assettag, str)
+			ms.assettags = append(ms.assettags, str)
 		}
 		for i := 0; i <= elem.expenseStreams; i++ {
 			ms.expenses = append(ms.expenses, make([]float64, ip.numyr))
 			str := fmt.Sprintf("expense%d", i)
-			ms.expensetag = append(ms.expensetag, str)
+			ms.expensetags = append(ms.expensetags, str)
 		}
 		ms.assetSale[1][7] = 50000
 
@@ -566,17 +566,17 @@ retir SSincome:         Income:  AssetSale:
 			errfile: os.Stderr,
 			ao:      NewAppOutput(csvfile, tablefile),
 
-			SS:    make([][]float64, 0),
-			SStag: make([]string, 0),
+			SS:     make([][]float64, 0),
+			SStags: make([]string, 0),
 
-			income:    make([][]float64, 0),
-			incometag: make([]string, 0),
+			income:     make([][]float64, 0),
+			incometags: make([]string, 0),
 
 			assetSale: make([][]float64, 0),
-			assettag:  make([]string, 0),
+			assettags: make([]string, 0),
 
-			expenses:   make([][]float64, 0),
-			expensetag: make([]string, 0),
+			expenses:    make([][]float64, 0),
+			expensetags: make([]string, 0),
 
 			OneK: elem.onek,
 		}
@@ -588,7 +588,7 @@ retir SSincome:         Income:  AssetSale:
 			v[0] = float64(i)
 			ms.SS = append(ms.SS, v)
 			str := fmt.Sprintf("SS%d", i)
-			ms.SStag = append(ms.SStag, str)
+			ms.SStags = append(ms.SStags, str)
 		}
 		for i := 0; i <= elem.incomeStreams; i++ {
 			v := make([]float64, ip.numyr)
@@ -598,7 +598,7 @@ retir SSincome:         Income:  AssetSale:
 			v[0] = float64(i)
 			ms.income = append(ms.income, v)
 			str := fmt.Sprintf("income%d", i)
-			ms.incometag = append(ms.incometag, str)
+			ms.incometags = append(ms.incometags, str)
 		}
 		for i := 0; i <= elem.AssetStreams; i++ {
 			v := make([]float64, ip.numyr)
@@ -608,7 +608,7 @@ retir SSincome:         Income:  AssetSale:
 			v[0] = float64(i)
 			ms.assetSale = append(ms.assetSale, v)
 			str := fmt.Sprintf("asset%d", i)
-			ms.assettag = append(ms.assettag, str)
+			ms.assettags = append(ms.assettags, str)
 		}
 		for i := 0; i <= elem.expenseStreams; i++ {
 			v := make([]float64, ip.numyr)
@@ -618,7 +618,7 @@ retir SSincome:         Income:  AssetSale:
 			v[0] = float64(i)
 			ms.expenses = append(ms.expenses, v)
 			str := fmt.Sprintf("expense%d", i)
-			ms.expensetag = append(ms.expensetag, str)
+			ms.expensetags = append(ms.expensetags, str)
 		}
 		ms.assetSale[1][7] = 50000.0
 
@@ -1509,7 +1509,7 @@ func TestVerifyInputs(t *testing.T) {
 	fmt.Printf("Not Yet Implemented\n")
 }
 
-func /*Test*/ ResultsOutput(t *testing.T) {
+func TestResultsOutput(t *testing.T) {
 	tests := []struct {
 		ip            map[string]string
 		verbose       bool

@@ -250,23 +250,29 @@ func (ms ModelSpecs) getSSIncomeAssetExpenseList() ([]string, []int, [][]float64
 		switch t {
 		case "SocialSecurity":
 			vp = &ms.SS
-			vt = &ms.SStag
+			vt = &ms.SStags
 		case "income":
 			vp = &ms.income
-			vt = &ms.incometag
+			vt = &ms.incometags
 		case "asset":
 			vp = &ms.assetSale
-			vt = &ms.assettag
+			vt = &ms.assettags
 		case "expense":
 			vp = &ms.expenses
-			vt = &ms.expensetag
+			vt = &ms.expensetags
 		}
 		count := 0
-		for elem := 1; elem < len(*vp); elem++ {
-			if len(*vp) != len(*vt) {
-				e := fmt.Errorf("getSSIncomeAssetExpenseList: %s vector lengths do not match (%d vs. %d)", t, len(*vp), len(*vt))
-				fmt.Printf("*vp: %#v\n", *vp)
-				fmt.Printf("*vt: %#v\n", *vt)
+		for elem := 1; elem < len(*vt); elem++ {
+			/*
+							if len(*vp) != len(*vt) {
+								e := fmt.Errorf("getSSIncomeAssetExpenseList: %s vector lengths do not match (%d vs. %d)", t, len(*vp), len(*vt))
+								fmt.Printf("*vp: %#v\n", *vp)
+								fmt.Printf("*vt: %#v\n", *vt)
+								panic(e)
+				            }
+			*/
+			if *vp == nil {
+				e := fmt.Errorf("getSSIncomeAssetExpenseList: %s data vector %s is nil", t, (*vt)[elem])
 				panic(e)
 			}
 			datamatrix = append(datamatrix, (*vp)[elem])

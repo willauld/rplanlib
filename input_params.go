@@ -91,6 +91,13 @@ func getIPFloatValue(str string) float64 {
 	}
 	return n
 }
+func verifyMaximize(s string) error {
+	e := error(nil)
+	if s != "Spending" && s != "PlusEstate" {
+		e = fmt.Errorf("verifyMaximize: %s is not a valid option", s)
+	}
+	return e
+}
 func verifyFilingStatus(s string) error {
 	e := error(nil)
 	if s != "joint" && s != "mseparate" && s != "single" {
@@ -111,6 +118,10 @@ func NewInputParams(ip map[string]string) (*InputParams, error) {
 	rip.max = 0       // = getIPIntValue(ip["eT_max"]) // TODO add to mobile
 	//	maximize:                "Spending", // or "PlusEstate"
 	rip.maximize = "Spending" // = ip["eT_Maximize"] // TODO add to mobile
+	err = verifyMaximize(rip.maximize)
+	if err != nil {
+		return nil, err
+	}
 
 	rip.accmap = map[string]int{"IRA": 0, "roth": 0, "aftertax": 0}
 	err = verifyFilingStatus(ip["filingStatus"])
@@ -118,7 +129,14 @@ func NewInputParams(ip map[string]string) (*InputParams, error) {
 		return nil, err
 	}
 	rip.filingStatus = ip["filingStatus"]
-	rip.myKey1 = ip["key1"] // TODO: these two should come from ip FIXME
+
+	rip.myKey1 = ip["key1"]
+	if ip["eT_Age1"] == "" ||
+		ip["eT_RetireAge1"] == "" ||
+		ip["eT_PlanThroughAge1"] == "" {
+		e := fmt.Errorf("NewInputParams: retiree age, retirement age and plan through age must all be specified")
+		return nil, e
+	}
 	rip.age1 = getIPIntValue(ip["eT_Age1"])
 	rip.retireAge1 = getIPIntValue(ip["eT_RetireAge1"])
 	if rip.retireAge1 < rip.age1 {
@@ -129,30 +147,63 @@ func NewInputParams(ip map[string]string) (*InputParams, error) {
 	rip.prePlanYears = yearsToRetire1
 	through1 := rip.planThroughAge1 - rip.age1
 
+	if ip["eT_PIA1"] != "" || ip["eT_SS_Start1"] != "" {
+		if ip["eT_PIA1"] == "" || ip["eT_SS_Start1"] == "" {
+			e := fmt.Errorf("NewInputParams: retiree social security PIA and start age both must be specified")
+			return nil, e
+		}
+	}
 	rip.PIA1 = kgetIPIntValue(ip["eT_PIA1"])
 	rip.SSStart1 = getIPIntValue(ip["eT_SS_Start1"])
 
+	if ip["eT_TDRA_Contrib1"] != "" ||
+		ip["eT_TDRA_ContribStartAge1"] != "" ||
+		ip["eT_TDRA_ContribEndAge1"] != "" {
+		if ip["eT_TDRA_Contrib1"] == "" ||
+			ip["eT_TDRA_ContribStartAge1"] == "" ||
+			ip["eT_TDRA_ContribEndAge1"] == "" {
+			e := fmt.Errorf("NewInputParams: retiree TDRA contribution requires contribution amount, start and end age for contributions be specified")
+			return nil, e
+		}
+	}
 	rip.TDRA1 = kgetIPIntValue(ip["eT_TDRA1"])
 	rip.TDRARate1 = getIPFloatValue(ip["eT_TDRA_Rate1"])
 	rip.TDRAContrib1 = kgetIPIntValue(ip["eT_TDRA_Contrib1"])
 	rip.TDRAContribStart1 = getIPIntValue(ip["eT_TDRA_ContribStartAge1"])
 	rip.TDRAContribEnd1 = getIPIntValue(ip["eT_TDRA_ContribEndAge1"])
-	if rip.TDRA1 > 0 {
+	if rip.TDRA1 > 0 || rip.TDRAContrib1 > 0 {
 		rip.accmap["IRA"]++
 	}
 
+	if ip["eT_Roth_Contrib1"] != "" ||
+		ip["eT_Roth_ContribStartAge1"] != "" ||
+		ip["eT_Roth_ContribEndAge1"] != "" {
+		if ip["eT_Roth_Contrib1"] == "" ||
+			ip["eT_Roth_ContribStartAge1"] == "" ||
+			ip["eT_Roth_ContribEndAge1"] == "" {
+			e := fmt.Errorf("NewInputParams: retiree Roth contribution requires contribution amount, start and end age for contributions be specified")
+			return nil, e
+		}
+	}
 	rip.Roth1 = kgetIPIntValue(ip["eT_Roth1"])
 	rip.RothRate1 = getIPFloatValue(ip["eT_Roth_Rate1"])
 	rip.RothContrib1 = kgetIPIntValue(ip["eT_Roth_Contrib1"])
 	rip.RothContribStart1 = getIPIntValue(ip["eT_Roth_ContribStartAge1"])
 	rip.RothContribEnd1 = getIPIntValue(ip["eT_Roth_ContribEndAge1"])
-	if rip.Roth1 > 0 {
+	if rip.Roth1 > 0 || rip.RothContrib1 > 0 {
 		rip.accmap["roth"]++
 	}
 
 	var through2 int
 	if rip.filingStatus == "joint" {
 		rip.myKey2 = ip["key2"]
+		if ip["eT_Age2"] == "" ||
+			ip["eT_RetireAge2"] == "" ||
+			ip["eT_PlanThroughAge2"] == "" {
+			e := fmt.Errorf("NewInputParams: retiree age, retirement age and plan through age must all be specified")
+			return nil, e
+		}
+		rip.age1 = getIPIntValue(ip["eT_Age1"])
 		rip.age2 = getIPIntValue(ip["eT_Age2"])
 		rip.retireAge2 = getIPIntValue(ip["eT_RetireAge2"])
 		if rip.retireAge2 < rip.age2 {
@@ -163,24 +214,50 @@ func NewInputParams(ip map[string]string) (*InputParams, error) {
 		rip.prePlanYears = intMin(yearsToRetire1, yearsToRetire2)
 		through2 = rip.planThroughAge2 - rip.age2
 
+		if ip["eT_PIA2"] != "" || ip["eT_SS_Start2"] != "" {
+			if ip["eT_PIA2"] == "" || ip["eT_SS_Start2"] == "" {
+				e := fmt.Errorf("NewInputParams: retiree social security PIA and start age both must be specified")
+				return nil, e
+			}
+		}
 		rip.PIA2 = kgetIPIntValue(ip["eT_PIA2"])
 		rip.SSStart2 = getIPIntValue(ip["eT_SS_Start2"])
 
+		if ip["eT_TDRA_Contrib2"] != "" ||
+			ip["eT_TDRA_ContribStartAge2"] != "" ||
+			ip["eT_TDRA_ContribEndAge2"] != "" {
+			if ip["eT_TDRA_Contrib2"] == "" ||
+				ip["eT_TDRA_ContribStartAge2"] == "" ||
+				ip["eT_TDRA_ContribEndAge2"] == "" {
+				e := fmt.Errorf("NewInputParams: retiree TDRA contribution requires contribution amount, start and end age for contributions be specified")
+				return nil, e
+			}
+		}
 		rip.TDRA2 = kgetIPIntValue(ip["eT_TDRA2"])
 		rip.TDRARate2 = getIPFloatValue(ip["eT_TDRA_Rate2"])
 		rip.TDRAContrib2 = kgetIPIntValue(ip["eT_TDRA_Contrib2"])
 		rip.TDRAContribStart2 = getIPIntValue(ip["eT_TDRA_ContribStartAge2"])
 		rip.TDRAContribEnd2 = getIPIntValue(ip["eT_TDRA_ContribEndAge2"])
-		if rip.TDRA2 > 0 {
+		if rip.TDRA2 > 0 || rip.TDRAContrib2 > 0 {
 			rip.accmap["IRA"]++
 		}
 
+		if ip["eT_Roth_Contrib2"] != "" ||
+			ip["eT_Roth_ContribStartAge2"] != "" ||
+			ip["eT_Roth_ContribEndAge2"] != "" {
+			if ip["eT_Roth_Contrib2"] == "" ||
+				ip["eT_Roth_ContribStartAge2"] == "" ||
+				ip["eT_Roth_ContribEndAge2"] == "" {
+				e := fmt.Errorf("NewInputParams: retiree Roth contribution requires contribution amount, start and end age for contributions be specified")
+				return nil, e
+			}
+		}
 		rip.Roth2 = kgetIPIntValue(ip["eT_Roth2"])
 		rip.RothRate2 = getIPFloatValue(ip["eT_Roth_Rate2"])
 		rip.RothContrib2 = kgetIPIntValue(ip["eT_Roth_Contrib2"])
 		rip.RothContribStart2 = getIPIntValue(ip["eT_Roth_ContribStartAge2"])
 		rip.RothContribEnd2 = getIPIntValue(ip["eT_Roth_ContribEndAge2"])
-		if rip.Roth2 > 0 {
+		if rip.Roth2 > 0 || rip.RothContrib2 > 0 {
 			rip.accmap["roth"]++
 		}
 	}
@@ -190,12 +267,22 @@ func NewInputParams(ip map[string]string) (*InputParams, error) {
 	rip.ageDelta = rip.age1 - rip.age2
 	rip.numyr = rip.endPlan - rip.startPlan
 
+	if ip["eT_Aftatax_Contrib"] != "" ||
+		ip["eT_Aftatax_ContribStartAge"] != "" ||
+		ip["eT_Aftatax_ContribEndAge"] != "" {
+		if ip["eT_Aftatax_Contrib"] == "" ||
+			ip["eT_Aftatax_ContribStartAge"] == "" ||
+			ip["eT_Aftatax_ContribEndAge"] == "" {
+			e := fmt.Errorf("NewInputParams: retiree After tax account contribution requires contribution amount, start and end age for contributions be specified")
+			return nil, e
+		}
+	}
 	rip.Aftatax = kgetIPIntValue(ip["eT_Aftatax"])
 	rip.AftataxRate = getIPFloatValue(ip["eT_Aftatax_Rate"])
 	rip.AftataxContrib = kgetIPIntValue(ip["eT_Aftatax_Contrib"])
 	rip.AftataxContribStart = getIPIntValue(ip["eT_Aftatax_ContribStartAge"])
 	rip.AftataxContribEnd = getIPIntValue(ip["eT_Aftatax_ContribEndAge"])
-	if rip.Aftatax > 0 {
+	if rip.Aftatax > 0 || rip.AftataxContrib > 0 {
 		rip.accmap["aftertax"]++
 	}
 

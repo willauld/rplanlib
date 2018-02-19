@@ -214,7 +214,13 @@ func NewInputParams(ip map[string]string) (*InputParams, error) {
 		rip.prePlanYears = intMin(yearsToRetire1, yearsToRetire2)
 		through2 = rip.planThroughAge2 - rip.age2
 
-		if ip["eT_PIA2"] != "" || ip["eT_SS_Start2"] != "" {
+		if ip["eT_PIA2"] != "" || ip["eT_SS_Start2"] != "" ||
+			ip["eT_PIA1"] != "" {
+			if ip["eT_PIA1"] == "" {
+				// if any SS set both must be specified
+				e := fmt.Errorf("NewInputParams: both retiree social security PIA and start age must be specified if either retiree is")
+				return nil, e
+			}
 			if ip["eT_PIA2"] == "" || ip["eT_SS_Start2"] == "" {
 				e := fmt.Errorf("NewInputParams: retiree social security PIA and start age both must be specified")
 				return nil, e

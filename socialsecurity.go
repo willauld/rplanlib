@@ -84,6 +84,9 @@ func processSS(ip *InputParams) (SS, SS1, SS2 []float64, tags []string) {
 		ageAtStart: ip.age1 + ip.prePlanYears,
 		currAge:    ip.age1,
 	}
+	if dt.fraamount < 0 && ip.filingStatus != "joint" {
+		return nil, nil, nil, nil
+	}
 	if dt.fraamount < 0 { // place default spousal support in second slot
 		ssi[1] = dt
 	} else {
@@ -111,18 +114,17 @@ func processSS(ip *InputParams) (SS, SS1, SS2 []float64, tags []string) {
 	// spousal benefit can not start before SS primary starts taking SS
 	//
 	firstdisperseyear := ssi[0].startSSAge - ssi[0].ageAtStart
-	disperseage := 0
 	//fmt.Printf("firstdispersyear: %d\n", firstdisperseyear)
 
 	var amount float64
 	for i := 0; i < sections; i++ {
-		disperseage = ssi[i].startSSAge
+		disperseage := ssi[i].startSSAge
 		//fraage := ssi[i].fraage
 		//fmt.Printf("FRA age[%d]: %d\n", i, ssi[i].fraage)
 		//fraamount := ssi[i].fraamount
 		//ageAtStart := ssi[i].ageAtStart
 		//currAge := ssi[i].currAge
-		if ssi[i].fraamount >= 0 {
+		if ssi[i].fraamount >= 0 { // TODO check if this needs to be able to equal zero ; FIXME maybe explicitly check for zero and return nils
 			// alter amount for start age vs fra (minus if before fra and + is after)
 			amount = adjPIA(float64(ssi[i].fraamount), ssi[i].fraage, disperseage)
 		} else {
@@ -158,7 +160,8 @@ func processSS(ip *InputParams) (SS, SS1, SS2 []float64, tags []string) {
 				// ERROR if ever happens
 				fmt.Printf("ERROR - this should never happen. local code 11111\n")
 				fmt.Printf("age: %d, year: %d, endage: %d, ageAtStart: %d\n", age, year, endage, ssi[i].ageAtStart)
-				continue
+				//fmt.Printf("ssi[%d]: %#v\n", i, ssi[i])
+				break
 			} else if year >= ip.numyr {
 				// ERROR if ever happens
 				fmt.Printf("ERROR - this should never happen. local code 22222\n\tage: %d, year: %d, ip.numyr: %d, endPlan: %d, startPlan: %d\n", age, year, ip.numyr, ip.endPlan, ip.startPlan)

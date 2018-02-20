@@ -91,6 +91,16 @@ func accessVector(v []float64, index int) float64 {
 
 // mergeVectors sums two vectors of equal length returning a third vector
 func mergeVectors(v1, v2 []float64) ([]float64, error) {
+	if v1 == nil && v2 != nil {
+		return v2, nil
+	}
+	if v1 != nil && v2 == nil {
+		return v1, nil
+	}
+	if v1 == nil && v2 == nil {
+		err := fmt.Errorf("mergeVectors: Can not merge two nil vectors")
+		return nil, err
+	}
 	if len(v1) != len(v2) {
 		err := fmt.Errorf("mergeVectors: Can not merge, lengths do not match, %d vs %d", len(v1), len(v2))
 		return nil, err
@@ -344,7 +354,7 @@ func NewModelSpecs(vindx VectorVarIndex,
 			ms.convertAge(ip.TDRAContribEnd1, a.mykey),
 			ip.startPlan, ip.endPlan, ip.iRate, a.rRate, ip.age1)
 		if err != nil {
-			panic(err)
+			return nil, err
 		}
 		a.bal = a.origbal*math.Pow(a.rRate, float64(ip.prePlanYears)) + dbal
 		ms.accounttable = append(ms.accounttable, a)
@@ -364,7 +374,7 @@ func NewModelSpecs(vindx VectorVarIndex,
 			ms.convertAge(ip.TDRAContribEnd2, a.mykey),
 			ip.startPlan, ip.endPlan, ip.iRate, a.rRate, ip.age1)
 		if err != nil {
-			panic(err)
+			return nil, err
 		}
 		a.bal = a.origbal*math.Pow(a.rRate, float64(ip.prePlanYears)) + dbal
 		ms.accounttable = append(ms.accounttable, a)
@@ -384,7 +394,7 @@ func NewModelSpecs(vindx VectorVarIndex,
 			ms.convertAge(ip.RothContribEnd1, a.mykey),
 			ip.startPlan, ip.endPlan, ip.iRate, a.rRate, ip.age1)
 		if err != nil {
-			panic(err)
+			return nil, err
 		}
 		a.bal = a.origbal*math.Pow(a.rRate, float64(ip.prePlanYears)) + dbal
 		//fmt.Printf("Roth acc: %#v\n", a)
@@ -405,7 +415,7 @@ func NewModelSpecs(vindx VectorVarIndex,
 			ms.convertAge(ip.RothContribEnd2, a.mykey),
 			ip.startPlan, ip.endPlan, ip.iRate, a.rRate, ip.age1)
 		if err != nil {
-			panic(err)
+			return nil, err
 		}
 		a.bal = a.origbal*math.Pow(a.rRate, float64(ip.prePlanYears)) + dbal
 		ms.accounttable = append(ms.accounttable, a)
@@ -427,7 +437,7 @@ func NewModelSpecs(vindx VectorVarIndex,
 			ms.convertAge(ip.AftataxContribEnd, a.mykey),
 			ip.startPlan, ip.endPlan, ip.iRate, a.rRate, ip.age1)
 		if err != nil {
-			panic(err)
+			return nil, err
 		}
 		a.bal = a.origbal*math.Pow(a.rRate, float64(ip.prePlanYears)) + dbal
 		a.basis = a.origbasis + dbasis
@@ -436,19 +446,8 @@ func NewModelSpecs(vindx VectorVarIndex,
 	}
 	if len(ms.accounttable) != ms.ip.numacc {
 		e := fmt.Errorf("NewModelSpecs: len(accounttable): %d not equal to numacc: %d", len(ms.accounttable), ms.ip.numacc)
-		panic(e)
+		return nil, e
 	}
-
-	//income: []float64 // TODO add real income vector, dummy for now
-	income1 := 0
-	incomeStart1 := ip.startPlan
-	incomeEnd1 := ip.endPlan
-	income, err := buildVector(income1, incomeStart1, incomeEnd1, ip.startPlan, ip.endPlan, ms.ip.iRate, ip.age1)
-	if err != nil {
-		fmt.Fprintf(errfile, "BuildVector Failed: %s\n", err)
-	}
-	ms.income = make([][]float64, 0)
-	ms.income = append(ms.income, income)
 
 	ms.SS = make([][]float64, 0)
 	SS, SS1, SS2, tags := processSS(&ip)
@@ -460,6 +459,41 @@ func NewModelSpecs(vindx VectorVarIndex,
 	//fmt.Printf("SS1: %v\n", ms.SS1)
 	//fmt.Printf("SS2: %v\n", ms.SS2)
 	//fmt.Printf("SS: %v\n", ms.SS)
+	//for _, stream := range [][]float64{ip.income, ip.expese} {
+	ms.income = make([][]float64, 0)
+	//stream = make([][]float64, 0)
+	for i := 0; i < len(ip.income); i++ {
+		tag := ip.income[i].Tag
+		amount := ip.income[i].Amount
+		startage := ip.income[i].StartAge
+		endage := ip.income[i].EndAge
+		infr := ms.ip.iRate
+		if !ip.income[i].Inflate {
+			infr = 1.0
+		}
+		income, err := buildVector(amount, startage, endage, ip.startPlan, ip.endPlan, infr, ip.age1)
+		if err != nil {
+			return nil, err
+		}
+		if i != 0 {
+			ms.income[0], err = mergeVectors(ms.income[0], income)
+			if err != nil {
+				return nil, err
+			}
+		} else {
+			ms.income = append(ms.income, income)
+			ms.incometags = append(ms.incometags, "combined income")
+		}
+		if ip.income[i].Tax {
+			ms.taxed, err = mergeVectors(ms.taxed, income)
+			if err != nil {
+				return nil, err
+			}
+		}
+		ms.income = append(ms.income, income)
+		ms.incometags = append(ms.incometags, tag)
+	}
+	//}
 
 	//expenses: []float64 // TODO add real income vector, dummy for now
 	exp1 := 0
@@ -471,16 +505,6 @@ func NewModelSpecs(vindx VectorVarIndex,
 	}
 	ms.expenses = make([][]float64, 0)
 	ms.expenses = append(ms.expenses, expenses)
-
-	//taxed: []float64 // TODO add real income vector, dummy for now
-	tax1 := 0
-	taxStart1 := ip.startPlan
-	taxEnd1 := ip.endPlan
-	taxed, err := buildVector(tax1, taxStart1, taxEnd1, ip.startPlan, ip.endPlan, ms.ip.iRate, ip.age1)
-	if err != nil {
-		fmt.Fprintf(errfile, "BuildVector Failed: %s\n", err)
-	}
-	ms.taxed = taxed
 
 	//asset_sale: []float64
 	assetSale, err := buildVector(0, ip.startPlan, ip.endPlan, ip.startPlan, ip.endPlan, ms.ip.iRate, ip.age1)

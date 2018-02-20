@@ -371,7 +371,7 @@ func NewInputParams(ip map[string]string) (*InputParams, error) {
 				Inflate:  getIPBoolValue(ip[fmt.Sprintf("eT_ExpenseInflate%d", i)]),
 				Tax:      false,
 			}
-			rip.expense = append(rip.income, sp)
+			rip.expense = append(rip.expense, sp)
 		}
 	}
 

@@ -1,2 +1,4 @@
 *.py 
 *.log
+*.csv
+*.txt

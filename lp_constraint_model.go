@@ -116,6 +116,7 @@ func genContrib(yearly int,
 	rRate float64,
 	baseAge int) ([]float64, float64, float64, error) {
 
+	//fmt.Printf("yearly: %d, startAge %d, endAge %d, vsAge %d, veAge %d, irate %f, rrate %f, bage %d\n", yearly, startAge, endAge, vecStartAge, vecEndAge, iRate, rRate, baseAge)
 	zeroVector := false
 	//verify that startAge and endAge are within vecStart and end
 	if vecStartAge > vecEndAge {
@@ -137,13 +138,17 @@ func genContrib(yearly int,
 	}
 	precontribs := 0.0
 	precontribsPlusReturns := 0.0
-	for age := startAge; age < vecStartAge; age++ {
+	b := 0.0
+	for age := baseAge; age < vecStartAge; age++ {
 		preyears := age - baseAge
 		// capture all contributions before start of retirement
-		b := float64(yearly) * math.Pow(iRate, float64(preyears))
-		precontribs += b
-		precontribsPlusReturns += b
+		if age >= startAge && age <= endAge {
+			b = float64(yearly) * math.Pow(iRate, float64(preyears))
+			precontribs += b
+			precontribsPlusReturns += b
+		}
 		precontribsPlusReturns *= rRate
+		//fmt.Printf("preplan: age %d, preyears %d, yearly %d, thisyear %f, precontribs %f, precontribsPlusReturns %f\n", age, preyears, yearly, b, precontribs, precontribsPlusReturns)
 	}
 	var vec []float64
 	if !zeroVector {
@@ -151,7 +156,7 @@ func genContrib(yearly int,
 		vec = make([]float64, vecSize)
 		for i := 0; i < vecSize; i++ {
 			if i >= startAge-vecStartAge && i <= endAge-vecStartAge {
-				to := float64(startAge - baseAge + i)
+				to := float64(vecStartAge - baseAge + i)
 				adj := math.Pow(iRate, to)
 				vec[i] = float64(yearly) * adj // or something like this FIXME TODO
 			}
@@ -280,6 +285,7 @@ func NewModelSpecs(vindx VectorVarIndex,
 	csvfile *os.File,
 	tablefile *os.File) (*ModelSpecs, error) {
 
+	//fmt.Printf("InputParams: %#v\n", ip)
 	ms := ModelSpecs{
 		ip:    ip,
 		vindx: vindx,
@@ -330,7 +336,7 @@ func NewModelSpecs(vindx VectorVarIndex,
 			a.rRate = ip.TDRARate1
 		}
 		a.acctype = "IRA"
-		a.mykey = "retiree1" // need to make this definable for pc versions
+		a.mykey = ip.myKey1
 		a.origbal = float64(ip.TDRA1)
 		a.contrib = float64(ip.TDRAContrib1)
 		a.contributions, dbal, _, err = genContrib(ip.TDRAContrib1,
@@ -350,7 +356,7 @@ func NewModelSpecs(vindx VectorVarIndex,
 			a.rRate = ip.TDRARate2
 		}
 		a.acctype = "IRA"
-		a.mykey = "retiree2" // need to make this definable for pc versions
+		a.mykey = ip.myKey2
 		a.origbal = float64(ip.TDRA2)
 		a.contrib = float64(ip.TDRAContrib2)
 		a.contributions, dbal, _, err = genContrib(ip.TDRAContrib2,
@@ -370,7 +376,7 @@ func NewModelSpecs(vindx VectorVarIndex,
 			a.rRate = ip.RothRate1
 		}
 		a.acctype = "roth"
-		a.mykey = "retiree1" // need to make this definable for pc versions
+		a.mykey = ip.myKey1
 		a.origbal = float64(ip.Roth1)
 		a.contrib = float64(ip.RothContrib1)
 		a.contributions, dbal, _, err = genContrib(ip.RothContrib1,
@@ -381,6 +387,7 @@ func NewModelSpecs(vindx VectorVarIndex,
 			panic(err)
 		}
 		a.bal = a.origbal*math.Pow(a.rRate, float64(ip.prePlanYears)) + dbal
+		//fmt.Printf("Roth acc: %#v\n", a)
 		ms.accounttable = append(ms.accounttable, a)
 	}
 	if ip.Roth2 > 0 || ip.RothContrib2 > 0 {
@@ -390,7 +397,7 @@ func NewModelSpecs(vindx VectorVarIndex,
 			a.rRate = ip.RothRate2
 		}
 		a.acctype = "roth"
-		a.mykey = "retiree2" // need to make this definable for pc versions
+		a.mykey = ip.myKey2
 		a.origbal = float64(ip.Roth2)
 		a.contrib = float64(ip.RothContrib2)
 		a.contributions, dbal, _, err = genContrib(ip.RothContrib1,
@@ -424,6 +431,7 @@ func NewModelSpecs(vindx VectorVarIndex,
 		}
 		a.bal = a.origbal*math.Pow(a.rRate, float64(ip.prePlanYears)) + dbal
 		a.basis = a.origbasis + dbasis
+		fmt.Printf("aftertax accout: %#v\n", a)
 		ms.accounttable = append(ms.accounttable, a)
 	}
 	if len(ms.accounttable) != ms.ip.numacc {
@@ -442,20 +450,6 @@ func NewModelSpecs(vindx VectorVarIndex,
 	ms.income = make([][]float64, 0)
 	ms.income = append(ms.income, income)
 
-	/*
-		ms.SS1, err := buildVector(ip.PIA1, ip.SSStart1, ip.endPlan, ip.startPlan, ip.endPlan, ms.ip.iRate, ip.age1)
-		if err != nil {
-			fmt.Fprintf(errfile, "BuildVector Failed: %s\n", err)
-		}
-		ms.SS2, err := buildVector(ip.PIA2, ip.SSStart2, ip.endPlan, ip.startPlan, ip.endPlan, ms.ip.iRate, ip.age1)
-		if err != nil {
-			fmt.Fprintf(errfile, "BuildVector Failed: %s\n", err)
-		}
-		ms.SS, err = mergeVectors(SS1, SS2)
-		if err != nil {
-			fmt.Fprintf(errfile, "mergeVector Failed: %s\n", err)
-		}
-	*/
 	ms.SS = make([][]float64, 0)
 	SS, SS1, SS2, tags := processSS(&ip)
 	ms.SS = append(ms.SS, SS)
@@ -983,9 +977,7 @@ func (ms ModelSpecs) convertAge(age int, key string) int {
 			index = i
 		}
 	}
-	if index == -1 {
-		return -1000 // TODO find a better response
-	} else if index == 0 {
+	if index <= 0 {
 		return age
 	}
 	//delta := ms.retirees[0].age - ms.retirees[1].age

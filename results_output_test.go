@@ -182,7 +182,8 @@ func TestActivitySummaryHeader(t *testing.T) {
 	for i, elem := range tests {
 		ip, err := NewInputParams(elem.sip)
 		if err != nil {
-			fmt.Printf("TestResultOutput: %s\n", err)
+			t.Errorf("TestActivitySummaryHeader case %d: %s", i, err)
+			continue
 		}
 		//fmt.Printf("InputParams: %#v\n", ip)
 		ti := NewTaxInfo(ip.filingStatus)
@@ -280,7 +281,8 @@ retiree1/retiree2
 		//fmt.Printf("================ CASE %d ==================\n", i)
 		ip, err := NewInputParams(elem.sip)
 		if err != nil {
-			fmt.Printf("TestResultOutput: %s\n", err)
+			t.Errorf("TestActivitySummary case %d: %s", i, err)
+			continue
 		}
 		//fmt.Printf("InputParams: %#v\n", ip)
 		ti := NewTaxInfo(ip.filingStatus)
@@ -289,7 +291,7 @@ retiree1/retiree2
 		vindx, err := NewVectorVarIndex(ip.numyr, taxbins,
 			cgbins, ip.accmap, os.Stdout)
 		if err != nil {
-			t.Errorf("TestActivitySummaryHeader case %d: %s", i, err)
+			t.Errorf("TestActivitySummary case %d: %s", i, err)
 			continue
 		}
 		csvfile := (*os.File)(nil)
@@ -385,7 +387,8 @@ func TestPrintIncomeHeader(t *testing.T) {
 		//fmt.Printf("=============== Case %d =================\n", i)
 		ip, err := NewInputParams(elem.sip)
 		if err != nil {
-			fmt.Printf("TestResultOutput: %s\n", err)
+			t.Errorf("TestPrintIncomeHeader case %d: %s", i, err)
+			continue
 		}
 		ms := ModelSpecs{
 			ip:        *ip,
@@ -445,7 +448,8 @@ func TestGetIncomeAssetExpenseList(t *testing.T) {
 		//fmt.Printf("=============== Case %d =================\n", i)
 		ip, err := NewInputParams(elem.sip)
 		if err != nil {
-			fmt.Printf("TestResultOutput: %s\n", err)
+			t.Errorf("TestGetIncomeAssetExpenseList case %d: %s", i, err)
+			continue
 		}
 		ms := ModelSpecs{
 			//ip:      ip,
@@ -579,7 +583,8 @@ retir SSincome:         Income:  AssetSale:
 		//fmt.Printf("=============== Case %d =================\n", i)
 		ip, err := NewInputParams(elem.sip)
 		if err != nil {
-			fmt.Printf("TestResultOutput: %s\n", err)
+			t.Errorf("TestTestPrintIncomeExpenseDetails case %d: %s", i, err)
+			continue
 		}
 		csvfile := (*os.File)(nil)
 		tablefile := os.Stdout
@@ -817,7 +822,7 @@ retiree1
 		//fmt.Printf("=============== Case %d =================\n", i)
 		ip, err := NewInputParams(elem.sip)
 		if err != nil {
-			fmt.Printf("TestResultOutput: %s\n", err)
+			fmt.Printf("TestPrintAccountTrans: %s\n", err)
 		}
 		ti := NewTaxInfo(ip.filingStatus)
 		taxbins := len(*ti.Taxtable)
@@ -877,7 +882,7 @@ func TestPrintHeaderTax(t *testing.T) {
 		//fmt.Printf("=============== Case %d =================\n", i)
 		ip, err := NewInputParams(elem.sip)
 		if err != nil {
-			fmt.Printf("TestResultOutput: %s\n", err)
+			fmt.Printf("TestPrintHeaderTax: %s\n", err)
 		}
 		csvfile := (*os.File)(nil)
 		tablefile := os.Stdout
@@ -982,7 +987,7 @@ retiree1
 		//fmt.Printf("=============== Case %d =================\n", i)
 		ip, err := NewInputParams(elem.sip)
 		if err != nil {
-			fmt.Printf("TestResultOutput: %s\n", err)
+			fmt.Printf("TestPrintTax: %s\n", err)
 		}
 		ti := NewTaxInfo(ip.filingStatus)
 		taxbins := len(*ti.Taxtable)
@@ -990,7 +995,7 @@ retiree1
 		vindx, err := NewVectorVarIndex(ip.numyr, taxbins,
 			cgbins, ip.accmap, os.Stdout)
 		if err != nil {
-			t.Errorf("TestPrintAccountTrans case %d: %s", i, err)
+			t.Errorf("TestPrintTax case %d: %s", i, err)
 			continue
 		}
 		logfile := os.Stdout
@@ -998,7 +1003,7 @@ retiree1
 		ms, err := NewModelSpecs(vindx, ti, *ip, false,
 			false, os.Stderr, logfile, csvfile, logfile)
 		if err != nil {
-			t.Errorf("TestPrintAccountTrans case %d: %s", i, err)
+			t.Errorf("TestPrintTax case %d: %s", i, err)
 			continue
 		}
 
@@ -1044,7 +1049,7 @@ retiree1/retiree2
 		//fmt.Printf("=============== Case %d =================\n", i)
 		ip, err := NewInputParams(elem.sip)
 		if err != nil {
-			fmt.Printf("TestResultOutput: %s\n", err)
+			fmt.Printf("TestHeaderTaxBrackets: %s\n", err)
 		}
 		ti := NewTaxInfo(ip.filingStatus)
 		csvfile := (*os.File)(nil)
@@ -1154,7 +1159,7 @@ retiree1
 		//fmt.Printf("=============== Case %d =================\n", i)
 		ip, err := NewInputParams(elem.sip)
 		if err != nil {
-			fmt.Printf("TestResultOutput: %s\n", err)
+			fmt.Printf("TestPrintTaxBrackets: %s\n", err)
 		}
 		ti := NewTaxInfo(ip.filingStatus)
 		taxbins := len(*ti.Taxtable)
@@ -1188,7 +1193,7 @@ retiree1
 		strn := strings.TrimSpace(str)
 		if elem.expect != strn {
 			showStrMismatch(elem.expect, strn)
-			t.Errorf("TestPrintTax case %d:  expected output:\n\t '%s'\n\tbut found:\n\t'%s'\n", i, elem.expect, strn)
+			t.Errorf("TestPrintTaxBrackets case %d:  expected output:\n\t '%s'\n\tbut found:\n\t'%s'\n", i, elem.expect, strn)
 		}
 	}
 }
@@ -1215,7 +1220,7 @@ retiree1/retiree2
 		//fmt.Printf("=============== Case %d =================\n", i)
 		ip, err := NewInputParams(elem.sip)
 		if err != nil {
-			fmt.Printf("TestResultOutput: %s\n", err)
+			fmt.Printf("TestPrintHeaderCapGainsBrackets: %s\n", err)
 		}
 		ti := NewTaxInfo(ip.filingStatus)
 		csvfile := (*os.File)(nil)
@@ -1325,7 +1330,7 @@ retiree1
 		//fmt.Printf("=============== Case %d =================\n", i)
 		ip, err := NewInputParams(elem.sip)
 		if err != nil {
-			fmt.Printf("TestResultOutput: %s\n", err)
+			fmt.Printf("TestPrintCapGainsBrackets: case %d: %s\n", i, err)
 		}
 		ti := NewTaxInfo(ip.filingStatus)
 		taxbins := len(*ti.Taxtable)
@@ -1333,7 +1338,7 @@ retiree1
 		vindx, err := NewVectorVarIndex(ip.numyr, taxbins,
 			cgbins, ip.accmap, os.Stdout)
 		if err != nil {
-			t.Errorf("TestPrintTaxBrackets case %d: %s", i, err)
+			t.Errorf("TestPrintCapGainsBrackets: case %d: %s\n", i, err)
 			continue
 		}
 		logfile := os.Stdout
@@ -1396,7 +1401,7 @@ func TestDepositAmount(t *testing.T) {
 	for i, elem := range tests {
 		ip, err := NewInputParams(sipSingle)
 		if err != nil {
-			fmt.Printf("TestResultOutput: %s\n", err)
+			t.Errorf("TestDepositAmount: Case %d: %s\n", i, err)
 		}
 		ti := NewTaxInfo(ip.filingStatus)
 		taxbins := len(*ti.Taxtable)
@@ -1452,7 +1457,8 @@ func TestOrdinaryTaxable(t *testing.T) {
 		//fmt.Printf("======== CASE %d ========\n", i)
 		ip, err := NewInputParams(elem.sip)
 		if err != nil {
-			fmt.Printf("TestResultOutput: %s\n", err)
+			t.Errorf("TestOrdinaryTaxable: Case %d: %s\n", i, err)
+			continue
 		}
 		//fmt.Printf("InputParams: %#v\n", ip)
 		ti := NewTaxInfo(ip.filingStatus)

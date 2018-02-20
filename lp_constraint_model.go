@@ -459,9 +459,8 @@ func NewModelSpecs(vindx VectorVarIndex,
 	//fmt.Printf("SS1: %v\n", ms.SS1)
 	//fmt.Printf("SS2: %v\n", ms.SS2)
 	//fmt.Printf("SS: %v\n", ms.SS)
-	//for _, stream := range [][]float64{ip.income, ip.expese} {
+
 	ms.income = make([][]float64, 0)
-	//stream = make([][]float64, 0)
 	for i := 0; i < len(ip.income); i++ {
 		tag := ip.income[i].Tag
 		amount := ip.income[i].Amount
@@ -493,18 +492,45 @@ func NewModelSpecs(vindx VectorVarIndex,
 		ms.income = append(ms.income, income)
 		ms.incometags = append(ms.incometags, tag)
 	}
-	//}
 
-	//expenses: []float64 // TODO add real income vector, dummy for now
-	exp1 := 0
-	expStart1 := ip.startPlan
-	expEnd1 := ip.endPlan
-	expenses, err := buildVector(exp1, expStart1, expEnd1, ip.startPlan, ip.endPlan, ms.ip.iRate, ip.age1)
-	if err != nil {
-		fmt.Fprintf(errfile, "BuildVector Failed: %s\n", err)
-	}
 	ms.expenses = make([][]float64, 0)
-	ms.expenses = append(ms.expenses, expenses)
+	for i := 0; i < len(ip.expense); i++ {
+		tag := ip.expense[i].Tag
+		amount := ip.expense[i].Amount
+		startage := ip.expense[i].StartAge
+		endage := ip.expense[i].EndAge
+		infr := ms.ip.iRate
+		if !ip.expense[i].Inflate {
+			infr = 1.0
+		}
+		expense, err := buildVector(amount, startage, endage, ip.startPlan, ip.endPlan, infr, ip.age1)
+		if err != nil {
+			return nil, err
+		}
+		if i != 0 {
+			ms.expenses[0], err = mergeVectors(ms.expenses[0], expense)
+			if err != nil {
+				return nil, err
+			}
+		} else {
+			ms.expenses = append(ms.expenses, expense)
+			ms.expensetags = append(ms.expensetags, "combined expense")
+		}
+		ms.expenses = append(ms.expenses, expense)
+		ms.expensetags = append(ms.expensetags, tag)
+	}
+	/*
+		//expenses: []float64 // TODO add real income vector, dummy for now
+		exp1 := 0
+		expStart1 := ip.startPlan
+		expEnd1 := ip.endPlan
+		expenses, err := buildVector(exp1, expStart1, expEnd1, ip.startPlan, ip.endPlan, ms.ip.iRate, ip.age1)
+		if err != nil {
+			fmt.Fprintf(errfile, "BuildVector Failed: %s\n", err)
+		}
+		ms.expenses = make([][]float64, 0)
+		ms.expenses = append(ms.expenses, expenses)
+	*/
 
 	//asset_sale: []float64
 	assetSale, err := buildVector(0, ip.startPlan, ip.endPlan, ip.startPlan, ip.endPlan, ms.ip.iRate, ip.age1)

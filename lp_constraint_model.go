@@ -148,7 +148,7 @@ func genContrib(yearly int,
 	var vec []float64
 	if !zeroVector {
 		vecSize := vecEndAge - vecStartAge
-		vec := make([]float64, vecSize)
+		vec = make([]float64, vecSize)
 		for i := 0; i < vecSize; i++ {
 			if i >= startAge-vecStartAge && i <= endAge-vecStartAge {
 				to := float64(startAge - baseAge + i)
@@ -199,6 +199,76 @@ func buildVector(yearly, startAge, endAge, vecStartAge, vecEndAge int, rate floa
 	return vec, nil
 }
 
+func (ms ModelSpecs) verifyTaxableIncomeCoversContrib() error {
+	//   and contrib is less than max
+	// TODO: before return check the following:
+	// - No TDRA contributions after reaching age 70
+	// - Contributions are below legal maximums
+	//   - Sum of contrib for all retirees is less than taxable income
+	//   - Sum of contrib for all retirees is less thansum of legal max's
+	//   - IRA+ROTH+401(k) Contributions are less than other taxable income for each
+	//   - IRA+ROTH+401(k) Contributions are less than legal max for each
+	// - this is all talking about uc(ij)
+	for year := 0; year < ms.ip.numyr; year++ {
+		contrib := 0.0
+		jointMaxContrib := ms.ti.maxContribution(year, year+ms.ip.prePlanYears, ms.retirees, "", ms.ip.iRate)
+		//print("jointMaxContrib: ", jointMaxContrib)
+		//jointMaxContrib = maxContribution(year, None)
+		for _, acc := range ms.accounttable {
+			if acc.acctype != "aftertax" {
+				carray := acc.contributions
+				if carray != nil && carray[year] > 0 {
+					contrib += carray[year]
+					ownerage := ms.accountOwnerAge(year, acc)
+					if ownerage >= 70 {
+						if acc.acctype == "IRA" {
+							e := fmt.Errorf("Error - IRS does not allow contributions to TDRA accounts after age 70.\n\tPlease correct the contributions at age %d,\n\tfrom the PRIMARY age line, for account type %s and owner %s", ms.ip.startPlan+year, acc.acctype, acc.mykey)
+							return e
+						}
+					}
+				}
+			}
+		}
+		//print("Contrib amount: ", contrib)
+		if accessVector(ms.taxed, year) < contrib {
+			e := fmt.Errorf("Error - IRS requires contributions to retirement accounts\n\tbe less than your ordinary taxable income.\n\tHowever, contributions of $%.0f at age %d,\n\tfrom the PRIMARY age line, exceeds the taxable\n\tincome of $%.0f", contrib, ms.ip.startPlan+year, accessVector(ms.taxed, year))
+			return e
+		}
+		if jointMaxContrib < contrib {
+			e := fmt.Errorf("Error - IRS requires contributions to retirement accounts\n\tbe less than a define maximum.\n\tHowever, contributions of $%.0f at age %d,\n\tfrom the PRIMARY age line, exceeds your maximum amount\n\tof $%.0f", contrib, ms.ip.startPlan+year, jointMaxContrib)
+			return e
+		}
+		//print("TYPE: ", self.retirement_type)
+		if ms.ip.filingStatus == "joint" {
+			// Need to check each retiree individually
+			for _, v := range ms.retirees {
+				//print(v)
+				contrib := 0.0
+				personalstartage := v.ageAtStart
+				MaxContrib := ms.ti.maxContribution(year, year+ms.ip.prePlanYears, ms.retirees, v.mykey, ms.ip.iRate)
+				//print("MaxContrib: ", MaxContrib, v.mykey)
+				for _, acc := range ms.accounttable {
+					//print(acc)
+					if acc.acctype != "aftertax" {
+						if acc.mykey == v.mykey {
+							carray := acc.contributions
+							if carray != nil {
+								contrib += accessVector(carray, year)
+							}
+						}
+					}
+				}
+				//print("Contrib amount: ", contrib)
+				if MaxContrib < contrib {
+					e := fmt.Errorf("Error - IRS requires contributions to retirement accounts be less than\n\ta define maximum.\n\tHowever, contributions of $%.0f at age %d, of the account owner's\n\tage line, exceeds the maximum personal amount of $%.0f for %s", contrib, personalstartage+year, MaxContrib, v.mykey)
+					return e
+				}
+			}
+		}
+	}
+	return nil
+}
+
 // NewModelSpecs creates a ModelSpecs object
 func NewModelSpecs(vindx VectorVarIndex,
 	ti Taxinfo,
@@ -208,7 +278,7 @@ func NewModelSpecs(vindx VectorVarIndex,
 	errfile *os.File,
 	logfile *os.File,
 	csvfile *os.File,
-	tablefile *os.File) ModelSpecs {
+	tablefile *os.File) (*ModelSpecs, error) {
 
 	ms := ModelSpecs{
 		ip:    ip,
@@ -253,7 +323,7 @@ func NewModelSpecs(vindx VectorVarIndex,
 	var err error
 	var dbal float64
 	const maxPossibleAccounts = 5
-	if ip.TDRA1 > 0 {
+	if ip.TDRA1 > 0 || ip.TDRAContrib1 > 0 {
 		a := account{}
 		a.rRate = ip.rRate
 		if ip.TDRARate1 != 0.0 {
@@ -273,7 +343,7 @@ func NewModelSpecs(vindx VectorVarIndex,
 		a.bal = a.origbal*math.Pow(a.rRate, float64(ip.prePlanYears)) + dbal
 		ms.accounttable = append(ms.accounttable, a)
 	}
-	if ip.TDRA2 > 0 {
+	if ip.TDRA2 > 0 || ip.TDRAContrib2 > 0 {
 		a := account{}
 		a.rRate = ip.rRate
 		if ip.TDRARate2 != 0 {
@@ -293,7 +363,7 @@ func NewModelSpecs(vindx VectorVarIndex,
 		a.bal = a.origbal*math.Pow(a.rRate, float64(ip.prePlanYears)) + dbal
 		ms.accounttable = append(ms.accounttable, a)
 	}
-	if ip.Roth1 > 0 {
+	if ip.Roth1 > 0 || ip.RothContrib1 > 0 {
 		a := account{}
 		a.rRate = ip.rRate
 		if ip.RothRate1 != 0 {
@@ -313,7 +383,7 @@ func NewModelSpecs(vindx VectorVarIndex,
 		a.bal = a.origbal*math.Pow(a.rRate, float64(ip.prePlanYears)) + dbal
 		ms.accounttable = append(ms.accounttable, a)
 	}
-	if ip.Roth2 > 0 {
+	if ip.Roth2 > 0 || ip.RothContrib2 > 0 {
 		a := account{}
 		a.rRate = ip.rRate
 		if ip.RothRate2 != 0 {
@@ -333,7 +403,7 @@ func NewModelSpecs(vindx VectorVarIndex,
 		a.bal = a.origbal*math.Pow(a.rRate, float64(ip.prePlanYears)) + dbal
 		ms.accounttable = append(ms.accounttable, a)
 	}
-	if ip.Aftatax > 0 {
+	if ip.Aftatax > 0 || ip.AftataxContrib > 0 {
 		var dbasis float64
 		a := account{}
 		a.rRate = ms.ip.rRate
@@ -436,12 +506,17 @@ func NewModelSpecs(vindx VectorVarIndex,
 	}
 	ms.cgAssetTaxed = cgtaxed
 
+	err = ms.verifyTaxableIncomeCoversContrib()
+	if err != nil {
+		return nil, err
+	}
+
 	if ip.filingStatus == "joint" {
 		// do nothing
 	} else { // single or mseparate zero retiree2 info
 		// TODO FIXME
 	}
-	return ms
+	return &ms, nil
 }
 
 // ModelNote contains section information for the constraint model

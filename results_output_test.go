@@ -198,8 +198,12 @@ func TestActivitySummaryHeader(t *testing.T) {
 		verbose := false
 		allowDeposits := false
 		logfile := os.Stdout
-		ms := NewModelSpecs(vindx, ti, *ip, verbose,
+		ms, err := NewModelSpecs(vindx, ti, *ip, verbose,
 			allowDeposits, os.Stderr, logfile, csvfile, logfile)
+		if err != nil {
+			t.Errorf("TestActivitySummaryHeader case %d: %s", i, err)
+			continue
+		}
 
 		mychan := make(chan string)
 		DoNothing := false //true
@@ -292,8 +296,12 @@ retiree1/retiree2
 		verbose := false
 		allowDeposits := false
 		logfile := os.Stdout
-		ms := NewModelSpecs(vindx, ti, *ip, verbose,
+		ms, err := NewModelSpecs(vindx, ti, *ip, verbose,
 			allowDeposits, os.Stderr, logfile, csvfile, logfile)
+		if err != nil {
+			t.Errorf("TestActivitySummaryHeader case %d: %s", i, err)
+			continue
+		}
 
 		mychan := make(chan string)
 		donothing := false
@@ -822,8 +830,12 @@ retiree1
 		}
 		logfile := os.Stdout
 		csvfile := (*os.File)(nil)
-		ms := NewModelSpecs(vindx, ti, *ip, false,
+		ms, err := NewModelSpecs(vindx, ti, *ip, false,
 			false, os.Stderr, logfile, csvfile, logfile)
+		if err != nil {
+			t.Errorf("TestActivityAccountTrans case %d: %s", i, err)
+			continue
+		}
 
 		mychan := make(chan string)
 		DoNothing := false //true
@@ -983,8 +995,12 @@ retiree1
 		}
 		logfile := os.Stdout
 		csvfile := (*os.File)(nil)
-		ms := NewModelSpecs(vindx, ti, *ip, false,
+		ms, err := NewModelSpecs(vindx, ti, *ip, false,
 			false, os.Stderr, logfile, csvfile, logfile)
+		if err != nil {
+			t.Errorf("TestPrintAccountTrans case %d: %s", i, err)
+			continue
+		}
 
 		mychan := make(chan string)
 		DoNothing := false //true
@@ -1151,8 +1167,12 @@ retiree1
 		}
 		logfile := os.Stdout
 		csvfile := (*os.File)(nil)
-		ms := NewModelSpecs(vindx, ti, *ip, false,
+		ms, err := NewModelSpecs(vindx, ti, *ip, false,
 			false, os.Stderr, logfile, csvfile, logfile)
+		if err != nil {
+			t.Errorf("TestPrintTaxBrackets case %d: %s", i, err)
+			continue
+		}
 
 		mychan := make(chan string)
 		DoNothing := false //true
@@ -1318,8 +1338,12 @@ retiree1
 		}
 		logfile := os.Stdout
 		csvfile := (*os.File)(nil)
-		ms := NewModelSpecs(vindx, ti, *ip, false,
+		ms, err := NewModelSpecs(vindx, ti, *ip, false,
 			false, os.Stderr, logfile, csvfile, logfile)
+		if err != nil {
+			t.Errorf("TestPrintCapGainsBrackets case %d: %s", i, err)
+			continue
+		}
 
 		mychan := make(chan string)
 		DoNothing := false //true
@@ -1442,8 +1466,12 @@ func TestOrdinaryTaxable(t *testing.T) {
 		}
 		logfile := os.Stdout
 		csvfile := (*os.File)(nil)
-		ms := NewModelSpecs(vindx, ti, *ip, false,
+		ms, err := NewModelSpecs(vindx, ti, *ip, false,
 			false, os.Stderr, logfile, csvfile, logfile)
+		if err != nil {
+			t.Errorf("TestOrdinaryTaxable case %d: %s", i, err)
+			continue
+		}
 		ot := ms.ordinaryTaxable(elem.year, elem.sxp)
 		if int(ot) != elem.expect {
 			t.Errorf("TestOrdinaryTaxable case %d: expected %d, found %d\n", i, elem.expect, int(ot))
@@ -1514,7 +1542,8 @@ Total spendable (after tax money): $490_153`,
 		//fmt.Printf("======== CASE %d ========\n", i)
 		ip, err := NewInputParams(elem.sip)
 		if err != nil {
-			fmt.Printf("TestResultOutput: %s\n", err)
+			t.Errorf("TestPrintBaseConfig case %d: %s", i, err)
+			continue
 		}
 		//fmt.Printf("InputParams: %#v\n", ip)
 		ti := NewTaxInfo(ip.filingStatus)
@@ -1523,13 +1552,17 @@ Total spendable (after tax money): $490_153`,
 		vindx, err := NewVectorVarIndex(ip.numyr, taxbins,
 			cgbins, ip.accmap, os.Stdout)
 		if err != nil {
-			t.Errorf("TestOrdinaryTaxable case %d: %s", i, err)
+			t.Errorf("TestPrintBaseConfig case %d: %s", i, err)
 			continue
 		}
 		logfile := os.Stdout
 		csvfile := (*os.File)(nil)
-		ms := NewModelSpecs(vindx, ti, *ip, false,
+		ms, err := NewModelSpecs(vindx, ti, *ip, false,
 			false, os.Stderr, logfile, csvfile, logfile)
+		if err != nil {
+			t.Errorf("TestPrintBaseConfig case %d: %s", i, err)
+			continue
+		}
 
 		mychan := make(chan string)
 		DoNothing := false //true
@@ -1577,19 +1610,19 @@ func TestResultsOutput(t *testing.T) {
 				"eT_PlanThroughAge1":         "75",
 				"eT_PlanThroughAge2":         "75",
 				"eT_PIA1":                    "20", //20K
-				"eT_PIA2":                    "",
-				"eT_SS_Start1":               "",
-				"eT_SS_Start2":               "",
+				"eT_PIA2":                    "-1",
+				"eT_SS_Start1":               "70",
+				"eT_SS_Start2":               "70",
 				"eT_TDRA1":                   "200", // 200k
 				"eT_TDRA2":                   "",
 				"eT_TDRA_Rate1":              "",
 				"eT_TDRA_Rate2":              "",
 				"eT_TDRA_Contrib1":           "",
-				"eT_TDRA_Contrib2":           "",
+				"eT_TDRA_Contrib2":           "5", // contribute 5k per year
 				"eT_TDRA_ContribStartAge1":   "",
-				"eT_TDRA_ContribStartAge2":   "",
+				"eT_TDRA_ContribStartAge2":   "63",
 				"eT_TDRA_ContribEndAge1":     "",
-				"eT_TDRA_ContribEndAge2":     "",
+				"eT_TDRA_ContribEndAge2":     "67",
 				"eT_Roth1":                   "",
 				"eT_Roth2":                   "",
 				"eT_Roth_Rate1":              "",
@@ -1693,9 +1726,18 @@ func TestResultsOutput(t *testing.T) {
 			t.Errorf("TestResultsOutput case %d: %s", i, err)
 			continue
 		}
-		csvfile := (*os.File)(nil)
-		ms := NewModelSpecs(vindx, ti, *ip, elem.verbose,
+		//csvfile := (*os.File)(nil)
+		csvfile, err := os.Create("ModelOutput.csv")
+		if err != nil {
+			t.Errorf("TestResultsOutput case %d: %s", i, err)
+			continue
+		}
+		ms, err := NewModelSpecs(vindx, ti, *ip, elem.verbose,
 			elem.allowDeposits, os.Stderr, logfile, csvfile, logfile)
+		if err != nil {
+			t.Errorf("TestResultsOutput case %d: %s", i, err)
+			continue
+		}
 
 		c, a, b, notes := ms.BuildModel()
 		ms.printModelMatrix(c, a, b, notes, nil, false)
@@ -1712,36 +1754,35 @@ func TestResultsOutput(t *testing.T) {
 		start := time.Now()
 		res := lpsimplex.LPSimplex(c, a, b, nil, nil, nil, callback, disp, maxiter, tol, bland)
 		elapsed := time.Since(start)
-		var str string
-		//str = fmt.Sprintf("Res: %+v\n", res)
-		//fmt.Printf(str)
-		//str = fmt.Sprintf("expeced opt: %v,          have opt: %v\n", expectOpt, res.Fun)
-		//fmt.Printf(str)
-		str = fmt.Sprintf("Message: %v\n", res.Message)
+
+		//fmt.Printf("Res: %#v\n", res)
+		str := fmt.Sprintf("Message: %v\n", res.Message)
 		fmt.Printf(str)
 		str = fmt.Sprintf("Time: LPSimplex() took %s\n", elapsed)
 		fmt.Printf(str)
 		fmt.Printf("Called LPSimplex() for m:%d x n:%d model\n", len(a), len(a[0]))
 
-		ms.printActivitySummary(&res.X)
-		ms.printIncomeExpenseDetails()
-		ms.printAccountTrans(&res.X)
-		ms.printTax(&res.X)
-		ms.printTaxBrackets(&res.X)
-		ms.printCapGainsBrackets(&res.X)
-		/*
-			//ms.print_model_results(res.x)
-				        if args.verboseincome:
-				            print_income_expense_details()
-				        if args.verboseaccounttrans:
-				            print_account_trans(res)
-				        if args.verbosetax:
-				            print_tax(res)
-				        if args.verbosetaxbrackets:
-				            print_tax_brackets(res)
-							print_cap_gains_brackets(res)
-		*/
-		ms.printBaseConfig(&res.X)
+		if res.Success {
+			ms.printActivitySummary(&res.X)
+			ms.printIncomeExpenseDetails()
+			ms.printAccountTrans(&res.X)
+			ms.printTax(&res.X)
+			ms.printTaxBrackets(&res.X)
+			ms.printCapGainsBrackets(&res.X)
+			/*
+				//ms.print_model_results(res.x)
+					        if args.verboseincome:
+					            print_income_expense_details()
+					        if args.verboseaccounttrans:
+					            print_account_trans(res)
+					        if args.verbosetax:
+					            print_tax(res)
+					        if args.verbosetaxbrackets:
+					            print_tax_brackets(res)
+								print_cap_gains_brackets(res)
+			*/
+			ms.printBaseConfig(&res.X)
+		}
 		//createDefX(&res.X)
 	}
 }

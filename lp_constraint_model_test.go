@@ -472,8 +472,11 @@ func TestNewModelSpecs(t *testing.T) {
 			t.Errorf("TestNewModelSpecs case %d: %s", i, err)
 			continue
 		}
-		ms := NewModelSpecs(vindx, ti, *ip, elem.verbose,
+		ms, err := NewModelSpecs(vindx, ti, *ip, elem.verbose,
 			elem.allowDeposits, os.Stderr, os.Stdout, nil, nil)
+		if err != nil {
+			t.Errorf("TestNewModelSpecs case %d: %s\n", i, err)
+		}
 		if ms.ip.iRate != elem.iRate {
 			t.Errorf("TestNewModelSpecs case %d: iRate expected %f, found %f", i, elem.iRate, ms.ip.iRate)
 		}
@@ -553,8 +556,11 @@ func TestBuildModel(t *testing.T) {
 			continue
 		}
 		logfile, err := os.Create("ModelMatixPP.log")
-		ms := NewModelSpecs(vindx, ti, *ip, elem.verbose,
+		ms, err := NewModelSpecs(vindx, ti, *ip, elem.verbose,
 			elem.allowDeposits, os.Stderr, logfile, nil, nil)
+		if err != nil {
+			t.Errorf("TestNewModelSpecs case %d: %s\n", i, err)
+		}
 		/**/
 		c, A, b, notes := ms.BuildModel()
 		ms.printModelMatrix(c, A, b, notes, nil, false)

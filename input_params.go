@@ -6,6 +6,8 @@ import (
 	"strings"
 )
 
+const maxStreams = 10
+
 // InputParams are the model params constructed from driver program string input
 type InputParams struct {
 	filingStatus        string
@@ -62,12 +64,18 @@ type InputParams struct {
 	numacc       int
 
 	// PROTOTYPE
-	IncomeTag1      string
-	IncomeAmount1   int
-	IncomeStartAge1 int
-	IncomeEndAge1   int
-	IncomeInflate1  bool
-	IncomeTax1      bool
+	income  []stream
+	expense []stream
+}
+
+type stream struct {
+	// PROTOTYPE
+	Tag      string
+	Amount   int
+	StartAge int
+	EndAge   int
+	Inflate  bool
+	Tax      bool
 }
 
 //TODO: TESTME
@@ -318,12 +326,54 @@ func NewInputParams(ip map[string]string) (*InputParams, error) {
 	}
 
 	//PROTOTYPE WORK ? FLAT ? LINK LIST ?
-	rip.IncomeTag1 = ip["eT_Income1"]
-	rip.IncomeAmount1 = kgetIPIntValue(ip["eT_IncomeAmount1"])
-	rip.IncomeStartAge1 = getIPIntValue(ip["eT_IncomeStartAge1"])
-	rip.IncomeEndAge1 = getIPIntValue(ip["eT_IncomeEndAge1"])
-	rip.IncomeInflate1 = getIPBoolValue(ip["eT_IncomeInflate1"])
-	rip.IncomeInflate1 = getIPBoolValue(ip["eT_IncomeTax1"])
+	rip.income = make([]stream, 0)
+	for i := 1; i < maxStreams; i++ {
+		if ip[fmt.Sprintf("eT_Income%d", i)] != "" ||
+			ip[fmt.Sprintf("eT_IncomeAmount%d", i)] != "" ||
+			ip[fmt.Sprintf("eT_IncomeStartAge%d", i)] != "" ||
+			ip[fmt.Sprintf("eT_IncomeEndAge%d", i)] != "" {
+			if ip[fmt.Sprintf("eT_Income%d", i)] == "" ||
+				ip[fmt.Sprintf("eT_IncomeAmount%d", i)] == "" ||
+				ip[fmt.Sprintf("eT_IncomeStartAge%d", i)] == "" ||
+				ip[fmt.Sprintf("eT_IncomeEndAge%d", i)] == "" {
+				e := fmt.Errorf("NewInputParams: retiree income stream requires name/tag, amount, start and end age all to be specified")
+				return nil, e
+			}
+			sp := stream{
+				Tag:      ip[fmt.Sprintf("eT_Income%d", i)],
+				Amount:   kgetIPIntValue(ip[fmt.Sprintf("eT_IncomeAmount%d", i)]),
+				StartAge: getIPIntValue(ip[fmt.Sprintf("eT_IncomeStartAge%d", i)]),
+				EndAge:   getIPIntValue(ip[fmt.Sprintf("eT_IncomeEndAge%d", i)]),
+				Inflate:  getIPBoolValue(ip[fmt.Sprintf("eT_IncomeInflate%d", i)]),
+				Tax:      getIPBoolValue(ip[fmt.Sprintf("eT_IncomeTax%d", i)]),
+			}
+			rip.income = append(rip.income, sp)
+		}
+	}
+	rip.expense = make([]stream, 0)
+	for i := 1; i < maxStreams; i++ {
+		if ip[fmt.Sprintf("eT_Expense%d", i)] != "" ||
+			ip[fmt.Sprintf("eT_ExpenseAmount%d", i)] != "" ||
+			ip[fmt.Sprintf("eT_ExpenseStartAge%d", i)] != "" ||
+			ip[fmt.Sprintf("eT_ExpenseEndAge%d", i)] != "" {
+			if ip[fmt.Sprintf("eT_Expense%d", i)] == "" ||
+				ip[fmt.Sprintf("eT_ExpenseAmount%d", i)] == "" ||
+				ip[fmt.Sprintf("eT_ExpenseStartAge%d", i)] == "" ||
+				ip[fmt.Sprintf("eT_ExpenseEndAge%d", i)] == "" {
+				e := fmt.Errorf("NewInputParams: retiree expense stream requires name/tag, amount, start and end age all to be specified")
+				return nil, e
+			}
+			sp := stream{
+				Tag:      ip[fmt.Sprintf("eT_Expense%d", i)],
+				Amount:   kgetIPIntValue(ip[fmt.Sprintf("eT_ExpenseAmount%d", i)]),
+				StartAge: getIPIntValue(ip[fmt.Sprintf("eT_ExpenseStartAge%d", i)]),
+				EndAge:   getIPIntValue(ip[fmt.Sprintf("eT_ExpenseEndAge%d", i)]),
+				Inflate:  getIPBoolValue(ip[fmt.Sprintf("eT_ExpenseInflate%d", i)]),
+				Tax:      false,
+			}
+			rip.expense = append(rip.income, sp)
+		}
+	}
 
 	//fmt.Printf("\n&&&&\n%v\n&&&&\n", rip)
 

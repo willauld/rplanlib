@@ -105,6 +105,51 @@ func TestGetIPFloatValue(t *testing.T) {
 		}()
 	}
 }
+func TestGetIPBoolValue(t *testing.T) {
+	tests := []struct {
+		str    string
+		expect bool
+		strerr string
+	}{
+		{ // case 0
+			str:    "",
+			expect: false,
+			strerr: "",
+		},
+		{ // case 1
+			str:    "trUe",
+			expect: true,
+			strerr: "",
+		},
+		{ // case 3
+			str:    "faLse",
+			expect: false,
+			strerr: "",
+		},
+	}
+	for i, elem := range tests {
+		func() {
+			defer func() {
+				r := recover()
+				if r == nil && elem.strerr != "" {
+					t.Errorf("getIPBoolValue() case %d should have panicked", i)
+				} else if elem.strerr == "" && r != nil {
+					t.Errorf("getIPBoolValue() case %d should not have panicked", i)
+				} else if r != nil {
+					errstr := fmt.Sprintf("%s", r)
+					if errstr != elem.strerr {
+						t.Errorf("getIPBoolValue() case %d panicked! with err '%v' but should have err '%v'", i, errstr, elem.strerr)
+					}
+				}
+			}()
+			// This function may cause a panic
+			val := getIPBoolValue(elem.str)
+			if val != elem.expect {
+				t.Errorf("GetIPBoolValue() case %d: Failed - Expected %v but found %v\n", i, elem.expect, val)
+			}
+		}()
+	}
+}
 
 func TestNewInputParams(t *testing.T) {
 	tests := []struct {

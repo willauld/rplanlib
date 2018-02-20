@@ -3,6 +3,7 @@ package rplanlib
 import (
 	"fmt"
 	"strconv"
+	"strings"
 )
 
 // InputParams are the model params constructed from driver program string input
@@ -59,6 +60,14 @@ type InputParams struct {
 	numyr        int
 	accmap       map[string]int
 	numacc       int
+
+	// PROTOTYPE
+	IncomeTag1      string
+	IncomeAmount1   int
+	IncomeStartAge1 int
+	IncomeEndAge1   int
+	IncomeInflate1  bool
+	IncomeTax1      bool
 }
 
 //TODO: TESTME
@@ -66,7 +75,6 @@ func kgetIPIntValue(str string) int {
 	return 1000 * getIPIntValue(str)
 }
 
-//TODO: TESTME
 func getIPIntValue(str string) int {
 	if str == "" {
 		return 0
@@ -79,7 +87,6 @@ func getIPIntValue(str string) int {
 	return n
 }
 
-//TODO: TESTME
 func getIPFloatValue(str string) float64 {
 	if str == "" {
 		return 0
@@ -90,6 +97,19 @@ func getIPFloatValue(str string) float64 {
 		panic(e)
 	}
 	return n
+}
+
+//TODO: TESTME
+func getIPBoolValue(str string) bool {
+	if str == "" {
+		return false
+	}
+	b, e := strconv.ParseBool(strings.ToLower(str))
+	if e != nil {
+		//fmt.Printf("GetIPFloatValue(): %s\n", e)
+		panic(e)
+	}
+	return b
 }
 func verifyMaximize(s string) error {
 	e := error(nil)
@@ -296,6 +316,14 @@ func NewInputParams(ip map[string]string) (*InputParams, error) {
 	for _, v := range rip.accmap {
 		rip.numacc += v
 	}
+
+	//PROTOTYPE WORK ? FLAT ? LINK LIST ?
+	rip.IncomeTag1 = ip["eT_Income1"]
+	rip.IncomeAmount1 = kgetIPIntValue(ip["eT_IncomeAmount1"])
+	rip.IncomeStartAge1 = getIPIntValue(ip["eT_IncomeStartAge1"])
+	rip.IncomeEndAge1 = getIPIntValue(ip["eT_IncomeEndAge1"])
+	rip.IncomeInflate1 = getIPBoolValue(ip["eT_IncomeInflate1"])
+	rip.IncomeInflate1 = getIPBoolValue(ip["eT_IncomeTax1"])
 
 	//fmt.Printf("\n&&&&\n%v\n&&&&\n", rip)
 

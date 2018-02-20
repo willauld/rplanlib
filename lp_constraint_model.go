@@ -431,7 +431,7 @@ func NewModelSpecs(vindx VectorVarIndex,
 		}
 		a.bal = a.origbal*math.Pow(a.rRate, float64(ip.prePlanYears)) + dbal
 		a.basis = a.origbasis + dbasis
-		fmt.Printf("aftertax accout: %#v\n", a)
+		//fmt.Printf("aftertax accout: %#v\n", a)
 		ms.accounttable = append(ms.accounttable, a)
 	}
 	if len(ms.accounttable) != ms.ip.numacc {

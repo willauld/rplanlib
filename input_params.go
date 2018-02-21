@@ -66,6 +66,7 @@ type InputParams struct {
 	// PROTOTYPE
 	income  []stream
 	expense []stream
+	assets  []asset
 }
 
 type stream struct {
@@ -76,6 +77,16 @@ type stream struct {
 	EndAge   int
 	Inflate  bool
 	Tax      bool
+}
+type asset struct {
+	tag                 string
+	value               int     // current value of the asset
+	costAndImprovements int     // purchase price plus improvment cost
+	ageToSell           int     // age at which to sell the asset
+	owedAtAgeToSell     int     // amount owed at time of sell (ageToSell)
+	primaryResidence    bool    // Primary residence gets tax break
+	assetRRate          float64 // avg rate of return (defaults to global rate)
+	brokerageRate       float64 // avg rate paid for brokerage services
 }
 
 //TODO: TESTME
@@ -372,6 +383,36 @@ func NewInputParams(ip map[string]string) (*InputParams, error) {
 				Tax:      false,
 			}
 			rip.expense = append(rip.expense, sp)
+		}
+	}
+	rip.assets = make([]asset, 0)
+	for i := 1; i < maxStreams; i++ {
+		if ip[fmt.Sprintf("eT_Asset%d", i)] != "" ||
+			ip[fmt.Sprintf("eT_AssetValue%d", i)] != "" ||
+			ip[fmt.Sprintf("eT_AssetAgeToSell%d", i)] != "" ||
+			ip[fmt.Sprintf("eT_AssetOwedAtAgeToSell%d", i)] != "" ||
+			ip[fmt.Sprintf("eT_AssetPrimaryResidence%d", i)] != "" ||
+			ip[fmt.Sprintf("eT_AssetCostAndImprovements%d", i)] != "" {
+			if ip[fmt.Sprintf("eT_Asset%d", i)] == "" ||
+				ip[fmt.Sprintf("eT_AssetValue%d", i)] == "" ||
+				ip[fmt.Sprintf("eT_AssetAgeToSell%d", i)] == "" ||
+				ip[fmt.Sprintf("eT_AssetOwedAtAgeToSell%d", i)] == "" ||
+				ip[fmt.Sprintf("eT_AssetPrimaryResidence%d", i)] == "" ||
+				ip[fmt.Sprintf("eT_AssetCostAndImprovements%d", i)] == "" {
+				e := fmt.Errorf("NewInputParams: retiree assets requires name/tag, value, age to sell, amount owed at age to sell, cost plus improvements and whether the asset is the primary residence, all to be specified")
+				return nil, e
+			}
+			ap := asset{
+				tag:                 ip[fmt.Sprintf("eT_Asset%d", i)],
+				value:               kgetIPIntValue(ip[fmt.Sprintf("eT_AssetValue%d", i)]),
+				ageToSell:           getIPIntValue(ip[fmt.Sprintf("eT_AssetAgeToSell%d", i)]),
+				costAndImprovements: kgetIPIntValue(ip[fmt.Sprintf("eT_AssetCostAndImprovements%d", i)]),
+				owedAtAgeToSell:     getIPIntValue(ip[fmt.Sprintf("eT_AssetOwedAtAgeToSell%d", i)]),
+				primaryResidence:    getIPBoolValue(ip[fmt.Sprintf("eT_AssetPrimaryResidence%d", i)]),
+				assetRRate:          getIPFloatValue(ip[fmt.Sprintf("eT_AssetRRate%d", i)]),
+				brokerageRate:       getIPFloatValue(ip[fmt.Sprintf("eT_AssetBrokerageRate%d", i)]),
+			}
+			rip.assets = append(rip.assets, ap)
 		}
 	}
 

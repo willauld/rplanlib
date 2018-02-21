@@ -519,36 +519,109 @@ func NewModelSpecs(vindx VectorVarIndex,
 		ms.expenses = append(ms.expenses, expense)
 		ms.expensetags = append(ms.expensetags, tag)
 	}
+
+	ms.assetSale = make([][]float64, 0)
+	illiquidassetplanstart := 0.0
+	illiquidassetplanend := 0.0
+	noSell := false
+	for i := 0; i < len(ip.assets); i++ {
+		var income float64
+		var cgtaxable float64
+		tag := ip.assets[i].tag
+		value := float64(ip.assets[i].value)
+		ageToSell := ip.assets[i].ageToSell
+		if ageToSell < ip.startPlan || ageToSell > ip.endPlan {
+			noSell = true
+		}
+		brokerageRate := float64(ip.assets[i].brokerageRate) / 100.0
+		if brokerageRate == 0 {
+			brokerageRate = 0.04 // default to 4%
+		}
+		assetRRate := ip.assets[i].assetRRate
+		costAndImprovements := float64(ip.assets[i].costAndImprovements)
+		owedAtAgeToSell := float64(ip.assets[i].owedAtAgeToSell)
+		primaryResidence := ip.assets[i].primaryResidence
+
+		infr := ms.ip.iRate // asset rate of return defaults to inflation rate
+		if assetRRate != 0 {
+			infr = assetRRate
+		}
+		if ageToSell < ip.startPlan && ageToSell != 0 {
+			err := fmt.Errorf("NewModelSpecs: Assets to be sold before plan start are not allow unless the age to sell is zero")
+			return nil, err
+		}
+		illiquidassetplanstart += value * math.Pow(infr, float64(ip.startPlan-ip.age1))
+		temp := 0.0
+		if ageToSell > ip.endPlan || ageToSell == 0 {
+			// age after plan ends or zero cause value to remain
+			temp = value * math.Pow(infr, float64(ip.startPlan+ip.numyr-ip.age1))
+		}
+		illiquidassetplanend += temp
+
+		if !noSell {
+			sellprice := value * math.Pow(infr, float64(ageToSell-ip.age1))
+			income := sellprice*(1-brokerageRate) - owedAtAgeToSell
+			if income < 0 {
+				income = 0
+			}
+			cgtaxable := sellprice*(1-brokerageRate) - costAndImprovements
+			//fmt.Printf("Asset sell price $%.0f, brokerageRate: %%%d, income $%.0f, cgtaxable $%.0f", sellprice, int(100*brokerageRate), income, cgtaxable))
+			if primaryResidence {
+				cgtaxable -= ti.Primeresidence * math.Pow(ip.iRate, float64(ageToSell-ip.age1))
+				//fmt.Printf("cgtaxable: ", cgtaxable)
+			}
+			if cgtaxable < 0 {
+				cgtaxable = 0
+			}
+			if income > 0 && ip.accmap["aftertax"] <= 0 {
+				e := fmt.Errorf("Error - Assets to be sold must have an 'aftertax' investment\naccount into which to deposit the net proceeds. Please\nadd an 'aftertax' account to yourn configuration; the bal may be zero")
+				return nil, e
+			}
+		}
+		assvec := make([]float64, ip.endPlan-ip.startPlan)
+		tempvec := make([]float64, ip.endPlan-ip.startPlan)
+		if !noSell {
+			year := ageToSell - ip.startPlan
+			assvec[year] = income
+			tempvec[year] = cgtaxable
+		}
+		if i != 0 {
+			ms.assetSale[0], err = mergeVectors(ms.assetSale[0], assvec)
+			if err != nil {
+				return nil, err
+			}
+		} else {
+			ms.assetSale = append(ms.assetSale, assvec)
+			ms.assettags = append(ms.assettags, "combined assets")
+		}
+		if ip.income[i].Tax {
+			ms.cgAssetTaxed, err = mergeVectors(ms.cgAssetTaxed, tempvec)
+			if err != nil {
+				return nil, err
+			}
+		}
+		ms.assetSale = append(ms.assetSale, assvec)
+		ms.assettags = append(ms.assettags, tag)
+	}
 	/*
-		//expenses: []float64 // TODO add real income vector, dummy for now
-		exp1 := 0
-		expStart1 := ip.startPlan
-		expEnd1 := ip.endPlan
-		expenses, err := buildVector(exp1, expStart1, expEnd1, ip.startPlan, ip.endPlan, ms.ip.iRate, ip.age1)
+		//asset_sale: []float64
+		assetSale, err := buildVector(0, ip.startPlan, ip.endPlan, ip.startPlan, ip.endPlan, ms.ip.iRate, ip.age1)
 		if err != nil {
 			fmt.Fprintf(errfile, "BuildVector Failed: %s\n", err)
 		}
-		ms.expenses = make([][]float64, 0)
-		ms.expenses = append(ms.expenses, expenses)
+		ms.assetSale = make([][]float64, 0)
+		ms.assetSale = append(ms.assetSale, assetSale)
+
+		//cg_asset_taxed: []float64 // TODO add real income vector, dummy for now
+		cgtax1 := 0
+		cgtaxStart1 := ip.startPlan
+		cgtaxEnd1 := ip.endPlan
+		cgtaxed, err := buildVector(cgtax1, cgtaxStart1, cgtaxEnd1, ip.startPlan, ip.endPlan, ms.ip.iRate, ip.age1)
+		if err != nil {
+			fmt.Fprintf(errfile, "BuildVector Failed: %s\n", err)
+		}
+		ms.cgAssetTaxed = cgtaxed
 	*/
-
-	//asset_sale: []float64
-	assetSale, err := buildVector(0, ip.startPlan, ip.endPlan, ip.startPlan, ip.endPlan, ms.ip.iRate, ip.age1)
-	if err != nil {
-		fmt.Fprintf(errfile, "BuildVector Failed: %s\n", err)
-	}
-	ms.assetSale = make([][]float64, 0)
-	ms.assetSale = append(ms.assetSale, assetSale)
-
-	//cg_asset_taxed: []float64 // TODO add real income vector, dummy for now
-	cgtax1 := 0
-	cgtaxStart1 := ip.startPlan
-	cgtaxEnd1 := ip.endPlan
-	cgtaxed, err := buildVector(cgtax1, cgtaxStart1, cgtaxEnd1, ip.startPlan, ip.endPlan, ms.ip.iRate, ip.age1)
-	if err != nil {
-		fmt.Fprintf(errfile, "BuildVector Failed: %s\n", err)
-	}
-	ms.cgAssetTaxed = cgtaxed
 
 	err = ms.verifyTaxableIncomeCoversContrib()
 	if err != nil {

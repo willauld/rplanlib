@@ -704,7 +704,8 @@ func TestPrintAccHeader(t *testing.T) {
 		//fmt.Printf("=============== Case %d =================\n", i)
 		ip, err := NewInputParams(elem.sip)
 		if err != nil {
-			fmt.Printf("TestResultOutput: %s\n", err)
+			t.Errorf("TestTestPrintIncomeExpenseDetails case %d:  %s", i, err)
+			continue
 		}
 		csvfile := (*os.File)(nil)
 		tablefile := os.Stdout
@@ -1628,9 +1629,9 @@ func TestResultsOutput(t *testing.T) {
 				"eT_TDRA_ContribStartAge1":   "",
 				"eT_TDRA_ContribStartAge2":   "63",
 				"eT_TDRA_ContribEndAge1":     "",
-				"eT_TDRA_ContribEndAge2":     "67",
-				"eT_Roth1":                   "",
-				"eT_Roth2":                   "",
+				"eT_TDRA_ContribEndAge2":     "64",
+				"eT_Roth1":                   "5",
+				"eT_Roth2":                   "20", //20k
 				"eT_Roth_Rate1":              "",
 				"eT_Roth_Rate2":              "",
 				"eT_Roth_Contrib1":           "",
@@ -1639,15 +1640,67 @@ func TestResultsOutput(t *testing.T) {
 				"eT_Roth_ContribStartAge2":   "",
 				"eT_Roth_ContribEndAge1":     "",
 				"eT_Roth_ContribEndAge2":     "",
-				"eT_Aftatax":                 "",
+				"eT_Aftatax":                 "60", //60k
 				"eT_Aftatax_Rate":            "",
-				"eT_Aftatax_Contrib":         "",
-				"eT_Aftatax_ContribStartAge": "",
-				"eT_Aftatax_ContribEndAge":   "",
+				"eT_Aftatax_Contrib":         "10", //10K
+				"eT_Aftatax_ContribStartAge": "63",
+				"eT_Aftatax_ContribEndAge":   "67",
 
 				"eT_iRate":    "2.5",
 				"eT_rRate":    "6",
 				"eT_maximize": "Spending", // or "PlusEstate"
+
+				//prototype entries below
+				"eT_Income1":         "rental1",
+				"eT_IncomeAmount1":   "1",
+				"eT_IncomeStartAge1": "63",
+				"eT_IncomeEndAge1":   "67",
+				"eT_IncomeInflate1":  "true",
+				"eT_IncomeTax1":      "true",
+
+				//prototype entries below
+				"eT_Income2":         "rental2",
+				"eT_IncomeAmount2":   "2",
+				"eT_IncomeStartAge2": "62",
+				"eT_IncomeEndAge2":   "70",
+				"eT_IncomeInflate2":  "false",
+				"eT_IncomeTax2":      "true",
+
+				//prototype entries below
+				"eT_Expense1":         "exp1",
+				"eT_ExpenseAmount1":   "1",
+				"eT_ExpenseStartAge1": "63",
+				"eT_ExpenseEndAge1":   "67",
+				"eT_ExpenseInflate1":  "true",
+				"eT_ExpenseTax1":      "true", //ignored, or should be
+
+				//prototype entries below
+				"eT_Expense2":         "exp2",
+				"eT_ExpenseAmount2":   "2",
+				"eT_ExpenseStartAge2": "62",
+				"eT_ExpenseEndAge2":   "70",
+				"eT_ExpenseInflate2":  "false",
+				"eT_ExpenseTax2":      "true", //ignored, or should be
+
+				//prototype entries below
+				"eT_Asset1":                    "ass1",
+				"eT_AssetValue1":               "100",
+				"eT_AssetAgeToSell1":           "73",
+				"eT_AssetCostAndImprovements1": "20",
+				"eT_AssetOwedAtAgeToSell1":     "10",
+				"eT_AssetPrimaryResidence1":    "True",
+				"eT_AssetRRate1":               "4",
+				"eT_AssetBrokerageRate1":       "4",
+
+				//prototype entries below
+				"eT_Asset2":                    "ass2",
+				"eT_AssetValue2":               "100",
+				"eT_AssetAgeToSell2":           "73",
+				"eT_AssetCostAndImprovements2": "20",
+				"eT_AssetOwedAtAgeToSell2":     "10",
+				"eT_AssetPrimaryResidence2":    "false",
+				"eT_AssetRRate2":               "",
+				"eT_AssetBrokerageRate2":       "",
 			},
 			verbose:       true,
 			allowDeposits: false,
@@ -1744,6 +1797,7 @@ func TestResultsOutput(t *testing.T) {
 			t.Errorf("TestResultsOutput case %d: %s", i, err)
 			continue
 		}
+		fmt.Printf("ModelSpecs: %#v\n", ms)
 
 		c, a, b, notes := ms.BuildModel()
 		ms.printModelMatrix(c, a, b, notes, nil, false)

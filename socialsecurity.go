@@ -147,8 +147,7 @@ func processSS(ip *InputParams) (SS, SS1, SS2 []float64, tags []string) {
 			}
 			//fraamount := ssi[0].fraamount / 2 // spousal benefit is 1/2 spouses at FRA
 			// alter amount for start age vs fra (minus if before fra)
-			//amount = adjPIA(float64(ssi[0].fraamount)/2, ssi[i].fraage, intMin(disperseage, ssi[i].fraage))
-			amount = adjPIA(float64(ssi[0].fraamount)/2, ssi[i].fraage, disperseage)
+			amount = adjPIA(float64(ssi[0].fraamount)/2, ssi[i].fraage, intMin(disperseage, ssi[i].fraage))
 		}
 		ssi[i].bucket = make([]float64, ip.numyr) // = [0] * self.numyr
 		endage := ip.numyr + ssi[i].ageAtStart

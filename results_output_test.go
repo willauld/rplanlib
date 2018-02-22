@@ -1801,6 +1801,12 @@ func TestResultsOutput(t *testing.T) {
 
 		c, a, b, notes := ms.BuildModel()
 		ms.printModelMatrix(c, a, b, notes, nil, false)
+		err = BinDumpModel(c, a, b, "")
+		if err != nil {
+			t.Errorf("TestResultsOutput case %d: %s", i, err)
+			continue
+		}
+		BinCheckModelFiles("./RPlanModelgo.dat", "./RPlanModelpython.dat")
 
 		tol := 1.0e-7
 

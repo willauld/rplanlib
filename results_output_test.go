@@ -56,9 +56,9 @@ var sipSingle = map[string]string{
 	"eT_Aftatax_ContribStartAge": "",
 	"eT_Aftatax_ContribEndAge":   "",
 
-	"eT_iRate":    "2.5",
-	"eT_rRate":    "6",
-	"eT_maximize": "Spending", // or "PlusEstate"
+	"eT_iRatePercent": "2.5",
+	"eT_rRatePercent": "6",
+	"eT_maximize":     "Spending", // or "PlusEstate"
 }
 
 var sipJoint = map[string]string{
@@ -102,9 +102,9 @@ var sipJoint = map[string]string{
 	"eT_Aftatax_ContribStartAge": "",
 	"eT_Aftatax_ContribEndAge":   "",
 
-	"eT_iRate":    "2.5",
-	"eT_rRate":    "6",
-	"eT_maximize": "Spending", // or "PlusEstate"
+	"eT_iRatePercent": "2.5",
+	"eT_rRatePercent": "6",
+	"eT_maximize":     "Spending", // or "PlusEstate"
 }
 var sipSingle3Acc = map[string]string{
 	"setName":                    "activeParams",
@@ -147,9 +147,9 @@ var sipSingle3Acc = map[string]string{
 	"eT_Aftatax_ContribStartAge": "",
 	"eT_Aftatax_ContribEndAge":   "",
 
-	"eT_iRate":    "2.5",
-	"eT_rRate":    "6",
-	"eT_maximize": "Spending", // or "PlusEstate"
+	"eT_iRatePercent": "2.5",
+	"eT_rRatePercent": "6",
+	"eT_maximize":     "Spending", // or "PlusEstate"
 }
 
 //def precheck_consistancy():
@@ -1646,9 +1646,9 @@ func TestResultsOutput(t *testing.T) {
 				"eT_Aftatax_ContribStartAge": "63",
 				"eT_Aftatax_ContribEndAge":   "67",
 
-				"eT_iRate":    "2.5",
-				"eT_rRate":    "6",
-				"eT_maximize": "Spending", // or "PlusEstate"
+				"eT_iRatePercent": "2.5",
+				"eT_rRatePercent": "6",
+				"eT_maximize":     "Spending", // or "PlusEstate"
 
 				//prototype entries below
 				"eT_Income1":         "rental1",
@@ -1689,8 +1689,8 @@ func TestResultsOutput(t *testing.T) {
 				"eT_AssetCostAndImprovements1": "20",
 				"eT_AssetOwedAtAgeToSell1":     "10",
 				"eT_AssetPrimaryResidence1":    "True",
-				"eT_AssetRRate1":               "4",
-				"eT_AssetBrokerageRate1":       "4",
+				"eT_AssetRRatePercent1":        "4",
+				"eT_AssetBrokeragePercent1":    "4",
 
 				//prototype entries below
 				"eT_Asset2":                    "ass2",
@@ -1699,8 +1699,8 @@ func TestResultsOutput(t *testing.T) {
 				"eT_AssetCostAndImprovements2": "20",
 				"eT_AssetOwedAtAgeToSell2":     "10",
 				"eT_AssetPrimaryResidence2":    "false",
-				"eT_AssetRRate2":               "",
-				"eT_AssetBrokerageRate2":       "",
+				"eT_AssetRRatePercent2":        "6", // python defaults to global rate
+				"eT_AssetBrokeragePercent2":    "",
 			},
 			verbose:       true,
 			allowDeposits: false,
@@ -1748,9 +1748,9 @@ func TestResultsOutput(t *testing.T) {
 				"eT_Aftatax_ContribStartAge": "",
 				"eT_Aftatax_ContribEndAge":   "",
 
-				"eT_iRate":    "2.5",
-				"eT_rRate":    "6",
-				"eT_maximize": "Spending", // or "PlusEstate"
+				"eT_iRatePercent": "2.5",
+				"eT_rRatePercent": "6",
+				"eT_maximize":     "Spending", // or "PlusEstate"
 			},
 			verbose:       true,
 			allowDeposits: false,
@@ -1797,7 +1797,7 @@ func TestResultsOutput(t *testing.T) {
 			t.Errorf("TestResultsOutput case %d: %s", i, err)
 			continue
 		}
-		fmt.Printf("ModelSpecs: %#v\n", ms)
+		//fmt.Printf("ModelSpecs: %#v\n", ms)
 
 		c, a, b, notes := ms.BuildModel()
 		ms.printModelMatrix(c, a, b, notes, nil, false)

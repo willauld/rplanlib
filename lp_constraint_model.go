@@ -302,8 +302,6 @@ func NewModelSpecs(vindx VectorVarIndex,
 		ti:    ti,
 		ao:    NewAppOutput(csvfile, tablefile),
 		allowTdraRothraDeposits: allowDeposits,
-		illiquidAssetPlanStart:  0.0,
-		illiquidAssetPlanEnd:    0.0,
 		verbose:                 verbose,
 		errfile:                 errfile,
 		logfile:                 logfile,
@@ -460,7 +458,8 @@ func NewModelSpecs(vindx VectorVarIndex,
 	//fmt.Printf("SS2: %v\n", ms.SS2)
 	//fmt.Printf("SS: %v\n", ms.SS)
 
-	ms.income = make([][]float64, 0)
+	ms.income = make([][]float64, 1)
+	ms.incometags = append(ms.incometags, "combined income")
 	for i := 0; i < len(ip.income); i++ {
 		tag := ip.income[i].Tag
 		amount := ip.income[i].Amount
@@ -474,14 +473,9 @@ func NewModelSpecs(vindx VectorVarIndex,
 		if err != nil {
 			return nil, err
 		}
-		if i != 0 {
-			ms.income[0], err = mergeVectors(ms.income[0], income)
-			if err != nil {
-				return nil, err
-			}
-		} else {
-			ms.income = append(ms.income, income)
-			ms.incometags = append(ms.incometags, "combined income")
+		ms.income[0], err = mergeVectors(ms.income[0], income)
+		if err != nil {
+			return nil, err
 		}
 		if ip.income[i].Tax {
 			ms.taxed, err = mergeVectors(ms.taxed, income)
@@ -493,7 +487,8 @@ func NewModelSpecs(vindx VectorVarIndex,
 		ms.incometags = append(ms.incometags, tag)
 	}
 
-	ms.expenses = make([][]float64, 0)
+	ms.expenses = make([][]float64, 1)
+	ms.expensetags = append(ms.expensetags, "combined expense")
 	for i := 0; i < len(ip.expense); i++ {
 		tag := ip.expense[i].Tag
 		amount := ip.expense[i].Amount
@@ -507,33 +502,27 @@ func NewModelSpecs(vindx VectorVarIndex,
 		if err != nil {
 			return nil, err
 		}
-		if i != 0 {
-			ms.expenses[0], err = mergeVectors(ms.expenses[0], expense)
-			if err != nil {
-				return nil, err
-			}
-		} else {
-			ms.expenses = append(ms.expenses, expense)
-			ms.expensetags = append(ms.expensetags, "combined expense")
+		ms.expenses[0], err = mergeVectors(ms.expenses[0], expense)
+		if err != nil {
+			return nil, err
 		}
 		ms.expenses = append(ms.expenses, expense)
 		ms.expensetags = append(ms.expensetags, tag)
 	}
 
-	ms.assetSale = make([][]float64, 0)
-	illiquidassetplanstart := 0.0
-	illiquidassetplanend := 0.0
+	ms.assetSale = make([][]float64, 1)
+	ms.assettags = append(ms.assettags, "combined assets")
+	ms.illiquidAssetPlanStart = 0.0
+	ms.illiquidAssetPlanEnd = 0.0
 	noSell := false
 	for i := 0; i < len(ip.assets); i++ {
-		var income float64
-		var cgtaxable float64
 		tag := ip.assets[i].tag
 		value := float64(ip.assets[i].value)
 		ageToSell := ip.assets[i].ageToSell
 		if ageToSell < ip.startPlan || ageToSell > ip.endPlan {
 			noSell = true
 		}
-		brokerageRate := float64(ip.assets[i].brokerageRate) / 100.0
+		brokerageRate := ip.assets[i].brokeragePercent / 100.0
 		if brokerageRate == 0 {
 			brokerageRate = 0.04 // default to 4%
 		}
@@ -546,17 +535,22 @@ func NewModelSpecs(vindx VectorVarIndex,
 		if assetRRate != 0 {
 			infr = assetRRate
 		}
+		//fmt.Printf("tag: %s, value: %.0f, ageToSell: %d, brokerageRate: %f, infr: %f\n", tag, value, ageToSell, brokerageRate, infr)
+		//fmt.Printf("owedAtAgeToSell: %.0f\n", owedAtAgeToSell)
 		if ageToSell < ip.startPlan && ageToSell != 0 {
 			err := fmt.Errorf("NewModelSpecs: Assets to be sold before plan start are not allow unless the age to sell is zero")
 			return nil, err
 		}
-		illiquidassetplanstart += value * math.Pow(infr, float64(ip.startPlan-ip.age1))
+		ms.illiquidAssetPlanStart += value * math.Pow(infr, float64(ip.startPlan-ip.age1))
 		temp := 0.0
 		if ageToSell > ip.endPlan || ageToSell == 0 {
 			// age after plan ends or zero cause value to remain
 			temp = value * math.Pow(infr, float64(ip.startPlan+ip.numyr-ip.age1))
 		}
-		illiquidassetplanend += temp
+		ms.illiquidAssetPlanEnd += temp
+
+		assvec := make([]float64, ip.endPlan-ip.startPlan)
+		tempvec := make([]float64, ip.endPlan-ip.startPlan)
 
 		if !noSell {
 			sellprice := value * math.Pow(infr, float64(ageToSell-ip.age1))
@@ -565,7 +559,7 @@ func NewModelSpecs(vindx VectorVarIndex,
 				income = 0
 			}
 			cgtaxable := sellprice*(1-brokerageRate) - costAndImprovements
-			//fmt.Printf("Asset sell price $%.0f, brokerageRate: %%%d, income $%.0f, cgtaxable $%.0f", sellprice, int(100*brokerageRate), income, cgtaxable))
+			//fmt.Printf("Asset sell price $%.0f, brokerageRate: %%%d, income $%.0f, cgtaxable $%.0f\n", sellprice, int(100*brokerageRate), income, cgtaxable)
 			if primaryResidence {
 				cgtaxable -= ti.Primeresidence * math.Pow(ip.iRate, float64(ageToSell-ip.age1))
 				//fmt.Printf("cgtaxable: ", cgtaxable)
@@ -577,22 +571,13 @@ func NewModelSpecs(vindx VectorVarIndex,
 				e := fmt.Errorf("Error - Assets to be sold must have an 'aftertax' investment\naccount into which to deposit the net proceeds. Please\nadd an 'aftertax' account to yourn configuration; the bal may be zero")
 				return nil, e
 			}
-		}
-		assvec := make([]float64, ip.endPlan-ip.startPlan)
-		tempvec := make([]float64, ip.endPlan-ip.startPlan)
-		if !noSell {
 			year := ageToSell - ip.startPlan
 			assvec[year] = income
 			tempvec[year] = cgtaxable
 		}
-		if i != 0 {
-			ms.assetSale[0], err = mergeVectors(ms.assetSale[0], assvec)
-			if err != nil {
-				return nil, err
-			}
-		} else {
-			ms.assetSale = append(ms.assetSale, assvec)
-			ms.assettags = append(ms.assettags, "combined assets")
+		ms.assetSale[0], err = mergeVectors(ms.assetSale[0], assvec)
+		if err != nil {
+			return nil, err
 		}
 		if ip.income[i].Tax {
 			ms.cgAssetTaxed, err = mergeVectors(ms.cgAssetTaxed, tempvec)
@@ -1112,10 +1097,16 @@ func (ms ModelSpecs) cgTaxableFraction(year int) float64 {
 	// applies only in Plan years
 	f := 1.0
 	if ms.ip.accmap["aftertax"] > 0 {
+		//TODO: FIXME REMOVE THIS LOOP
 		for _, v := range ms.accounttable {
 			if v.acctype == "aftertax" {
-				if v.bal > 0 {
-					f = 1 - (v.basis / (v.bal * math.Pow(v.rRate, float64(year+ms.ip.prePlanYears))))
+				if v.bal > 0 { // don't want to divide by zero
+					//
+					// v.bal includes the rRate and v.basis includes
+					// the additional contributions up until
+					// startPlan so no need to inflate for ms.ip.prePlanYears
+					//
+					f = 1 - (v.basis / (v.bal * math.Pow(v.rRate, float64(year))))
 				}
 				break // should be the last entry anyway but...
 			}

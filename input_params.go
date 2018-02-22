@@ -49,8 +49,10 @@ type InputParams struct {
 	AftataxContrib      int
 	AftataxContribStart int
 	AftataxContribEnd   int
-	iRate               float64 // TODO add to Mobile
-	rRate               float64 // TODO add to Mobile
+	iRatePercent        float64 // TODO add to Mobile
+	iRate               float64 // local, not mobile
+	rRatePercent        float64 // TODO add to Mobile
+	rRate               float64 // local, not mobile
 	maximize            string  // "Spending" or "PlusEstate" // TODO add to Mobile
 	min                 int     // TODO add to Mobile
 	max                 int     // TODO add to Mobile
@@ -85,8 +87,9 @@ type asset struct {
 	ageToSell           int     // age at which to sell the asset
 	owedAtAgeToSell     int     // amount owed at time of sell (ageToSell)
 	primaryResidence    bool    // Primary residence gets tax break
+	assetRRatePercent   float64 // avg rate of return (defaults to global rate)
 	assetRRate          float64 // avg rate of return (defaults to global rate)
-	brokerageRate       float64 // avg rate paid for brokerage services
+	brokeragePercent    float64 // avg rate paid for brokerage services
 }
 
 //TODO: TESTME
@@ -151,10 +154,12 @@ func NewInputParams(ip map[string]string) (*InputParams, error) {
 	var err error
 	rip := InputParams{}
 
-	rip.rRate = 1.06  // = getIPFloatValue(ip["eT_Gen_rRate"]) // TODO add to mobile
-	rip.iRate = 1.025 // = getIPFloatValue(ip["eT_Gen_iRate"]) // TODO add to mobile
-	rip.min = 0       // = getIPIntValue(ip["eT_min"]) // TODO add to mobile
-	rip.max = 0       // = getIPIntValue(ip["eT_max"]) // TODO add to mobile
+	rip.rRatePercent = getIPFloatValue(ip["eT_rRatePercent"]) // TODO add to mobile
+	rip.iRatePercent = getIPFloatValue(ip["eT_iRatePercent"]) // TODO add to mobile
+	rip.rRate = 1 + rip.rRatePercent/100.0
+	rip.iRate = 1 + rip.iRatePercent/100.0
+	rip.min = 0 // = getIPIntValue(ip["eT_min"]) // TODO add to mobile
+	rip.max = 0 // = getIPIntValue(ip["eT_max"]) // TODO add to mobile
 	//	maximize:                "Spending", // or "PlusEstate"
 	rip.maximize = "Spending" // = ip["eT_Maximize"] // TODO add to mobile
 	err = verifyMaximize(rip.maximize)
@@ -407,11 +412,12 @@ func NewInputParams(ip map[string]string) (*InputParams, error) {
 				value:               kgetIPIntValue(ip[fmt.Sprintf("eT_AssetValue%d", i)]),
 				ageToSell:           getIPIntValue(ip[fmt.Sprintf("eT_AssetAgeToSell%d", i)]),
 				costAndImprovements: kgetIPIntValue(ip[fmt.Sprintf("eT_AssetCostAndImprovements%d", i)]),
-				owedAtAgeToSell:     getIPIntValue(ip[fmt.Sprintf("eT_AssetOwedAtAgeToSell%d", i)]),
+				owedAtAgeToSell:     kgetIPIntValue(ip[fmt.Sprintf("eT_AssetOwedAtAgeToSell%d", i)]),
 				primaryResidence:    getIPBoolValue(ip[fmt.Sprintf("eT_AssetPrimaryResidence%d", i)]),
-				assetRRate:          getIPFloatValue(ip[fmt.Sprintf("eT_AssetRRate%d", i)]),
-				brokerageRate:       getIPFloatValue(ip[fmt.Sprintf("eT_AssetBrokerageRate%d", i)]),
+				assetRRatePercent:   getIPFloatValue(ip[fmt.Sprintf("eT_AssetRRatePercent%d", i)]),
+				brokeragePercent:    getIPFloatValue(ip[fmt.Sprintf("eT_AssetBrokeragePercent%d", i)]),
 			}
+			ap.assetRRate = 1 + ap.assetRRatePercent/100.0
 			rip.assets = append(rip.assets, ap)
 		}
 	}

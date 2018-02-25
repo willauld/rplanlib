@@ -50,7 +50,7 @@ func TersPrintMatrix(a [][]float64) error {
 	return nil
 }
 
-func BinDumpModel(c []float64, A [][]float64, b []float64, fname string) error {
+func BinDumpModel(c []float64, A [][]float64, b []float64, x []float64, fname string) error {
 	if fname == "" {
 		fname = "./RPlanModelgo.dat"
 	}
@@ -78,7 +78,7 @@ func BinDumpModel(c []float64, A [][]float64, b []float64, fname string) error {
 	//fmt.Printf("c Header Rows: %d, Cols: %d, code: %#X\n", header[0], header[1], header[2])
 
 	header = []uint32{uint32(len(A)), uint32(len(A[0])), 0xDEADBEEF}
-	//fmt.Printf("A length: %d, %d, dumping", (len(A), len(A[0])))
+	//fmt.Printf("A length: %d, %d, dumping\n", (len(A), len(A[0])))
 	err = binary.Write(filem, Endian, &header)
 	if err != nil {
 		e := fmt.Errorf("BinDumpModel(3): %s\n", err)
@@ -92,7 +92,7 @@ func BinDumpModel(c []float64, A [][]float64, b []float64, fname string) error {
 		}
 	}
 	header = []uint32{uint32(len(b)), 0, 0xDEADBEEF}
-	//fmt.Printf("b length: %d, dumping", len(b))
+	//fmt.Printf("b length: %d, dumping\n", len(b))
 	err = binary.Write(filem, Endian, &header)
 	if err != nil {
 		e := fmt.Errorf("BinDumpModel(5): %s\n", err)
@@ -102,6 +102,24 @@ func BinDumpModel(c []float64, A [][]float64, b []float64, fname string) error {
 	if err != nil {
 		e := fmt.Errorf("BinDumpModel(6): %s\n", err)
 		return e
+	}
+	xlen := 0
+	xOverhead := 0
+	if x != nil {
+		header = []uint32{uint32(len(x)), 0, 0xDEADBEEF}
+		//fmt.Printf("x length: %d, dumping\n", len(x))
+		err = binary.Write(filem, Endian, &header)
+		if err != nil {
+			e := fmt.Errorf("BinDumpModel(7): %s\n", err)
+			return e
+		}
+		err = binary.Write(filem, Endian, &x)
+		if err != nil {
+			e := fmt.Errorf("BinDumpModel(8): %s\n", err)
+			return e
+		}
+		xOverhead = 12
+		xlen = len(x)
 	}
 
 	//filem.Close()
@@ -113,19 +131,25 @@ func BinDumpModel(c []float64, A [][]float64, b []float64, fname string) error {
 	}
 	fsize := stats.Size()
 
-	overhead := 3 * 12
+	overhead := 3*12 + xOverhead
 	csize := 8 * len(c)
 	Asize := 8 * len(A) * len(A[0])
 	bsize := 8 * len(b)
-	if fsize != int64(overhead+csize+Asize+bsize) {
-		fmt.Printf("Error - dump file size error, filesize: %d, len(c): %d, len(A): %d, Len(A[0]): %d, len(b): %d\n", fsize, len(c), len(A), len(A[0]), len(b))
+	xsize := 8 * xlen
+	if fsize != int64(overhead+csize+Asize+bsize+xsize) {
+		fmt.Printf("BinDumpModel Error - dump file size error, filesize: %d, len(c): %d, len(A): %d, Len(A[0]): %d, len(b): %d, len(x): %d\n", fsize, len(c), len(A), len(A[0]), len(b), xlen)
 	}
-	fmt.Printf("See Me - dump file size error, filesize: %d, len(c): %d, len(A): %d, Len(A[0]): %d, len(b): %d\n", fsize, len(c), len(A), len(A[0]), len(b))
-	binDumpCheck(c, A, b, fname)
+	binDumpCheck(c, A, b, x, fname)
 	return nil
 }
 
-func binDumpCheck(c []float64, A [][]float64, b []float64, ftocheck string) {
+func binDumpCheck(c []float64, A [][]float64, b []float64, x []float64, ftocheck string) {
+	xlen := 0
+	xOverhead := 0
+	if x != nil {
+		xlen = len(x)
+		xOverhead = 12
+	}
 	filex, err := os.Open(ftocheck) // For read access.
 	if err != nil {
 		log.Fatal(err)
@@ -137,10 +161,10 @@ func binDumpCheck(c []float64, A [][]float64, b []float64, ftocheck string) {
 	}
 	fsize := stats.Size()
 	filex.Close()
-	if int(fsize) != 3*12+8*len(c)+8*len(A)*len(A[0])+8*len(b) {
-		fmt.Printf("Error - dump file size error, filesize: %d, len(c): %d, len(A): %d, Len(A[0]): %d, len(b): %d\n", fsize, len(c), len(A), len(A[0]), len(b))
+	if int(fsize) != xOverhead+3*12+8*len(c)+8*len(A)*len(A[0])+8*len(b)+8*xlen {
+		fmt.Printf("binDumpCheck Error - dump file size error, filesize: %d, len(c): %d, len(A): %d, Len(A[0]): %d, len(b): %d, xlen: %d, overhead: %d\n", fsize, len(c), len(A), len(A[0]), len(b), xlen, xOverhead+3*12)
 	}
-	c1, A1, b1 := BinLoadModel(ftocheck)
+	c1, A1, b1, x1 := BinLoadModel(ftocheck)
 	// Check loaded C vector
 	if len(c) != len(c1) {
 		fmt.Printf("modelio error: len(c): %d does not match len(c1) %d\n", len(c), len(c1))
@@ -173,6 +197,17 @@ func binDumpCheck(c []float64, A [][]float64, b []float64, ftocheck string) {
 			fmt.Printf("b[%d] is %g but found %g\n", i, b[i], b1[i])
 		}
 	}
+	if x != nil && x1 != nil {
+		// Checking x vector
+		if len(x) != len(x1) {
+			fmt.Printf("modelio error: len(x): %d does not match len(x1) %d\n", len(x), len(x1))
+		}
+		for i := 0; i < len(x); i++ {
+			if x[i] != x1[i] {
+				fmt.Printf("x[%d] is %g but found %g\n", i, x[i], x1[i])
+			}
+		}
+	}
 }
 
 func BinCheckModelFiles(f1, f2 string, v *VectorVarIndex) {
@@ -201,8 +236,8 @@ func BinCheckModelFiles(f1, f2 string, v *VectorVarIndex) {
 	if f1size != f2size {
 		fmt.Printf("Error - file sizes do not match %d vs %d\n", f1size, f2size)
 	}
-	c, A, b := BinLoadModel(f2)
-	c1, A1, b1 := BinLoadModel(f1)
+	c, A, b, x := BinLoadModel(f2)
+	c1, A1, b1, x1 := BinLoadModel(f1)
 	// Check loaded C vector
 	if len(c) != len(c1) {
 		fmt.Printf("modelio error: len(c): %d does not match len(c1) %d\n", len(c), len(c1))
@@ -246,10 +281,27 @@ func BinCheckModelFiles(f1, f2 string, v *VectorVarIndex) {
 			math.Abs(b[i]-b1[i]) > 0.00000001 {
 			//if b[i] != b1[i]
 			fmt.Printf("b[%d] is:\nf2: %g\nf1: %g\n", i, b[i], b1[i])
-			if v != nil {
-				fmt.Printf("	%s\n", "<= b")
+			fmt.Printf("	%s\n", "<= b")
+		}
+	}
+	if x != nil && x1 != nil {
+		// Checking x vector
+		if len(x) != len(x1) {
+			fmt.Printf("modelio error: len(x): %d does not match len(x1) %d\n", len(x), len(x1))
+		}
+		for i := 0; i < len(x); i++ {
+			if x[i] > 0 && x1[i] < 0 || x[i] < 0 && x1[i] > 0 ||
+				math.Abs(x[i]-x1[i]) > 0.00000001 {
+				fmt.Printf("x[%d] is:\nf2: %g\nf1: %g\n", i, x[i], x1[i])
+				if v != nil {
+					fmt.Printf("	%s\n", v.Varstr(i))
+				}
 			}
 		}
+	} else {
+		fmt.Printf("modelio warning: x or x1 is not present\n")
+		fmt.Printf("x: %v\n", x)
+		fmt.Printf("x1: %v\n", x1)
 	}
 }
 
@@ -260,7 +312,7 @@ func BinCheckModelFiles(f1, f2 string, v *VectorVarIndex) {
 //TODO: unit test
 
 // BinLoadModel reads a binary file, extracting c, A, b of a Linear Program
-func BinLoadModel(filename string) ([]float64, [][]float64, []float64) {
+func BinLoadModel(filename string) ([]float64, [][]float64, []float64, []float64) {
 	if filename == "" {
 		filename = "./RPlanModelpython.dat"
 	}
@@ -328,12 +380,37 @@ func BinLoadModel(filename string) ([]float64, [][]float64, []float64) {
 		os.Exit(1)
 	}
 
+	// Load x array
+	//header = make([]uint32, 3) // can I reuse the other header???
+	x := []float64(nil)
+	xlen := 0
+	xOverhead := 0
+	err = binary.Read(filem, Endian, &header)
+	if err != nil {
+		fmt.Printf("x binary.Read failed: %s\n", err)
+	} else {
+		if header[2] != 0xDEADBEEF {
+			fmt.Printf("header code is not 0xDEADBEEF: %#X\n", header[2])
+			os.Exit(1)
+		}
+		//fmt.Printf("x Header Rows: %d, Cols: %d, code: %#X\n", header[0], header[1], header[2])
+		x = make([]float64, header[0])
+		err = binary.Read(filem, Endian, &x)
+		if err != nil {
+			fmt.Printf("x binary.Read failed: %s\n", err)
+			os.Exit(1)
+		}
+		xlen = len(x)
+		xOverhead = 12
+		//fmt.Printf("X: %v\n", x)
+	}
+
 	filem.Close()
-	contentsize := 3*12 + len(c)*8 + len(A)*len(A[0])*8 + len(b)*8
+	contentsize := xOverhead + 3*12 + len(c)*8 + len(A)*len(A[0])*8 + len(b)*8 + 8*xlen
 	if size != int64(contentsize) {
 		fmt.Printf("BinLoadModel: file size (%d) and content size (%d) do not match\n", size, contentsize)
 	}
-	return c, A, b
+	return c, A, b, x
 }
 
 /*

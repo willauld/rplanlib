@@ -4,6 +4,7 @@ import (
 	"encoding/binary"
 	"fmt"
 	"log"
+	"math"
 	"os"
 )
 
@@ -174,7 +175,7 @@ func binDumpCheck(c []float64, A [][]float64, b []float64, ftocheck string) {
 	}
 }
 
-func BinCheckModelFiles(f1, f2 string) {
+func BinCheckModelFiles(f1, f2 string, v *VectorVarIndex) {
 	filex, err := os.Open(f1) // For read access.
 	if err != nil {
 		log.Fatal(err)
@@ -207,8 +208,14 @@ func BinCheckModelFiles(f1, f2 string) {
 		fmt.Printf("modelio error: len(c): %d does not match len(c1) %d\n", len(c), len(c1))
 	}
 	for i := 0; i < len(c); i++ {
-		if c[i] != c1[i] {
-			fmt.Printf("c[%d] is %g but found %g\n", i, c[i], c1[i])
+
+		//if AlmostEqualRelativeAndAbs(c[i], c1[i], 0, 0)
+		if c[i] > 0 && c1[i] < 0 || c[i] < 0 && c1[i] > 0 ||
+			math.Abs(c[i]-c1[i]) > 0.00000001 {
+			fmt.Printf("c[%d] is:\nf2: %.[4]*[2]g\nf1: %.[4]*[3]g\n", i, c[i], c1[i], 20)
+			if v != nil {
+				fmt.Printf("	%s\n", v.Varstr(i))
+			}
 		}
 	}
 	// Checking A matrix
@@ -220,8 +227,13 @@ func BinCheckModelFiles(f1, f2 string) {
 			fmt.Printf("modelio error: len(A[0]): %d does not match len(A1[%d]) %d\n", i, len(A[0]), len(A1[i]))
 		}
 		for j := 0; j < len(A[0]); j++ {
-			if A[i][j] != A1[i][j] {
-				fmt.Printf("A[%d][%d] is %g but found %g\n", i, j, A[i][j], A1[i][j])
+			if A[i][j] > 0 && A1[i][j] < 0 || A[i][j] < 0 && A1[i][j] > 0 ||
+				math.Abs(A[i][j]-A1[i][j]) > 0.00000001 {
+				//if A[i][j] != A1[i][j]
+				fmt.Printf("A[%d][%d] is:\nf2: %g\nf1: %g\n", i, j, A[i][j], A1[i][j])
+				if v != nil {
+					fmt.Printf("	%s\n", v.Varstr(j))
+				}
 			}
 		}
 	}
@@ -230,8 +242,13 @@ func BinCheckModelFiles(f1, f2 string) {
 		fmt.Printf("modelio error: len(b): %d does not match len(b1) %d\n", len(b), len(b1))
 	}
 	for i := 0; i < len(b); i++ {
-		if b[i] != b1[i] {
-			fmt.Printf("b[%d] is %g but found %g\n", i, b[i], b1[i])
+		if b[i] > 0 && b1[i] < 0 || b[i] < 0 && b1[i] > 0 ||
+			math.Abs(b[i]-b1[i]) > 0.00000001 {
+			//if b[i] != b1[i]
+			fmt.Printf("b[%d] is:\nf2: %g\nf1: %g\n", i, b[i], b1[i])
+			if v != nil {
+				fmt.Printf("	%s\n", "<= b")
+			}
 		}
 	}
 }
@@ -317,4 +334,77 @@ func BinLoadModel(filename string) ([]float64, [][]float64, []float64) {
 		fmt.Printf("BinLoadModel: file size (%d) and content size (%d) do not match\n", size, contentsize)
 	}
 	return c, A, b
+}
+
+/*
+//
+// The following two functions come from the following URL:
+// https://randomascii.wordpress.com/2012/02/25/comparing-floating-point-numbers-2012-edition/
+//
+type Float_t struct {
+    Float_t(float num = 0.0f) : f(num) {}
+    // Portable extraction of components.
+
+    int32_t i;
+    float f;
+    struct
+    {   // Bitfields for exploration. Do not use in production code.
+        uint32_t mantissa : 23;
+        uint32_t exponent : 8;
+        uint32_t sign : 1;
+    } parts;
+}
+func bool Negative() const { return i < 0; }
+func int32_t RawMantissa() const { return i & ((1 << 23) - 1); }
+func int32_t RawExponent() const { return (i >> 23) & 0xFF; }
+
+func AlmostEqualUlpsAndAbs(A, B, float64,
+	maxDiff float64, maxUlpsDiff int) bool {
+	// Check if the numbers are really close -- needed
+	// when comparing numbers near zero.
+	absDiff := fabs(A - B)
+	if absDiff <= maxDiff {
+		return true
+	}
+
+	Float_t uA(A);
+	Float_t uB(B);
+
+	// Different signs means they do not match.
+	if uA.Negative() != uB.Negative() {
+		return false;
+	}
+
+	// Find the difference in ULPs.
+	int ulpsDiff = abs(uA.i - uB.i);
+	if ulpsDiff <= maxUlpsDiff {
+		return true;
+	}
+	return false;
+}
+*/
+
+func AlmostEqualRelativeAndAbs(A float64, B float64, maxDiff float64, maxReldiff float64) bool { // FLT_EPSILON
+	// Check if the numbers are really close -- needed
+	// when comparing numbers near zero.
+	if maxReldiff == 0.0 {
+		maxReldiff = 1.19e-7
+	}
+	if maxDiff == 0.0 {
+		maxDiff = 1.19e-7
+	}
+	diff := math.Abs(A - B)
+	if diff <= maxDiff {
+		return true
+	}
+	A = math.Abs(A)
+	B = math.Abs(B)
+	largest := A
+	if B > A {
+		largest = B
+	}
+	if diff <= largest*maxReldiff {
+		return true
+	}
+	return false
 }

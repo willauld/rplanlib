@@ -1801,12 +1801,6 @@ func TestResultsOutput(t *testing.T) {
 
 		c, a, b, notes := ms.BuildModel()
 		ms.printModelMatrix(c, a, b, notes, nil, false)
-		err = BinDumpModel(c, a, b, "")
-		if err != nil {
-			t.Errorf("TestResultsOutput case %d: %s", i, err)
-			continue
-		}
-		BinCheckModelFiles("./RPlanModelgo.dat", "./RPlanModelpython.dat")
 
 		tol := 1.0e-7
 
@@ -1820,6 +1814,13 @@ func TestResultsOutput(t *testing.T) {
 		start := time.Now()
 		res := lpsimplex.LPSimplex(c, a, b, nil, nil, nil, callback, disp, maxiter, tol, bland)
 		elapsed := time.Since(start)
+
+		err = BinDumpModel(c, a, b, res.X, "./RPlanModelgo.datX")
+		if err != nil {
+			t.Errorf("TestResultsOutput case %d: %s", i, err)
+			continue
+		}
+		BinCheckModelFiles("./RPlanModelgo.datX", "./RPlanModelpython.datX", &vindx)
 
 		//fmt.Printf("Res: %#v\n", res)
 		str := fmt.Sprintf("Message: %v\n", res.Message)

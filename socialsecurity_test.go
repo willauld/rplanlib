@@ -405,14 +405,14 @@ func TestProcessSS(t *testing.T) {
 		if len(ss) != len(ss1) {
 			t.Errorf("TestProcessSS case %d: Social Security vectors are not the same lengths as required\n", i)
 		}
-		zeros := ip.SSStart1 - ip.startPlan
-		//fmt.Printf("zeros: %d, SSstart1: %d, startPlan: %d, endPlan: %d, planthrough1: %d\n", zeros, ip.SSStart1, ip.startPlan, ip.endPlan, ip.planThroughAge1)
+		zeros := ip.SSStart1 - ip.StartPlan
+		//fmt.Printf("zeros: %d, SSstart1: %d, startPlan: %d, endPlan: %d, planthrough1: %d\n", zeros, ip.SSStart1, ip.StartPlan, ip.EndPlan, ip.planThroughAge1)
 		expt := "combined"
 		if tags[0] != expt {
 			t.Errorf("TestProcessSS case %d:  tags[0] should be (%s) but is (%s)\n", i, expt, tags[0])
 		}
-		if tags[1] != ip.myKey1 {
-			t.Errorf("TestProcessSS case %d:  tags[1] should be (%s) but is (%s)\n", i, ip.myKey1, tags[1])
+		if tags[1] != ip.MyKey1 {
+			t.Errorf("TestProcessSS case %d:  tags[1] should be (%s) but is (%s)\n", i, ip.MyKey1, tags[1])
 		}
 		// Verify years before starting SS have zero SS income
 		for j := 0; j < zeros; j++ {
@@ -420,15 +420,15 @@ func TestProcessSS(t *testing.T) {
 				t.Errorf("TestProcessSS case %d:  ss1[%d]: %f should equal zero, it's before starting SS\n", i, j, ss1[j])
 			}
 		}
-		if ip.filingStatus != "joint" {
+		if ip.FilingStatus != "joint" {
 			for j := 0; j < len(ss); j++ { // TODO: FIXME if not joint to need ss1 separate from ss - remove it
 				if ss[j] != ss1[j] {
 					t.Errorf("TestProcessSS case %d:  SS[%d](%f) must equal SS1[%d](%f)\n", i, j, ss[j], j, ss1[j])
 				}
 			}
 		} else { // is "joint"
-			if tags[2] != ip.myKey2 {
-				t.Errorf("TestProcessSS case %d:  tags[2] should be (%s) but is (%s)\n", i, ip.myKey2, tags[2])
+			if tags[2] != ip.MyKey2 {
+				t.Errorf("TestProcessSS case %d:  tags[2] should be (%s) but is (%s)\n", i, ip.MyKey2, tags[2])
 			}
 			if len(ss) != len(ss2) {
 				t.Errorf("TestProcessSS case %d: Social Security vectors are not the same lengths as required\n", i)
@@ -438,8 +438,8 @@ func TestProcessSS(t *testing.T) {
 					t.Errorf("TestProcessSS case %d:  SS[j] must equal SS1[j] + SS2[j]\n", i)
 				}
 			}
-			//delta := ip.age2 - ip.age1
-			zeros = ip.SSStart2 + ip.ageDelta - ip.startPlan // convert to prime age
+			//delta := ip.Age2 - ip.Age1
+			zeros = ip.SSStart2 + ip.AgeDelta - ip.StartPlan // convert to prime age
 			// Verify years before starting SS have zero SS income
 			for j := 0; j < zeros; j++ {
 				if int(ss2[j]) != 0 {
@@ -447,29 +447,29 @@ func TestProcessSS(t *testing.T) {
 				}
 			}
 			// varify that years after retiree's planthrough have zero SS income
-			r1end := ip.planThroughAge1 - ip.startPlan + 1
+			r1end := ip.PlanThroughAge1 - ip.StartPlan + 1
 			//fmt.Printf("r1end: %d, planThroughAge1: %d, retireAge1: %d\n", r1end, ip.planThroughAge1, ip.retireAge1)
-			for j := r1end; j < ip.numyr; j++ {
+			for j := r1end; j < ip.Numyr; j++ {
 				if ss1[j] != 0 {
 					t.Errorf("TestProcessSS case %d:  ss1[%d]: %f should equal zero, it's after planThrough age\n", i, j, ss1[j])
 				}
 			}
 			// varify that years after retiree's planthrough have zero SS income
-			r2end := ip.planThroughAge2 + ip.ageDelta - ip.startPlan + 1
-			for j := r2end; j < ip.numyr; j++ {
+			r2end := ip.PlanThroughAge2 + ip.AgeDelta - ip.StartPlan + 1
+			for j := r2end; j < ip.Numyr; j++ {
 				if ss2[j] != 0 {
 					t.Errorf("TestProcessSS case %d:  ss2[%d]: %f should equal zero, it's after planThrough age\n", i, j, ss2[j])
 				}
 			}
 			if r1end < r2end {
 				// Verify retiree2 gets greater SS after retiree1 is gone
-				woulda := ip.iRate * ss1[r1end-1]
+				woulda := ip.IRate * ss1[r1end-1]
 				if ss2[r1end] < woulda {
 					t.Errorf("TestProcessSS case %d:  ss2[%d]: %f should have gotten %f after spouses death\n", i, r1end, ss2[r1end], woulda)
 				}
 			} else { // equal case does not muck up this test
 				// Verify retiree1 gets greater SS after retiree2 is gone
-				woulda := ip.iRate * ss2[r2end-1]
+				woulda := ip.IRate * ss2[r2end-1]
 				if ss1[r1end] < woulda {
 					t.Errorf("TestProcessSS case %d:  ss1[%d]: %f should have gotten %f after spouses death\n", i, r2end, ss2[r2end], woulda)
 				}

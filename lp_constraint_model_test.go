@@ -464,10 +464,10 @@ func TestNewModelSpecs(t *testing.T) {
 			fmt.Printf("TestNewModelSpecs: %s\n", err)
 			continue
 		}
-		ti := NewTaxInfo(ip.filingStatus)
+		ti := NewTaxInfo(ip.FilingStatus)
 		taxbins := len(*ti.Taxtable)
 		cgbins := len(*ti.Capgainstable)
-		vindx, err := NewVectorVarIndex(ip.numyr, taxbins, cgbins, ip.accmap, os.Stdout)
+		vindx, err := NewVectorVarIndex(ip.Numyr, taxbins, cgbins, ip.Accmap, os.Stdout)
 		if err != nil {
 			t.Errorf("TestNewModelSpecs case %d: %s", i, err)
 			continue
@@ -477,8 +477,8 @@ func TestNewModelSpecs(t *testing.T) {
 		if err != nil {
 			t.Errorf("TestNewModelSpecs case %d: %s\n", i, err)
 		}
-		if ms.ip.iRate != elem.iRate {
-			t.Errorf("TestNewModelSpecs case %d: iRate expected %f, found %f", i, elem.iRate, ms.ip.iRate)
+		if ms.Ip.IRate != elem.iRate {
+			t.Errorf("TestNewModelSpecs case %d: iRate expected %f, found %f", i, elem.iRate, ms.Ip.IRate)
 		}
 	}
 }
@@ -549,8 +549,8 @@ func TestBuildModel(t *testing.T) {
 		}
 		taxbins := len(*ti.Taxtable)
 		cgbins := len(*ti.Capgainstable)
-		vindx, err := NewVectorVarIndex(ip.numyr, taxbins,
-			cgbins, ip.accmap, os.Stdout)
+		vindx, err := NewVectorVarIndex(ip.Numyr, taxbins,
+			cgbins, ip.Accmap, os.Stdout)
 		if err != nil {
 			t.Errorf("BuildModel case %d: %s", i, err)
 			continue
@@ -565,8 +565,8 @@ func TestBuildModel(t *testing.T) {
 		c, A, b, notes := ms.BuildModel()
 		ms.printModelMatrix(c, A, b, notes, nil, false)
 		/**/
-		if ms.ip.iRate != elem.iRate {
-			t.Errorf("BuildModel case %d: iRate expected %f, found %f", i, elem.iRate, ms.ip.iRate)
+		if ms.Ip.IRate != elem.iRate {
+			t.Errorf("BuildModel case %d: iRate expected %f, found %f", i, elem.iRate, ms.Ip.IRate)
 		}
 	}
 }
@@ -579,7 +579,7 @@ func TestAccountOwnerAge(t *testing.T) {
 	}{
 		{ // case 0
 			ms: ModelSpecs{
-				retirees: []retiree{
+				Retirees: []retiree{
 					{ // retireeindx == 0
 						age:        56,
 						ageAtStart: 57,
@@ -597,7 +597,7 @@ func TestAccountOwnerAge(t *testing.T) {
 						dcpBuckets:              nil,
 					},
 				},
-				accounttable: []account{
+				Accounttable: []account{
 					{
 						bal:           30,
 						basis:         0,
@@ -613,7 +613,7 @@ func TestAccountOwnerAge(t *testing.T) {
 		},
 		{ // case 1
 			ms: ModelSpecs{
-				retirees: []retiree{
+				Retirees: []retiree{
 					{ // retireeindx == 0
 						age:        56,
 						ageAtStart: 57,
@@ -631,7 +631,7 @@ func TestAccountOwnerAge(t *testing.T) {
 						dcpBuckets:              nil,
 					},
 				},
-				accounttable: []account{
+				Accounttable: []account{
 					{
 						bal:           30,
 						basis:         0,
@@ -647,8 +647,8 @@ func TestAccountOwnerAge(t *testing.T) {
 		},
 	}
 	for i, elem := range tests {
-		ownerAge := elem.ms.accountOwnerAge(elem.year, elem.ms.accounttable[0])
-		calcage := elem.ms.retirees[elem.index].ageAtStart + elem.year
+		ownerAge := elem.ms.accountOwnerAge(elem.year, elem.ms.Accounttable[0])
+		calcage := elem.ms.Retirees[elem.index].ageAtStart + elem.year
 		if ownerAge != calcage {
 			t.Errorf("AccountOwnerAge case %d: age does not match, expected %d, found %d", i, calcage, ownerAge)
 		}
@@ -663,7 +663,7 @@ func TestMatchRetiree(t *testing.T) {
 	}{
 		{ // case 0
 			ms: ModelSpecs{
-				retirees: []retiree{
+				Retirees: []retiree{
 					{ // retireeindx == 0
 						age:        56,
 						ageAtStart: 57,
@@ -687,7 +687,7 @@ func TestMatchRetiree(t *testing.T) {
 		},
 		{ // case 1
 			ms: ModelSpecs{
-				retirees: []retiree{
+				Retirees: []retiree{
 					{ // retireeindx == 0
 						age:        56,
 						ageAtStart: 57,
@@ -729,7 +729,7 @@ func TestCgTaxableFraction(t *testing.T) { /* TODO:FIXME:IMPLEMENTME */
 	}{
 		{ // case 0
 			ms: ModelSpecs{
-				retirees: []retiree{
+				Retirees: []retiree{
 					{ // retireeindx == 0
 						age:        56,
 						ageAtStart: 57,
@@ -747,7 +747,7 @@ func TestCgTaxableFraction(t *testing.T) { /* TODO:FIXME:IMPLEMENTME */
 						dcpBuckets:              nil,
 					},
 				},
-				accounttable: []account{
+				Accounttable: []account{
 					{
 						bal:           30,
 						basis:         20,
@@ -757,8 +757,8 @@ func TestCgTaxableFraction(t *testing.T) { /* TODO:FIXME:IMPLEMENTME */
 						mykey:         "retiree2",
 					},
 				},
-				ip: InputParams{
-					accmap: map[string]int{
+				Ip: InputParams{
+					Accmap: map[string]int{
 						"IRA":      1,
 						"roth":     0,
 						"aftertax": 0,
@@ -770,7 +770,7 @@ func TestCgTaxableFraction(t *testing.T) { /* TODO:FIXME:IMPLEMENTME */
 		},
 		{ // case 1
 			ms: ModelSpecs{
-				retirees: []retiree{
+				Retirees: []retiree{
 					{ // retireeindx == 0
 						age:        56,
 						ageAtStart: 57,
@@ -788,7 +788,7 @@ func TestCgTaxableFraction(t *testing.T) { /* TODO:FIXME:IMPLEMENTME */
 						dcpBuckets:              nil,
 					},
 				},
-				accounttable: []account{
+				Accounttable: []account{
 					{
 						bal:           30,
 						basis:         10,
@@ -806,8 +806,8 @@ func TestCgTaxableFraction(t *testing.T) { /* TODO:FIXME:IMPLEMENTME */
 						mykey:         "retiree2",
 					},
 				},
-				ip: InputParams{
-					accmap: map[string]int{
+				Ip: InputParams{
+					Accmap: map[string]int{
 						"IRA":      1,
 						"roth":     0,
 						"aftertax": 1,
@@ -822,7 +822,7 @@ func TestCgTaxableFraction(t *testing.T) { /* TODO:FIXME:IMPLEMENTME */
 		f := elem.ms.cgTaxableFraction(elem.year)
 		fprime := elem.expectf
 		if elem.expectf < 0 {
-			fprime = 1 - (elem.ms.accounttable[0].basis / (elem.ms.accounttable[0].bal * math.Pow(elem.ms.accounttable[0].rRate, float64(elem.year+elem.ms.ip.prePlanYears))))
+			fprime = 1 - (elem.ms.Accounttable[0].basis / (elem.ms.Accounttable[0].bal * math.Pow(elem.ms.Accounttable[0].rRate, float64(elem.year+elem.ms.Ip.PrePlanYears))))
 		}
 		if f != fprime {
 			t.Errorf("cgTaxableFraction case %d: expected %f, found %f", i, fprime, f)
@@ -933,24 +933,24 @@ func TestPrintModelMatrix(t *testing.T) {
 			fmt.Printf("TestNewModelSpecs: %s\n", err)
 			continue
 		}
-		ti := NewTaxInfo(ip.filingStatus)
+		ti := NewTaxInfo(ip.FilingStatus)
 		taxbins := len(*ti.Taxtable)
 		cgbins := len(*ti.Capgainstable)
-		vindx, err := NewVectorVarIndex(ip.numyr, taxbins, cgbins, ip.accmap, os.Stdout)
+		vindx, err := NewVectorVarIndex(ip.Numyr, taxbins, cgbins, ip.Accmap, os.Stdout)
 		if err != nil {
 			t.Errorf("PrintConstraint case %d: %s", i, err)
 			continue
 		}
 		numaccounts := 0
-		for _, acc := range ip.accmap {
+		for _, acc := range ip.Accmap {
 			numaccounts += acc
 		}
 		ms := ModelSpecs{
-			ip:      *ip,
-			vindx:   vindx,
-			ti:      ti,
-			logfile: os.Stdout,
-			errfile: os.Stderr,
+			Ip:      *ip,
+			Vindx:   vindx,
+			Ti:      ti,
+			Logfile: os.Stdout,
+			Errfile: os.Stderr,
 		}
 
 		c := make([]float64, vindx.Vsize)
@@ -1002,11 +1002,11 @@ func TestPrintModelMatrix(t *testing.T) {
 		}
 		A[0] = row0
 		A[1] = row1
-		fmt.Fprintf(ms.logfile, "c: %v\n", c)
-		fmt.Fprintf(ms.logfile, "Row0: %v\n", row0)
-		fmt.Fprintf(ms.logfile, "b[0]: %v\n", b[0])
-		fmt.Fprintf(ms.logfile, "Row1: %v\n", row1)
-		fmt.Fprintf(ms.logfile, "b[1]: %v\n", b[1])
+		fmt.Fprintf(ms.Logfile, "c: %v\n", c)
+		fmt.Fprintf(ms.Logfile, "Row0: %v\n", row0)
+		fmt.Fprintf(ms.Logfile, "b[0]: %v\n", b[0])
+		fmt.Fprintf(ms.Logfile, "Row1: %v\n", row1)
+		fmt.Fprintf(ms.Logfile, "b[1]: %v\n", b[1])
 		ms.printModelMatrix(c, A, b, nil, nil, false) // TODO add cases with varying parameters 4 and 5
 
 		str := ms.RestoreModelSpecsLog(mychan, oldout, w)
@@ -1124,24 +1124,24 @@ func TestPrintConstraint(t *testing.T) {
 			fmt.Printf("TestNewModelSpecs: %s\n", err)
 			continue
 		}
-		ti := NewTaxInfo(ip.filingStatus)
+		ti := NewTaxInfo(ip.FilingStatus)
 		taxbins := len(*ti.Taxtable)
 		cgbins := len(*ti.Capgainstable)
-		vindx, err := NewVectorVarIndex(ip.numyr, taxbins, cgbins, ip.accmap, os.Stdout)
+		vindx, err := NewVectorVarIndex(ip.Numyr, taxbins, cgbins, ip.Accmap, os.Stdout)
 		if err != nil {
 			t.Errorf("PrintConstraint case %d: %s", i, err)
 			continue
 		}
 		numaccounts := 0
-		for _, acc := range ip.accmap {
+		for _, acc := range ip.Accmap {
 			numaccounts += acc
 		}
 		ms := ModelSpecs{
-			ip:      *ip,
-			vindx:   vindx,
-			ti:      ti,
-			logfile: os.Stdout,
-			errfile: os.Stderr,
+			Ip:      *ip,
+			Vindx:   vindx,
+			Ti:      ti,
+			Logfile: os.Stdout,
+			Errfile: os.Stderr,
 		}
 
 		row := make([]float64, vindx.Vsize)
@@ -1168,8 +1168,8 @@ func TestPrintConstraint(t *testing.T) {
 			t.Errorf("RedirectStdout: %s\n", err)
 			return // should this be continue?
 		}
-		fmt.Fprintf(ms.logfile, "Row: %v\n", row)
-		fmt.Fprintf(ms.logfile, "b: %v\n", elem.b)
+		fmt.Fprintf(ms.Logfile, "Row: %v\n", row)
+		fmt.Fprintf(ms.Logfile, "b: %v\n", elem.b)
 		ms.printConstraint(row, elem.b)
 
 		//str := RestoreStdout(mychan, oldout, w)
@@ -1289,20 +1289,20 @@ func TestPrintModelRow(t *testing.T) {
 			fmt.Printf("TestNewModelSpecs: %s\n", err)
 			continue
 		}
-		ti := NewTaxInfo(ip.filingStatus)
+		ti := NewTaxInfo(ip.FilingStatus)
 		taxbins := len(*ti.Taxtable)
 		cgbins := len(*ti.Capgainstable)
-		vindx, err := NewVectorVarIndex(ip.numyr, taxbins, cgbins, ip.accmap, os.Stdout)
+		vindx, err := NewVectorVarIndex(ip.Numyr, taxbins, cgbins, ip.Accmap, os.Stdout)
 		if err != nil {
 			t.Errorf("PrintModelRow case %d: %s", i, err)
 			continue
 		}
 		ms := ModelSpecs{
-			ip:      *ip,
-			vindx:   vindx,
-			ti:      ti,
-			logfile: os.Stdout,
-			errfile: os.Stderr,
+			Ip:      *ip,
+			Vindx:   vindx,
+			Ti:      ti,
+			Logfile: os.Stdout,
+			Errfile: os.Stderr,
 		}
 
 		row := make([]float64, vindx.Vsize)
@@ -1329,7 +1329,7 @@ func TestPrintModelRow(t *testing.T) {
 			t.Errorf("RedirectStdout: %s\n", err)
 			return // should this be continue?
 		}
-		fmt.Fprintf(ms.logfile, "Row: %v\n", row)
+		fmt.Fprintf(ms.Logfile, "Row: %v\n", row)
 		ms.printModelRow(row, elem.suppressNewline)
 
 		str := ms.RestoreModelSpecsLog(mychan, oldout, w)
@@ -1446,12 +1446,12 @@ func (ms *ModelSpecs) RedirectModelSpecsTable(mechan chan string, DoNothing bool
 	if DoNothing {
 		return nil, nil, nil
 	}
-	oldtable := ms.ao.tableFile
+	oldtable := ms.Ao.tableFile
 	readPipe, writePipe, err := os.Pipe()
 	if err != nil {
 		return oldtable, nil, err
 	}
-	ms.ao.tableFile = writePipe
+	ms.Ao.tableFile = writePipe
 	go func() {
 		var buf bytes.Buffer
 		_, err := io.Copy(&buf, readPipe)
@@ -1471,18 +1471,18 @@ func (ms *ModelSpecs) RestoreModelSpecsTable(mechan chan string, oldtable *os.Fi
 	}
 	// Reset the output again
 	writePipe.Close()
-	ms.ao.tableFile = oldtable
+	ms.Ao.tableFile = oldtable
 	str := <-mechan
 	return str
 }
 
 func (ms *ModelSpecs) RedirectModelSpecsLog(mechan chan string) (*os.File, *os.File, error) {
-	oldlog := ms.logfile
+	oldlog := ms.Logfile
 	readPipe, writePipe, err := os.Pipe()
 	if err != nil {
 		return oldlog, nil, err
 	}
-	ms.logfile = writePipe
+	ms.Logfile = writePipe
 	go func() {
 		var buf bytes.Buffer
 		_, err := io.Copy(&buf, readPipe)
@@ -1499,7 +1499,7 @@ func (ms *ModelSpecs) RedirectModelSpecsLog(mechan chan string) (*os.File, *os.F
 func (ms *ModelSpecs) RestoreModelSpecsLog(mechan chan string, oldlog *os.File, writePipe *os.File) string {
 	// Reset the output again
 	writePipe.Close()
-	ms.logfile = oldlog
+	ms.Logfile = oldlog
 	str := <-mechan
 	return str
 }

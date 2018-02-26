@@ -10,15 +10,15 @@ const maxStreams = 10
 
 // InputParams are the model params constructed from driver program string input
 type InputParams struct {
-	filingStatus        string
-	myKey1              string
-	myKey2              string
-	age1                int
-	age2                int
-	retireAge1          int
-	retireAge2          int
-	planThroughAge1     int
-	planThroughAge2     int
+	FilingStatus        string
+	MyKey1              string
+	MyKey2              string
+	Age1                int
+	Age2                int
+	RetireAge1          int
+	RetireAge2          int
+	PlanThroughAge1     int
+	PlanThroughAge2     int
 	PIA1                int
 	PIA2                int
 	SSStart1            int
@@ -49,26 +49,26 @@ type InputParams struct {
 	AftataxContrib      int
 	AftataxContribStart int
 	AftataxContribEnd   int
-	iRatePercent        float64 // TODO add to Mobile
-	iRate               float64 // local, not mobile
-	rRatePercent        float64 // TODO add to Mobile
-	rRate               float64 // local, not mobile
-	maximize            string  // "Spending" or "PlusEstate" // TODO add to Mobile
-	min                 int     // TODO add to Mobile
-	max                 int     // TODO add to Mobile
+	IRatePercent        float64 // TODO add to Mobile
+	IRate               float64 // local, not mobile
+	RRatePercent        float64 // TODO add to Mobile
+	RRate               float64 // local, not mobile
+	Maximize            string  // "Spending" or "PlusEstate" // TODO add to Mobile
+	Min                 int     // TODO add to Mobile
+	Max                 int     // TODO add to Mobile
 
-	prePlanYears int
-	startPlan    int
-	endPlan      int
-	ageDelta     int
-	numyr        int
-	accmap       map[string]int
-	numacc       int
+	PrePlanYears int
+	StartPlan    int
+	EndPlan      int
+	AgeDelta     int
+	Numyr        int
+	Accmap       map[string]int
+	Numacc       int
 
 	// PROTOTYPE
-	income  []stream
-	expense []stream
-	assets  []asset
+	Income  []stream
+	Expense []stream
+	Assets  []asset
 }
 
 type stream struct {
@@ -81,15 +81,15 @@ type stream struct {
 	Tax      bool
 }
 type asset struct {
-	tag                 string
-	value               int     // current value of the asset
-	costAndImprovements int     // purchase price plus improvment cost
-	ageToSell           int     // age at which to sell the asset
-	owedAtAgeToSell     int     // amount owed at time of sell (ageToSell)
-	primaryResidence    bool    // Primary residence gets tax break
-	assetRRatePercent   float64 // avg rate of return (defaults to global rate)
-	assetRRate          float64 // avg rate of return (defaults to global rate)
-	brokeragePercent    float64 // avg rate paid for brokerage services
+	Tag                 string
+	Value               int     // current value of the asset
+	CostAndImprovements int     // purchase price plus improvment cost
+	AgeToSell           int     // age at which to sell the asset
+	OwedAtAgeToSell     int     // amount owed at time of sell (ageToSell)
+	PrimaryResidence    bool    // Primary residence gets tax break
+	AssetRRatePercent   float64 // avg rate of return (defaults to global rate)
+	AssetRRate          float64 // avg rate of return (defaults to global rate)
+	BrokeragePercent    float64 // avg rate paid for brokerage services
 }
 
 //TODO: TESTME
@@ -154,42 +154,42 @@ func NewInputParams(ip map[string]string) (*InputParams, error) {
 	var err error
 	rip := InputParams{}
 
-	rip.rRatePercent = getIPFloatValue(ip["eT_rRatePercent"]) // TODO add to mobile
-	rip.iRatePercent = getIPFloatValue(ip["eT_iRatePercent"]) // TODO add to mobile
-	rip.rRate = 1 + rip.rRatePercent/100.0
-	rip.iRate = 1 + rip.iRatePercent/100.0
-	rip.min = 0 // = getIPIntValue(ip["eT_min"]) // TODO add to mobile
-	rip.max = 0 // = getIPIntValue(ip["eT_max"]) // TODO add to mobile
+	rip.RRatePercent = getIPFloatValue(ip["eT_rRatePercent"]) // TODO add to mobile
+	rip.IRatePercent = getIPFloatValue(ip["eT_iRatePercent"]) // TODO add to mobile
+	rip.RRate = 1 + rip.RRatePercent/100.0
+	rip.IRate = 1 + rip.IRatePercent/100.0
+	rip.Min = 0 // = getIPIntValue(ip["eT_min"]) // TODO add to mobile
+	rip.Max = 0 // = getIPIntValue(ip["eT_max"]) // TODO add to mobile
 	//	maximize:                "Spending", // or "PlusEstate"
-	rip.maximize = "Spending" // = ip["eT_Maximize"] // TODO add to mobile
-	err = verifyMaximize(rip.maximize)
+	rip.Maximize = "Spending" // = ip["eT_Maximize"] // TODO add to mobile
+	err = verifyMaximize(rip.Maximize)
 	if err != nil {
 		return nil, err
 	}
 
-	rip.accmap = map[string]int{"IRA": 0, "roth": 0, "aftertax": 0}
+	rip.Accmap = map[string]int{"IRA": 0, "roth": 0, "aftertax": 0}
 	err = verifyFilingStatus(ip["filingStatus"])
 	if err != nil {
 		return nil, err
 	}
-	rip.filingStatus = ip["filingStatus"]
+	rip.FilingStatus = ip["filingStatus"]
 
-	rip.myKey1 = ip["key1"]
+	rip.MyKey1 = ip["key1"]
 	if ip["eT_Age1"] == "" ||
 		ip["eT_RetireAge1"] == "" ||
 		ip["eT_PlanThroughAge1"] == "" {
 		e := fmt.Errorf("NewInputParams: retiree age, retirement age and plan through age must all be specified")
 		return nil, e
 	}
-	rip.age1 = getIPIntValue(ip["eT_Age1"])
-	rip.retireAge1 = getIPIntValue(ip["eT_RetireAge1"])
-	if rip.retireAge1 < rip.age1 {
-		rip.retireAge1 = rip.age1
+	rip.Age1 = getIPIntValue(ip["eT_Age1"])
+	rip.RetireAge1 = getIPIntValue(ip["eT_RetireAge1"])
+	if rip.RetireAge1 < rip.Age1 {
+		rip.RetireAge1 = rip.Age1
 	}
-	rip.planThroughAge1 = getIPIntValue(ip["eT_PlanThroughAge1"])
-	yearsToRetire1 := rip.retireAge1 - rip.age1
-	rip.prePlanYears = yearsToRetire1
-	through1 := rip.planThroughAge1 - rip.age1
+	rip.PlanThroughAge1 = getIPIntValue(ip["eT_PlanThroughAge1"])
+	yearsToRetire1 := rip.RetireAge1 - rip.Age1
+	rip.PrePlanYears = yearsToRetire1
+	through1 := rip.PlanThroughAge1 - rip.Age1
 
 	if ip["eT_PIA1"] != "" || ip["eT_SS_Start1"] != "" {
 		if ip["eT_PIA1"] == "" || ip["eT_SS_Start1"] == "" {
@@ -216,7 +216,7 @@ func NewInputParams(ip map[string]string) (*InputParams, error) {
 	rip.TDRAContribStart1 = getIPIntValue(ip["eT_TDRA_ContribStartAge1"])
 	rip.TDRAContribEnd1 = getIPIntValue(ip["eT_TDRA_ContribEndAge1"])
 	if rip.TDRA1 > 0 || rip.TDRAContrib1 > 0 {
-		rip.accmap["IRA"]++
+		rip.Accmap["IRA"]++
 	}
 
 	if ip["eT_Roth_Contrib1"] != "" ||
@@ -235,28 +235,27 @@ func NewInputParams(ip map[string]string) (*InputParams, error) {
 	rip.RothContribStart1 = getIPIntValue(ip["eT_Roth_ContribStartAge1"])
 	rip.RothContribEnd1 = getIPIntValue(ip["eT_Roth_ContribEndAge1"])
 	if rip.Roth1 > 0 || rip.RothContrib1 > 0 {
-		rip.accmap["roth"]++
+		rip.Accmap["roth"]++
 	}
 
 	var through2 int
-	if rip.filingStatus == "joint" {
-		rip.myKey2 = ip["key2"]
+	if rip.FilingStatus == "joint" {
+		rip.MyKey2 = ip["key2"]
 		if ip["eT_Age2"] == "" ||
 			ip["eT_RetireAge2"] == "" ||
 			ip["eT_PlanThroughAge2"] == "" {
 			e := fmt.Errorf("NewInputParams: retiree age, retirement age and plan through age must all be specified")
 			return nil, e
 		}
-		rip.age1 = getIPIntValue(ip["eT_Age1"])
-		rip.age2 = getIPIntValue(ip["eT_Age2"])
-		rip.retireAge2 = getIPIntValue(ip["eT_RetireAge2"])
-		if rip.retireAge2 < rip.age2 {
-			rip.retireAge2 = rip.age2
+		rip.Age2 = getIPIntValue(ip["eT_Age2"])
+		rip.RetireAge2 = getIPIntValue(ip["eT_RetireAge2"])
+		if rip.RetireAge2 < rip.Age2 {
+			rip.RetireAge2 = rip.Age2
 		}
-		rip.planThroughAge2 = getIPIntValue(ip["eT_PlanThroughAge2"])
-		yearsToRetire2 := rip.retireAge2 - rip.age2
-		rip.prePlanYears = intMin(yearsToRetire1, yearsToRetire2)
-		through2 = rip.planThroughAge2 - rip.age2
+		rip.PlanThroughAge2 = getIPIntValue(ip["eT_PlanThroughAge2"])
+		yearsToRetire2 := rip.RetireAge2 - rip.Age2
+		rip.PrePlanYears = intMin(yearsToRetire1, yearsToRetire2)
+		through2 = rip.PlanThroughAge2 - rip.Age2
 
 		if ip["eT_PIA2"] != "" || ip["eT_SS_Start2"] != "" ||
 			ip["eT_PIA1"] != "" {
@@ -289,7 +288,7 @@ func NewInputParams(ip map[string]string) (*InputParams, error) {
 		rip.TDRAContribStart2 = getIPIntValue(ip["eT_TDRA_ContribStartAge2"])
 		rip.TDRAContribEnd2 = getIPIntValue(ip["eT_TDRA_ContribEndAge2"])
 		if rip.TDRA2 > 0 || rip.TDRAContrib2 > 0 {
-			rip.accmap["IRA"]++
+			rip.Accmap["IRA"]++
 		}
 
 		if ip["eT_Roth_Contrib2"] != "" ||
@@ -308,14 +307,14 @@ func NewInputParams(ip map[string]string) (*InputParams, error) {
 		rip.RothContribStart2 = getIPIntValue(ip["eT_Roth_ContribStartAge2"])
 		rip.RothContribEnd2 = getIPIntValue(ip["eT_Roth_ContribEndAge2"])
 		if rip.Roth2 > 0 || rip.RothContrib2 > 0 {
-			rip.accmap["roth"]++
+			rip.Accmap["roth"]++
 		}
 	}
 	// the following must be after "joint" section
-	rip.startPlan = rip.prePlanYears + rip.age1
-	rip.endPlan = intMax(through1, through2) + 1 + rip.age1
-	rip.ageDelta = rip.age1 - rip.age2
-	rip.numyr = rip.endPlan - rip.startPlan
+	rip.StartPlan = rip.PrePlanYears + rip.Age1
+	rip.EndPlan = intMax(through1, through2) + 1 + rip.Age1
+	rip.AgeDelta = rip.Age1 - rip.Age2
+	rip.Numyr = rip.EndPlan - rip.StartPlan
 
 	if ip["eT_Aftatax_Contrib"] != "" ||
 		ip["eT_Aftatax_ContribStartAge"] != "" ||
@@ -333,16 +332,16 @@ func NewInputParams(ip map[string]string) (*InputParams, error) {
 	rip.AftataxContribStart = getIPIntValue(ip["eT_Aftatax_ContribStartAge"])
 	rip.AftataxContribEnd = getIPIntValue(ip["eT_Aftatax_ContribEndAge"])
 	if rip.Aftatax > 0 || rip.AftataxContrib > 0 {
-		rip.accmap["aftertax"]++
+		rip.Accmap["aftertax"]++
 	}
 
-	rip.numacc = 0
-	for _, v := range rip.accmap {
-		rip.numacc += v
+	rip.Numacc = 0
+	for _, v := range rip.Accmap {
+		rip.Numacc += v
 	}
 
 	//PROTOTYPE WORK ? FLAT ? LINK LIST ?
-	rip.income = make([]stream, 0)
+	rip.Income = make([]stream, 0)
 	for i := 1; i < maxStreams; i++ {
 		if ip[fmt.Sprintf("eT_Income%d", i)] != "" ||
 			ip[fmt.Sprintf("eT_IncomeAmount%d", i)] != "" ||
@@ -363,10 +362,10 @@ func NewInputParams(ip map[string]string) (*InputParams, error) {
 				Inflate:  getIPBoolValue(ip[fmt.Sprintf("eT_IncomeInflate%d", i)]),
 				Tax:      getIPBoolValue(ip[fmt.Sprintf("eT_IncomeTax%d", i)]),
 			}
-			rip.income = append(rip.income, sp)
+			rip.Income = append(rip.Income, sp)
 		}
 	}
-	rip.expense = make([]stream, 0)
+	rip.Expense = make([]stream, 0)
 	for i := 1; i < maxStreams; i++ {
 		if ip[fmt.Sprintf("eT_Expense%d", i)] != "" ||
 			ip[fmt.Sprintf("eT_ExpenseAmount%d", i)] != "" ||
@@ -387,10 +386,10 @@ func NewInputParams(ip map[string]string) (*InputParams, error) {
 				Inflate:  getIPBoolValue(ip[fmt.Sprintf("eT_ExpenseInflate%d", i)]),
 				Tax:      false,
 			}
-			rip.expense = append(rip.expense, sp)
+			rip.Expense = append(rip.Expense, sp)
 		}
 	}
-	rip.assets = make([]asset, 0)
+	rip.Assets = make([]asset, 0)
 	for i := 1; i < maxStreams; i++ {
 		if ip[fmt.Sprintf("eT_Asset%d", i)] != "" ||
 			ip[fmt.Sprintf("eT_AssetValue%d", i)] != "" ||
@@ -408,17 +407,17 @@ func NewInputParams(ip map[string]string) (*InputParams, error) {
 				return nil, e
 			}
 			ap := asset{
-				tag:                 ip[fmt.Sprintf("eT_Asset%d", i)],
-				value:               kgetIPIntValue(ip[fmt.Sprintf("eT_AssetValue%d", i)]),
-				ageToSell:           getIPIntValue(ip[fmt.Sprintf("eT_AssetAgeToSell%d", i)]),
-				costAndImprovements: kgetIPIntValue(ip[fmt.Sprintf("eT_AssetCostAndImprovements%d", i)]),
-				owedAtAgeToSell:     kgetIPIntValue(ip[fmt.Sprintf("eT_AssetOwedAtAgeToSell%d", i)]),
-				primaryResidence:    getIPBoolValue(ip[fmt.Sprintf("eT_AssetPrimaryResidence%d", i)]),
-				assetRRatePercent:   getIPFloatValue(ip[fmt.Sprintf("eT_AssetRRatePercent%d", i)]),
-				brokeragePercent:    getIPFloatValue(ip[fmt.Sprintf("eT_AssetBrokeragePercent%d", i)]),
+				Tag:                 ip[fmt.Sprintf("eT_Asset%d", i)],
+				Value:               kgetIPIntValue(ip[fmt.Sprintf("eT_AssetValue%d", i)]),
+				AgeToSell:           getIPIntValue(ip[fmt.Sprintf("eT_AssetAgeToSell%d", i)]),
+				CostAndImprovements: kgetIPIntValue(ip[fmt.Sprintf("eT_AssetCostAndImprovements%d", i)]),
+				OwedAtAgeToSell:     kgetIPIntValue(ip[fmt.Sprintf("eT_AssetOwedAtAgeToSell%d", i)]),
+				PrimaryResidence:    getIPBoolValue(ip[fmt.Sprintf("eT_AssetPrimaryResidence%d", i)]),
+				AssetRRatePercent:   getIPFloatValue(ip[fmt.Sprintf("eT_AssetRRatePercent%d", i)]),
+				BrokeragePercent:    getIPFloatValue(ip[fmt.Sprintf("eT_AssetBrokeragePercent%d", i)]),
 			}
-			ap.assetRRate = 1 + ap.assetRRatePercent/100.0
-			rip.assets = append(rip.assets, ap)
+			ap.AssetRRate = 1 + ap.AssetRRatePercent/100.0
+			rip.Assets = append(rip.Assets, ap)
 		}
 	}
 

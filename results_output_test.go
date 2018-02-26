@@ -186,11 +186,11 @@ func TestActivitySummaryHeader(t *testing.T) {
 			continue
 		}
 		//fmt.Printf("InputParams: %#v\n", ip)
-		ti := NewTaxInfo(ip.filingStatus)
+		ti := NewTaxInfo(ip.FilingStatus)
 		taxbins := len(*ti.Taxtable)
 		cgbins := len(*ti.Capgainstable)
-		vindx, err := NewVectorVarIndex(ip.numyr, taxbins,
-			cgbins, ip.accmap, os.Stdout)
+		vindx, err := NewVectorVarIndex(ip.Numyr, taxbins,
+			cgbins, ip.Accmap, os.Stdout)
 		if err != nil {
 			t.Errorf("TestActivitySummaryHeader case %d: %s", i, err)
 			continue
@@ -285,11 +285,11 @@ retiree1/retiree2
 			continue
 		}
 		//fmt.Printf("InputParams: %#v\n", ip)
-		ti := NewTaxInfo(ip.filingStatus)
+		ti := NewTaxInfo(ip.FilingStatus)
 		taxbins := len(*ti.Taxtable)
 		cgbins := len(*ti.Capgainstable)
-		vindx, err := NewVectorVarIndex(ip.numyr, taxbins,
-			cgbins, ip.accmap, os.Stdout)
+		vindx, err := NewVectorVarIndex(ip.Numyr, taxbins,
+			cgbins, ip.Accmap, os.Stdout)
 		if err != nil {
 			t.Errorf("TestActivitySummary case %d: %s", i, err)
 			continue
@@ -391,13 +391,13 @@ func TestPrintIncomeHeader(t *testing.T) {
 			continue
 		}
 		ms := ModelSpecs{
-			ip:        *ip,
-			logfile:   os.Stdout,
-			errfile:   os.Stderr,
-			ao:        NewAppOutput(elem.csvfile, elem.tablefile),
-			assetSale: make([][]float64, 0),
+			Ip:        *ip,
+			Logfile:   os.Stdout,
+			Errfile:   os.Stderr,
+			Ao:        NewAppOutput(elem.csvfile, elem.tablefile),
+			AssetSale: make([][]float64, 0),
 		}
-		ms.assetSale = append(ms.assetSale, make([]float64, ip.numyr))
+		ms.AssetSale = append(ms.AssetSale, make([]float64, ip.Numyr))
 
 		mychan := make(chan string)
 		DoNothing := false //true
@@ -460,36 +460,36 @@ func TestGetIncomeAssetExpenseList(t *testing.T) {
 			SS:     make([][]float64, 0),
 			SStags: make([]string, 0),
 
-			income:     make([][]float64, 0),
-			incometags: make([]string, 0),
+			Income:     make([][]float64, 0),
+			Incometags: make([]string, 0),
 
-			assetSale: make([][]float64, 0),
-			assettags: make([]string, 0),
+			AssetSale: make([][]float64, 0),
+			Assettags: make([]string, 0),
 
-			expenses:    make([][]float64, 0),
-			expensetags: make([]string, 0),
+			Expenses:    make([][]float64, 0),
+			Expensetags: make([]string, 0),
 		}
 		for i := 0; i <= elem.SSStreams; i++ {
-			ms.SS = append(ms.SS, make([]float64, ip.numyr))
+			ms.SS = append(ms.SS, make([]float64, ip.Numyr))
 			str := fmt.Sprintf("SS%d", i)
 			ms.SStags = append(ms.SStags, str)
 		}
 		for i := 0; i <= elem.incomeStreams; i++ {
-			ms.income = append(ms.income, make([]float64, ip.numyr))
+			ms.Income = append(ms.Income, make([]float64, ip.Numyr))
 			str := fmt.Sprintf("income%d", i)
-			ms.incometags = append(ms.incometags, str)
+			ms.Incometags = append(ms.Incometags, str)
 		}
 		for i := 0; i <= elem.AssetStreams; i++ {
-			ms.assetSale = append(ms.assetSale, make([]float64, ip.numyr))
+			ms.AssetSale = append(ms.AssetSale, make([]float64, ip.Numyr))
 			str := fmt.Sprintf("asset%d", i)
-			ms.assettags = append(ms.assettags, str)
+			ms.Assettags = append(ms.Assettags, str)
 		}
 		for i := 0; i <= elem.expenseStreams; i++ {
-			ms.expenses = append(ms.expenses, make([]float64, ip.numyr))
+			ms.Expenses = append(ms.Expenses, make([]float64, ip.Numyr))
 			str := fmt.Sprintf("expense%d", i)
-			ms.expensetags = append(ms.expensetags, str)
+			ms.Expensetags = append(ms.Expensetags, str)
 		}
-		ms.assetSale[1][7] = 50000
+		ms.AssetSale[1][7] = 50000
 
 		headerlist, countlist, matrix := ms.getSSIncomeAssetExpenseList()
 		//fmt.Printf("headerlist: %#v\n", headerlist)
@@ -589,28 +589,28 @@ retir SSincome:         Income:  AssetSale:
 		csvfile := (*os.File)(nil)
 		tablefile := os.Stdout
 		ms := ModelSpecs{
-			ip:      *ip,
-			logfile: os.Stdout,
-			errfile: os.Stderr,
-			ao:      NewAppOutput(csvfile, tablefile),
+			Ip:      *ip,
+			Logfile: os.Stdout,
+			Errfile: os.Stderr,
+			Ao:      NewAppOutput(csvfile, tablefile),
 
 			SS:     make([][]float64, 0),
 			SStags: make([]string, 0),
 
-			income:     make([][]float64, 0),
-			incometags: make([]string, 0),
+			Income:     make([][]float64, 0),
+			Incometags: make([]string, 0),
 
-			assetSale: make([][]float64, 0),
-			assettags: make([]string, 0),
+			AssetSale: make([][]float64, 0),
+			Assettags: make([]string, 0),
 
-			expenses:    make([][]float64, 0),
-			expensetags: make([]string, 0),
+			Expenses:    make([][]float64, 0),
+			Expensetags: make([]string, 0),
 
 			OneK: elem.onek,
 		}
 		for i := 0; i <= elem.SSStreams; i++ {
-			v := make([]float64, ip.numyr)
-			for j := 1; j < ip.numyr; j++ {
+			v := make([]float64, ip.Numyr)
+			for j := 1; j < ip.Numyr; j++ {
 				v[j] = float64(j * 1000)
 			}
 			v[0] = float64(i)
@@ -619,36 +619,36 @@ retir SSincome:         Income:  AssetSale:
 			ms.SStags = append(ms.SStags, str)
 		}
 		for i := 0; i <= elem.incomeStreams; i++ {
-			v := make([]float64, ip.numyr)
-			for j := 1; j < ip.numyr; j++ {
+			v := make([]float64, ip.Numyr)
+			for j := 1; j < ip.Numyr; j++ {
 				v[j] = float64(j * 1000)
 			}
 			v[0] = float64(i)
-			ms.income = append(ms.income, v)
+			ms.Income = append(ms.Income, v)
 			str := fmt.Sprintf("income%d", i)
-			ms.incometags = append(ms.incometags, str)
+			ms.Incometags = append(ms.Incometags, str)
 		}
 		for i := 0; i <= elem.AssetStreams; i++ {
-			v := make([]float64, ip.numyr)
-			for j := 1; j < ip.numyr; j++ {
+			v := make([]float64, ip.Numyr)
+			for j := 1; j < ip.Numyr; j++ {
 				v[j] = float64(j * 1000)
 			}
 			v[0] = float64(i)
-			ms.assetSale = append(ms.assetSale, v)
+			ms.AssetSale = append(ms.AssetSale, v)
 			str := fmt.Sprintf("asset%d", i)
-			ms.assettags = append(ms.assettags, str)
+			ms.Assettags = append(ms.Assettags, str)
 		}
 		for i := 0; i <= elem.expenseStreams; i++ {
-			v := make([]float64, ip.numyr)
-			for j := 1; j < ip.numyr; j++ {
+			v := make([]float64, ip.Numyr)
+			for j := 1; j < ip.Numyr; j++ {
 				v[j] = float64(j * 1000)
 			}
 			v[0] = float64(i)
-			ms.expenses = append(ms.expenses, v)
+			ms.Expenses = append(ms.Expenses, v)
 			str := fmt.Sprintf("expense%d", i)
-			ms.expensetags = append(ms.expensetags, str)
+			ms.Expensetags = append(ms.Expensetags, str)
 		}
-		ms.assetSale[1][7] = 50000.0
+		ms.AssetSale[1][7] = 50000.0
 
 		//headerlist, countlist, matrix := ms.getSSIncomeAssetExpenseList()
 		//fmt.Printf("headerlist: %#v\n", headerlist)
@@ -710,10 +710,10 @@ func TestPrintAccHeader(t *testing.T) {
 		csvfile := (*os.File)(nil)
 		tablefile := os.Stdout
 		ms := ModelSpecs{
-			ip:      *ip,
-			logfile: os.Stdout,
-			errfile: os.Stderr,
-			ao:      NewAppOutput(csvfile, tablefile),
+			Ip:      *ip,
+			Logfile: os.Stdout,
+			Errfile: os.Stderr,
+			Ao:      NewAppOutput(csvfile, tablefile),
 			OneK:    elem.onek,
 		}
 
@@ -825,11 +825,11 @@ retiree1
 		if err != nil {
 			fmt.Printf("TestPrintAccountTrans: %s\n", err)
 		}
-		ti := NewTaxInfo(ip.filingStatus)
+		ti := NewTaxInfo(ip.FilingStatus)
 		taxbins := len(*ti.Taxtable)
 		cgbins := len(*ti.Capgainstable)
-		vindx, err := NewVectorVarIndex(ip.numyr, taxbins,
-			cgbins, ip.accmap, os.Stdout)
+		vindx, err := NewVectorVarIndex(ip.Numyr, taxbins,
+			cgbins, ip.Accmap, os.Stdout)
 		if err != nil {
 			t.Errorf("TestPrintAccountTrans case %d: %s", i, err)
 			continue
@@ -888,10 +888,10 @@ func TestPrintHeaderTax(t *testing.T) {
 		csvfile := (*os.File)(nil)
 		tablefile := os.Stdout
 		ms := ModelSpecs{
-			ip:      *ip,
-			logfile: os.Stdout,
-			errfile: os.Stderr,
-			ao:      NewAppOutput(csvfile, tablefile),
+			Ip:      *ip,
+			Logfile: os.Stdout,
+			Errfile: os.Stderr,
+			Ao:      NewAppOutput(csvfile, tablefile),
 		}
 
 		mychan := make(chan string)
@@ -990,11 +990,11 @@ retiree1
 		if err != nil {
 			fmt.Printf("TestPrintTax: %s\n", err)
 		}
-		ti := NewTaxInfo(ip.filingStatus)
+		ti := NewTaxInfo(ip.FilingStatus)
 		taxbins := len(*ti.Taxtable)
 		cgbins := len(*ti.Capgainstable)
-		vindx, err := NewVectorVarIndex(ip.numyr, taxbins,
-			cgbins, ip.accmap, os.Stdout)
+		vindx, err := NewVectorVarIndex(ip.Numyr, taxbins,
+			cgbins, ip.Accmap, os.Stdout)
 		if err != nil {
 			t.Errorf("TestPrintTax case %d: %s", i, err)
 			continue
@@ -1052,15 +1052,15 @@ retiree1/retiree2
 		if err != nil {
 			fmt.Printf("TestHeaderTaxBrackets: %s\n", err)
 		}
-		ti := NewTaxInfo(ip.filingStatus)
+		ti := NewTaxInfo(ip.FilingStatus)
 		csvfile := (*os.File)(nil)
 		tablefile := os.Stdout
 		ms := ModelSpecs{
-			ip:      *ip,
-			ti:      ti,
-			logfile: os.Stdout,
-			errfile: os.Stderr,
-			ao:      NewAppOutput(csvfile, tablefile),
+			Ip:      *ip,
+			Ti:      ti,
+			Logfile: os.Stdout,
+			Errfile: os.Stderr,
+			Ao:      NewAppOutput(csvfile, tablefile),
 		}
 
 		mychan := make(chan string)
@@ -1162,11 +1162,11 @@ retiree1
 		if err != nil {
 			fmt.Printf("TestPrintTaxBrackets: %s\n", err)
 		}
-		ti := NewTaxInfo(ip.filingStatus)
+		ti := NewTaxInfo(ip.FilingStatus)
 		taxbins := len(*ti.Taxtable)
 		cgbins := len(*ti.Capgainstable)
-		vindx, err := NewVectorVarIndex(ip.numyr, taxbins,
-			cgbins, ip.accmap, os.Stdout)
+		vindx, err := NewVectorVarIndex(ip.Numyr, taxbins,
+			cgbins, ip.Accmap, os.Stdout)
 		if err != nil {
 			t.Errorf("TestPrintTaxBrackets case %d: %s", i, err)
 			continue
@@ -1223,15 +1223,15 @@ retiree1/retiree2
 		if err != nil {
 			fmt.Printf("TestPrintHeaderCapGainsBrackets: %s\n", err)
 		}
-		ti := NewTaxInfo(ip.filingStatus)
+		ti := NewTaxInfo(ip.FilingStatus)
 		csvfile := (*os.File)(nil)
 		tablefile := os.Stdout
 		ms := ModelSpecs{
-			ip:      *ip,
-			ti:      ti,
-			logfile: os.Stdout,
-			errfile: os.Stderr,
-			ao:      NewAppOutput(csvfile, tablefile),
+			Ip:      *ip,
+			Ti:      ti,
+			Logfile: os.Stdout,
+			Errfile: os.Stderr,
+			Ao:      NewAppOutput(csvfile, tablefile),
 		}
 
 		mychan := make(chan string)
@@ -1333,11 +1333,11 @@ retiree1
 		if err != nil {
 			fmt.Printf("TestPrintCapGainsBrackets: case %d: %s\n", i, err)
 		}
-		ti := NewTaxInfo(ip.filingStatus)
+		ti := NewTaxInfo(ip.FilingStatus)
 		taxbins := len(*ti.Taxtable)
 		cgbins := len(*ti.Capgainstable)
-		vindx, err := NewVectorVarIndex(ip.numyr, taxbins,
-			cgbins, ip.accmap, os.Stdout)
+		vindx, err := NewVectorVarIndex(ip.Numyr, taxbins,
+			cgbins, ip.Accmap, os.Stdout)
 		if err != nil {
 			t.Errorf("TestPrintCapGainsBrackets: case %d: %s\n", i, err)
 			continue
@@ -1404,21 +1404,21 @@ func TestDepositAmount(t *testing.T) {
 		if err != nil {
 			t.Errorf("TestDepositAmount: Case %d: %s\n", i, err)
 		}
-		ti := NewTaxInfo(ip.filingStatus)
+		ti := NewTaxInfo(ip.FilingStatus)
 		taxbins := len(*ti.Taxtable)
 		cgbins := len(*ti.Capgainstable)
-		vindx, err := NewVectorVarIndex(ip.numyr, taxbins, cgbins, ip.accmap, os.Stdout)
+		vindx, err := NewVectorVarIndex(ip.Numyr, taxbins, cgbins, ip.Accmap, os.Stdout)
 		if err != nil {
 			t.Errorf("PrintModelRow case %d: %s", i, err)
 			continue
 		}
 		ms := ModelSpecs{
-			ip:      *ip,
-			vindx:   vindx,
-			ti:      ti,
-			logfile: os.Stdout,
-			errfile: os.Stderr,
-			accounttable: []account{
+			Ip:      *ip,
+			Vindx:   vindx,
+			Ti:      ti,
+			Logfile: os.Stdout,
+			Errfile: os.Stderr,
+			Accounttable: []account{
 				{
 					acctype: "IRA",
 				},
@@ -1426,10 +1426,10 @@ func TestDepositAmount(t *testing.T) {
 					acctype: "aftertax",
 				},
 			},
-			assetSale: make([][]float64, 0),
+			AssetSale: make([][]float64, 0),
 		}
-		ms.assetSale = append(ms.assetSale, make([]float64, ip.numyr))
-		ms.assetSale[0][5] = 20000
+		ms.AssetSale = append(ms.AssetSale, make([]float64, ip.Numyr))
+		ms.AssetSale[0][5] = 20000
 
 		damount := ms.depositAmount(xpSingle, elem.year, elem.index)
 		if damount != elem.expected {
@@ -1462,11 +1462,11 @@ func TestOrdinaryTaxable(t *testing.T) {
 			continue
 		}
 		//fmt.Printf("InputParams: %#v\n", ip)
-		ti := NewTaxInfo(ip.filingStatus)
+		ti := NewTaxInfo(ip.FilingStatus)
 		taxbins := len(*ti.Taxtable)
 		cgbins := len(*ti.Capgainstable)
-		vindx, err := NewVectorVarIndex(ip.numyr, taxbins,
-			cgbins, ip.accmap, os.Stdout)
+		vindx, err := NewVectorVarIndex(ip.Numyr, taxbins,
+			cgbins, ip.Accmap, os.Stdout)
 		if err != nil {
 			t.Errorf("TestOrdinaryTaxable case %d: %s", i, err)
 			continue
@@ -1553,11 +1553,11 @@ Total spendable (after tax money): $490_153`,
 			continue
 		}
 		//fmt.Printf("InputParams: %#v\n", ip)
-		ti := NewTaxInfo(ip.filingStatus)
+		ti := NewTaxInfo(ip.FilingStatus)
 		taxbins := len(*ti.Taxtable)
 		cgbins := len(*ti.Capgainstable)
-		vindx, err := NewVectorVarIndex(ip.numyr, taxbins,
-			cgbins, ip.accmap, os.Stdout)
+		vindx, err := NewVectorVarIndex(ip.Numyr, taxbins,
+			cgbins, ip.Accmap, os.Stdout)
 		if err != nil {
 			t.Errorf("TestPrintBaseConfig case %d: %s", i, err)
 			continue
@@ -1771,11 +1771,11 @@ func TestResultsOutput(t *testing.T) {
 			continue
 		}
 		//fmt.Printf("InputParams: %#v\n", ip)
-		ti := NewTaxInfo(ip.filingStatus)
+		ti := NewTaxInfo(ip.FilingStatus)
 		taxbins := len(*ti.Taxtable)
 		cgbins := len(*ti.Capgainstable)
-		vindx, err := NewVectorVarIndex(ip.numyr, taxbins,
-			cgbins, ip.accmap, os.Stdout)
+		vindx, err := NewVectorVarIndex(ip.Numyr, taxbins,
+			cgbins, ip.Accmap, os.Stdout)
 		if err != nil {
 			t.Errorf("TestResultsOutput case %d: %s", i, err)
 			continue

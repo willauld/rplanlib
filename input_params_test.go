@@ -359,26 +359,26 @@ func TestNewInputParams(t *testing.T) {
 			fmt.Printf("TestNewInputParents: %s\n", err)
 			continue
 		}
-		if modelip.prePlanYears != elem.prePlanYears {
-			t.Errorf("NewInputParams case %d: Failed - prePlanYears Expected %v but found %v\n", i, elem.prePlanYears, modelip.prePlanYears)
+		if modelip.PrePlanYears != elem.prePlanYears {
+			t.Errorf("NewInputParams case %d: Failed - prePlanYears Expected %v but found %v\n", i, elem.prePlanYears, modelip.PrePlanYears)
 		}
-		if modelip.startPlan != elem.startPlan {
-			t.Errorf("NewInputParams case %d: Failed - startPlan Expected %v but found %v\n", i, elem.startPlan, modelip.startPlan)
+		if modelip.StartPlan != elem.startPlan {
+			t.Errorf("NewInputParams case %d: Failed - startPlan Expected %v but found %v\n", i, elem.startPlan, modelip.StartPlan)
 		}
-		if modelip.endPlan != elem.endPlan {
-			t.Errorf("NewInputParams case %d: Failed - endPlan Expected %v but found %v\n", i, elem.endPlan, modelip.endPlan)
+		if modelip.EndPlan != elem.endPlan {
+			t.Errorf("NewInputParams case %d: Failed - endPlan Expected %v but found %v\n", i, elem.endPlan, modelip.EndPlan)
 		}
-		if modelip.numyr != elem.numyr {
-			t.Errorf("NewInputParams case %d: Failed - numyr Expected %v but found %v\n", i, elem.numyr, modelip.numyr)
+		if modelip.Numyr != elem.numyr {
+			t.Errorf("NewInputParams case %d: Failed - numyr Expected %v but found %v\n", i, elem.numyr, modelip.Numyr)
 		}
-		if modelip.accmap["IRA"] != elem.accmap["IRA"] {
-			t.Errorf("NewInputParams case %d: Failed - IRA accounts Expected %v but found %v\n", i, elem.accmap["IRA"], modelip.accmap["IRA"])
+		if modelip.Accmap["IRA"] != elem.accmap["IRA"] {
+			t.Errorf("NewInputParams case %d: Failed - IRA accounts Expected %v but found %v\n", i, elem.accmap["IRA"], modelip.Accmap["IRA"])
 		}
-		if modelip.accmap["roth"] != elem.accmap["roth"] {
-			t.Errorf("NewInputParams case %d: Failed - roth accounts Expected %v but found %v\n", i, elem.accmap["roth"], modelip.accmap["roth"])
+		if modelip.Accmap["roth"] != elem.accmap["roth"] {
+			t.Errorf("NewInputParams case %d: Failed - roth accounts Expected %v but found %v\n", i, elem.accmap["roth"], modelip.Accmap["roth"])
 		}
-		if modelip.accmap["aftertax"] != elem.accmap["aftertax"] {
-			t.Errorf("NewInputParams case %d: Failed - aftertax accounts Expected %v but found %v\n", i, elem.accmap["aftertax"], modelip.accmap["aftertax"])
+		if modelip.Accmap["aftertax"] != elem.accmap["aftertax"] {
+			t.Errorf("NewInputParams case %d: Failed - aftertax accounts Expected %v but found %v\n", i, elem.accmap["aftertax"], modelip.Accmap["aftertax"])
 		}
 	}
 }

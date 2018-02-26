@@ -68,23 +68,23 @@ func processSS(ip *InputParams) (SS, SS1, SS2 []float64, tags []string) {
 		//e := fmt.Errorf("processSS: both PIA1: %d and PIA2: %d non-positive", ip.PIA1, ip.PIA2)
 		return nil, nil, nil, nil
 	}
-	SS = make([]float64, ip.numyr) // = [0] * self.numyr
+	SS = make([]float64, ip.Numyr) // = [0] * self.numyr
 	tags = make([]string, 2)
 	tags[0] = "combined"
-	tags[1] = ip.myKey1
+	tags[1] = ip.MyKey1
 
 	index := 0
 	sections := 1
 	dt := ssI{
 		fraamount:  ip.PIA1,            // fraamount := v["amount"]
-		fraage:     fra(ip.age1),       // fraage := v["FRA"]
+		fraage:     fra(ip.Age1),       // fraage := v["FRA"]
 		startSSAge: ip.SSStart1,        // agestr := v["age"]
-		endAge:     ip.planThroughAge1, // agestr := v["age"]
-		key:        ip.myKey1,
-		ageAtStart: ip.age1 + ip.prePlanYears,
-		currAge:    ip.age1,
+		endAge:     ip.PlanThroughAge1, // agestr := v["age"]
+		key:        ip.MyKey1,
+		ageAtStart: ip.Age1 + ip.PrePlanYears,
+		currAge:    ip.Age1,
 	}
-	if dt.fraamount < 0 && ip.filingStatus != "joint" {
+	if dt.fraamount < 0 && ip.FilingStatus != "joint" {
 		return nil, nil, nil, nil
 	}
 	if dt.fraamount < 0 { // place default spousal support in second slot
@@ -93,20 +93,20 @@ func processSS(ip *InputParams) (SS, SS1, SS2 []float64, tags []string) {
 		ssi[index] = dt
 		index++
 	}
-	if ip.filingStatus == "joint" {
+	if ip.FilingStatus == "joint" {
 
 		sections = 2
 		dt = ssI{
 			fraamount:  ip.PIA2,            // fraamount := v["amount"]
-			fraage:     fra(ip.age2),       // fraage := v["FRA"]
+			fraage:     fra(ip.Age2),       // fraage := v["FRA"]
 			startSSAge: ip.SSStart2,        // agestr := v["age"]
-			endAge:     ip.planThroughAge2, // agestr := v["age"]
-			key:        ip.myKey2,
-			ageAtStart: ip.age2 + ip.prePlanYears,
-			currAge:    ip.age2,
+			endAge:     ip.PlanThroughAge2, // agestr := v["age"]
+			key:        ip.MyKey2,
+			ageAtStart: ip.Age2 + ip.PrePlanYears,
+			currAge:    ip.Age2,
 		}
 		ssi[index] = dt
-		tags = append(tags, ip.myKey2)
+		tags = append(tags, ip.MyKey2)
 	}
 	//fmt.Printf("ssi[0]: %#v\n", ssi[0])
 	//fmt.Printf("ssi[1]: %#v\n", ssi[1])
@@ -149,8 +149,8 @@ func processSS(ip *InputParams) (SS, SS1, SS2 []float64, tags []string) {
 			// alter amount for start age vs fra (minus if before fra)
 			amount = adjPIA(float64(ssi[0].fraamount)/2, ssi[i].fraage, intMin(disperseage, ssi[i].fraage))
 		}
-		ssi[i].bucket = make([]float64, ip.numyr) // = [0] * self.numyr
-		endage := ip.numyr + ssi[i].ageAtStart
+		ssi[i].bucket = make([]float64, ip.Numyr) // = [0] * self.numyr
+		endage := ip.Numyr + ssi[i].ageAtStart
 		//fmt.Printf("section: %d, disperseage: %d\n", i, disperseage)
 		for age := disperseage; age < endage; age++ {
 			year := age - ssi[i].ageAtStart //self.startage
@@ -161,18 +161,18 @@ func processSS(ip *InputParams) (SS, SS1, SS2 []float64, tags []string) {
 				fmt.Printf("age: %d, year: %d, endage: %d, ageAtStart: %d\n", age, year, endage, ssi[i].ageAtStart)
 				//fmt.Printf("ssi[%d]: %#v\n", i, ssi[i])
 				break
-			} else if year >= ip.numyr {
+			} else if year >= ip.Numyr {
 				// ERROR if ever happens
-				fmt.Printf("ERROR - this should never happen. local code 22222\n\tage: %d, year: %d, ip.numyr: %d, endPlan: %d, startPlan: %d\n", age, year, ip.numyr, ip.endPlan, ip.startPlan)
+				fmt.Printf("ERROR - this should never happen. local code 22222\n\tage: %d, year: %d, ip.numyr: %d, endPlan: %d, startPlan: %d\n", age, year, ip.Numyr, ip.EndPlan, ip.StartPlan)
 				break
 			} else {
-				adjAmount := amount * math.Pow(ip.iRate, float64(age-ssi[i].currAge)) //year
+				adjAmount := amount * math.Pow(ip.IRate, float64(age-ssi[i].currAge)) //year
 				//print("age %d, year %d, SS: %6.0f += amount %6.0f" %(age, year, SS[year], adj_amount))
 				SS[year] += adjAmount
 				ssi[i].bucket[year] = adjAmount
 			}
 		}
-		if ssi[i].key == ip.myKey1 {
+		if ssi[i].key == ip.MyKey1 {
 			ip.SSStart1 = disperseage
 		} else {
 			ip.SSStart2 = disperseage
@@ -189,7 +189,7 @@ func processSS(ip *InputParams) (SS, SS1, SS2 []float64, tags []string) {
 		if d[0] > d[1] {
 			firstToDie, secondToDie = 1, 0
 		}
-		for year := d[firstToDie] + 1; year < ip.numyr; year++ {
+		for year := d[firstToDie] + 1; year < ip.Numyr; year++ {
 			greater := ssi[1].bucket[year]
 			if ssi[0].bucket[year] > ssi[1].bucket[year] {
 				greater = ssi[0].bucket[year]
@@ -203,7 +203,7 @@ func processSS(ip *InputParams) (SS, SS1, SS2 []float64, tags []string) {
 	//fmt.Printf("ssi[1]: %#v\n", ssi[1])
 	SS1 = ssi[0].bucket
 	SS2 = ssi[1].bucket
-	if ssi[0].key != ip.myKey1 {
+	if ssi[0].key != ip.MyKey1 {
 		SS1 = ssi[1].bucket
 		SS2 = ssi[0].bucket
 	}

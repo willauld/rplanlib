@@ -1800,7 +1800,7 @@ func TestResultsOutput(t *testing.T) {
 		//fmt.Printf("ModelSpecs: %#v\n", ms)
 
 		c, a, b, notes := ms.BuildModel()
-		ms.printModelMatrix(c, a, b, notes, nil, false)
+		ms.PrintModelMatrix(c, a, b, notes, nil, false)
 
 		tol := 1.0e-7
 

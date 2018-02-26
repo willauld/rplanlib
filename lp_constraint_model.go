@@ -1115,7 +1115,7 @@ func (ms ModelSpecs) cgTaxableFraction(year int) float64 {
 
 // TODO: FIXME: Create UNIT tests: last two parameters need s vector (s is output from simplex run)
 // printModelMatrix prints to object function (cx) and constraint matrix (Ax<=b)
-func (ms ModelSpecs) printModelMatrix(c []float64, A [][]float64, b []float64, notes []ModelNote, s []float64, nonBindingOnly bool) {
+func (ms ModelSpecs) PrintModelMatrix(c []float64, A [][]float64, b []float64, notes []ModelNote, s []float64, nonBindingOnly bool) {
 	note := ""
 	notesIndex := 0
 	nextModelIndex := len(A) + 1 // beyond the end of A

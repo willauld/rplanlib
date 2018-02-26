@@ -314,7 +314,7 @@ retiree1/retiree2
 		}
 
 		//xp := &[]float64{0.0, 0.0}
-		ms.printActivitySummary(elem.xp)
+		ms.PrintActivitySummary(elem.xp)
 
 		str := ms.RestoreModelSpecsTable(mychan, oldout, w, donothing)
 		strnn := strings.TrimSpace(str)
@@ -663,7 +663,7 @@ retir SSincome:         Income:  AssetSale:
 			return // should this be continue?
 		}
 
-		ms.printIncomeExpenseDetails()
+		ms.PrintIncomeExpenseDetails()
 
 		str := ms.RestoreModelSpecsTable(mychan, oldout, w, DoNothing)
 		strn := strings.TrimSpace(str)
@@ -851,7 +851,7 @@ retiree1
 			return // should this be continue?
 		}
 
-		ms.printAccountTrans(elem.sxp)
+		ms.PrintAccountTrans(elem.sxp)
 
 		str := ms.RestoreModelSpecsTable(mychan, oldout, w, DoNothing)
 		strn := strings.TrimSpace(str)
@@ -1016,7 +1016,7 @@ retiree1
 			return // should this be continue?
 		}
 
-		ms.printTax(elem.sxp)
+		ms.PrintTax(elem.sxp)
 
 		str := ms.RestoreModelSpecsTable(mychan, oldout, w, DoNothing)
 		strn := strings.TrimSpace(str)
@@ -1188,7 +1188,7 @@ retiree1
 			return // should this be continue?
 		}
 
-		ms.printTaxBrackets(elem.sxp)
+		ms.PrintTaxBrackets(elem.sxp)
 
 		str := ms.RestoreModelSpecsTable(mychan, oldout, w, DoNothing)
 		strn := strings.TrimSpace(str)
@@ -1359,7 +1359,7 @@ retiree1
 			return // should this be continue?
 		}
 
-		ms.printCapGainsBrackets(elem.sxp)
+		ms.PrintCapGainsBrackets(elem.sxp)
 
 		str := ms.RestoreModelSpecsTable(mychan, oldout, w, DoNothing)
 		strn := strings.TrimSpace(str)
@@ -1579,7 +1579,7 @@ Total spendable (after tax money): $490_153`,
 			return // should this be continue?
 		}
 
-		ms.printBaseConfig(elem.sxp)
+		ms.PrintBaseConfig(elem.sxp)
 
 		str := ms.RestoreModelSpecsTable(mychan, oldout, w, DoNothing)
 		strn := strings.TrimSpace(str)
@@ -1830,12 +1830,12 @@ func TestResultsOutput(t *testing.T) {
 		fmt.Printf("Called LPSimplex() for m:%d x n:%d model\n", len(a), len(a[0]))
 
 		if res.Success {
-			ms.printActivitySummary(&res.X)
-			ms.printIncomeExpenseDetails()
-			ms.printAccountTrans(&res.X)
-			ms.printTax(&res.X)
-			ms.printTaxBrackets(&res.X)
-			ms.printCapGainsBrackets(&res.X)
+			ms.PrintActivitySummary(&res.X)
+			ms.PrintIncomeExpenseDetails()
+			ms.PrintAccountTrans(&res.X)
+			ms.PrintTax(&res.X)
+			ms.PrintTaxBrackets(&res.X)
+			ms.PrintCapGainsBrackets(&res.X)
 			/*
 				//ms.print_model_results(res.x)
 					        if args.verboseincome:
@@ -1848,7 +1848,7 @@ func TestResultsOutput(t *testing.T) {
 					            print_tax_brackets(res)
 								print_cap_gains_brackets(res)
 			*/
-			ms.printBaseConfig(&res.X)
+			ms.PrintBaseConfig(&res.X)
 		}
 		//createDefX(&res.X)
 	}

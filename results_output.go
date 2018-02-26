@@ -140,7 +140,7 @@ func (ms ModelSpecs) activitySummaryHeader(fieldwidth int) {
 	ms.Ao.output("\n")
 }
 
-func (ms ModelSpecs) printActivitySummary(xp *[]float64) {
+func (ms ModelSpecs) PrintActivitySummary(xp *[]float64) {
 
 	ms.Ao.output("\nActivity Summary:\n")
 	ms.Ao.output("\n")
@@ -284,7 +284,7 @@ func (ms ModelSpecs) getSSIncomeAssetExpenseList() ([]string, []int, [][]float64
 	return headerlist, countlist, datamatrix
 }
 
-func (ms ModelSpecs) printIncomeExpenseDetails() {
+func (ms ModelSpecs) PrintIncomeExpenseDetails() {
 	if ms.OneK < 1 {
 		e := fmt.Errorf("printIncomeExpenseDetails: ms.OneK is %f which is not allowed", ms.OneK)
 		panic(e)
@@ -344,7 +344,7 @@ func (ms ModelSpecs) printAccHeader() {
 	ms.Ao.output("\n")
 }
 
-func (ms ModelSpecs) printAccountTrans(xp *[]float64) {
+func (ms ModelSpecs) PrintAccountTrans(xp *[]float64) {
 
 	ms.Ao.output("\nAccount Transactions Summary:\n\n")
 	ms.printAccHeader()
@@ -495,7 +495,7 @@ func (ms ModelSpecs) printHeaderTax() {
 	ms.Ao.output("\n")
 }
 
-func (ms ModelSpecs) printTax(xp *[]float64) {
+func (ms ModelSpecs) PrintTax(xp *[]float64) {
 	ms.Ao.output("\nTax Summary:\n\n")
 	ms.printHeaderTax()
 	for year := 0; year < ms.Ip.Numyr; year++ {
@@ -578,7 +578,7 @@ func (ms ModelSpecs) printHeaderTaxBrackets() {
 	ms.Ao.output("&@brkTot\n")
 }
 
-func (ms ModelSpecs) printTaxBrackets(xp *[]float64) {
+func (ms ModelSpecs) PrintTaxBrackets(xp *[]float64) {
 	ms.Ao.output("\nOverall Tax Bracket Summary:\n")
 	ms.printHeaderTaxBrackets()
 	for year := 0; year < ms.Ip.Numyr; year++ {
@@ -647,7 +647,7 @@ func (ms ModelSpecs) printHeaderCapgainsBrackets() {
 	ms.Ao.output("&@brkTot\n")
 }
 
-func (ms ModelSpecs) printCapGainsBrackets(xp *[]float64) {
+func (ms ModelSpecs) PrintCapGainsBrackets(xp *[]float64) {
 	ms.Ao.output("\nOverall Capital Gains Bracket Summary:\n")
 	ms.printHeaderCapgainsBrackets()
 	for year := 0; year < ms.Ip.Numyr; year++ {
@@ -812,7 +812,7 @@ func (ms ModelSpecs) getResultTotals(xp *[]float64) (twithd, tcombined, tT, ttax
 	return twithd, tcombined, tT, ttax, tcgtax, tearlytax, tspendable, tbeginbal, tendbal
 }
 
-func (ms ModelSpecs) printBaseConfig(xp *[]float64) { // input is res.x
+func (ms ModelSpecs) PrintBaseConfig(xp *[]float64) { // input is res.x
 	totwithd, tincome, tTaxable, tincometax, tcgtax, tearlytax, tspendable, tbeginbal, tendbal := ms.getResultTotals(xp)
 	ms.Ao.output("\n")
 	ms.Ao.output("======\n")

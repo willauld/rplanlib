@@ -288,6 +288,7 @@ func NewModelSpecs(vindx VectorVarIndex,
 	ip InputParams,
 	verbose bool,
 	allowDeposits bool,
+	RoundToOneK bool,
 	errfile *os.File,
 	logfile *os.File,
 	csvfile *os.File,
@@ -305,7 +306,10 @@ func NewModelSpecs(vindx VectorVarIndex,
 		Logfile:                 logfile,
 		//csvfile:                 csvfile,
 		//tablefile:               tablefile,
-		OneK: 1.0, //1000.0,
+		OneK: 1000.0,
+	}
+	if !RoundToOneK {
+		ms.OneK = 1.0
 	}
 
 	retirees := []retiree{
@@ -1114,7 +1118,8 @@ func (ms ModelSpecs) cgTaxableFraction(year int) float64 {
 }
 
 // TODO: FIXME: Create UNIT tests: last two parameters need s vector (s is output from simplex run)
-// printModelMatrix prints to object function (cx) and constraint matrix (Ax<=b)
+
+// PrintModelMatrix prints to object function (cx) and constraint matrix (Ax<=b)
 func (ms ModelSpecs) PrintModelMatrix(c []float64, A [][]float64, b []float64, notes []ModelNote, s []float64, nonBindingOnly bool) {
 	note := ""
 	notesIndex := 0

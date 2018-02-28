@@ -127,6 +127,7 @@ func NewVectorVarIndex(iyears, itaxbins, icgbins int,
 	// If after the following 3 asignments len(iaccmap)==3 then it
 	// has the correct key values
 	//
+	// TODO FIXME does the value, err = map[key] help here????
 	iaccmap["IRA"] = iaccmap["IRA"]
 	iaccmap["roth"] = iaccmap["roth"]
 	iaccmap["aftertax"] = iaccmap["aftertax"]

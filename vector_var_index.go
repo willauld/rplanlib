@@ -123,16 +123,11 @@ func NewVectorVarIndex(iyears, itaxbins, icgbins int,
 		e := fmt.Errorf("NewVectorVarIndex: invalid value, accmap length != 3 but rather %d, accmap: %v", len(iaccmap), iaccmap)
 		return VectorVarIndex{}, e
 	}
-	//
-	// If after the following 3 asignments len(iaccmap)==3 then it
-	// has the correct key values
-	//
-	// TODO FIXME does the value, err = map[key] help here????
-	iaccmap["IRA"] = iaccmap["IRA"]
-	iaccmap["roth"] = iaccmap["roth"]
-	iaccmap["aftertax"] = iaccmap["aftertax"]
-	if len(iaccmap) != 3 {
-		e := fmt.Errorf("NewVectorVarIndex: accmap has invalid key value: %v", iaccmap)
+	_, okIRA := iaccmap["IRA"]
+	_, okRoth := iaccmap["roth"]
+	_, okAftertax := iaccmap["aftertax"]
+	if !okIRA || !okRoth || !okAftertax {
+		e := fmt.Errorf("NewVectorVarIndex: accmap missing one of (IRA, roth, aftertax) key values, has: %v", iaccmap)
 		return VectorVarIndex{}, e
 	}
 

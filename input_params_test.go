@@ -14,7 +14,7 @@ func TestNewInputStringsMap(t *testing.T) {
 		size int
 	}{
 		{
-			size: 222,
+			size: 242,
 		},
 	}
 	for i, elem := range tests {
@@ -22,9 +22,19 @@ func TestNewInputStringsMap(t *testing.T) {
 		if len(rm) != elem.size {
 			t.Errorf("GetNewInputStringsMap() case %d: Failed - Expected %d but found %d\n", i, int(elem.size), len(rm))
 		}
-		for k, v := range rm {
-			fmt.Printf("    %s: '%s'\n", k, v)
-
+		for _, s := range InputStrDefs {
+			_, ok := rm[s]
+			if !ok {
+				t.Errorf("GetNewInputStringsMap() case %d: Failed - missing %s\n", i, s)
+			}
+		}
+		for i := 1; i < MaxStreams+1; i++ {
+			for _, s := range InputStreamStrDefs {
+				_, ok := rm[fmt.Sprintf("%s%d", s, i)]
+				if !ok {
+					t.Errorf("GetNewInputStringsMap() case %d: Failed - missing %s\n", i, s)
+				}
+			}
 		}
 	}
 }

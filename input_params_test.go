@@ -9,6 +9,26 @@ import (
 // Testing for input_params.go
 //
 
+func TestNewInputStringsMap(t *testing.T) {
+	tests := []struct {
+		size int
+	}{
+		{
+			size: 222,
+		},
+	}
+	for i, elem := range tests {
+		rm := NewInputStringsMap()
+		if len(rm) != elem.size {
+			t.Errorf("GetNewInputStringsMap() case %d: Failed - Expected %d but found %d\n", i, int(elem.size), len(rm))
+		}
+		for k, v := range rm {
+			fmt.Printf("    %s: '%s'\n", k, v)
+
+		}
+	}
+}
+
 func TestGetIPIntValue(t *testing.T) {
 	tests := []struct {
 		str    string

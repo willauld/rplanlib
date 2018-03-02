@@ -6,7 +6,8 @@ import (
 	"strings"
 )
 
-const maxStreams = 10
+// MaxStreams is the maximam number of streams for each: income, expense, asset
+const MaxStreams = 10
 
 // InputParams are the model params constructed from driver program string input
 type InputParams struct {
@@ -342,7 +343,7 @@ func NewInputParams(ip map[string]string) (*InputParams, error) {
 
 	//PROTOTYPE WORK ? FLAT ? LINK LIST ?
 	rip.Income = make([]stream, 0)
-	for i := 1; i < maxStreams; i++ {
+	for i := 1; i < MaxStreams; i++ {
 		if ip[fmt.Sprintf("eT_Income%d", i)] != "" ||
 			ip[fmt.Sprintf("eT_IncomeAmount%d", i)] != "" ||
 			ip[fmt.Sprintf("eT_IncomeStartAge%d", i)] != "" ||
@@ -366,7 +367,7 @@ func NewInputParams(ip map[string]string) (*InputParams, error) {
 		}
 	}
 	rip.Expense = make([]stream, 0)
-	for i := 1; i < maxStreams; i++ {
+	for i := 1; i < MaxStreams; i++ {
 		if ip[fmt.Sprintf("eT_Expense%d", i)] != "" ||
 			ip[fmt.Sprintf("eT_ExpenseAmount%d", i)] != "" ||
 			ip[fmt.Sprintf("eT_ExpenseStartAge%d", i)] != "" ||
@@ -390,7 +391,7 @@ func NewInputParams(ip map[string]string) (*InputParams, error) {
 		}
 	}
 	rip.Assets = make([]asset, 0)
-	for i := 1; i < maxStreams; i++ {
+	for i := 1; i < MaxStreams; i++ {
 		if ip[fmt.Sprintf("eT_Asset%d", i)] != "" ||
 			ip[fmt.Sprintf("eT_AssetValue%d", i)] != "" ||
 			ip[fmt.Sprintf("eT_AssetAgeToSell%d", i)] != "" ||
@@ -424,4 +425,87 @@ func NewInputParams(ip map[string]string) (*InputParams, error) {
 	//fmt.Printf("\n&&&&\n%v\n&&&&\n", rip)
 
 	return &rip, nil
+}
+
+// NewInputStringsMap returns a map with all available settings set to the empty string
+func NewInputStringsMap() map[string]string {
+	//This functions is the One Source of Truth for the avalable settings
+	ipsm := map[string]string{
+		"setName":                    "",
+		"filingStatus":               "",
+		"key1":                       "",
+		"key2":                       "",
+		"eT_Age1":                    "",
+		"eT_Age2":                    "",
+		"eT_RetireAge1":              "",
+		"eT_RetireAge2":              "",
+		"eT_PlanThroughAge1":         "",
+		"eT_PlanThroughAge2":         "",
+		"eT_PIA1":                    "",
+		"eT_PIA2":                    "",
+		"eT_SS_Start1":               "",
+		"eT_SS_Start2":               "",
+		"eT_TDRA1":                   "",
+		"eT_TDRA2":                   "",
+		"eT_TDRA_Rate1":              "",
+		"eT_TDRA_Rate2":              "",
+		"eT_TDRA_Contrib1":           "",
+		"eT_TDRA_Contrib2":           "",
+		"eT_TDRA_ContribStartAge1":   "",
+		"eT_TDRA_ContribStartAge2":   "",
+		"eT_TDRA_ContribEndAge1":     "",
+		"eT_TDRA_ContribEndAge2":     "",
+		"eT_Roth1":                   "",
+		"eT_Roth2":                   "",
+		"eT_Roth_Rate1":              "",
+		"eT_Roth_Rate2":              "",
+		"eT_Roth_Contrib1":           "",
+		"eT_Roth_Contrib2":           "",
+		"eT_Roth_ContribStartAge1":   "",
+		"eT_Roth_ContribStartAge2":   "",
+		"eT_Roth_ContribEndAge1":     "",
+		"eT_Roth_ContribEndAge2":     "",
+		"eT_Aftatax":                 "",
+		"eT_Aftatax_Rate":            "",
+		"eT_Aftatax_Contrib":         "",
+		"eT_Aftatax_ContribStartAge": "",
+		"eT_Aftatax_ContribEndAge":   "",
+
+		"eT_iRatePercent": "",
+		"eT_rRatePercent": "",
+		"eT_maximize":     "",
+	}
+
+	for i := 1; i < MaxStreams; i++ {
+		//prototype entries below
+		ipsm[fmt.Sprintf("eT_Income%d", i)] = ""
+		ipsm[fmt.Sprintf("eT_IncomeAmount%d", i)] = ""
+		ipsm[fmt.Sprintf("eT_IncomeStartAge%d", i)] = ""
+		ipsm[fmt.Sprintf("eT_IncomeEndAge%d", i)] = ""
+		ipsm[fmt.Sprintf("eT_IncomeInflate%d", i)] = ""
+		ipsm[fmt.Sprintf("eT_IncomeTax%d", i)] = ""
+	}
+
+	for i := 1; i < MaxStreams; i++ {
+		//prototype entries below
+		ipsm[fmt.Sprintf("eT_Expense%d", i)] = ""
+		ipsm[fmt.Sprintf("eT_ExpenseAmount%d", i)] = ""
+		ipsm[fmt.Sprintf("eT_ExpenseStartAge%d", i)] = ""
+		ipsm[fmt.Sprintf("eT_ExpenseEndAge%d", i)] = ""
+		ipsm[fmt.Sprintf("eT_ExpenseInflate%d", i)] = ""
+		ipsm[fmt.Sprintf("eT_ExpenseTax%d", i)] = "" //ignored, or should be
+	}
+
+	for i := 1; i < MaxStreams; i++ {
+		//prototype entries below
+		ipsm[fmt.Sprintf("eT_Asset%d", i)] = ""
+		ipsm[fmt.Sprintf("eT_AssetValue%d", i)] = ""
+		ipsm[fmt.Sprintf("eT_AssetAgeToSell%d", i)] = ""
+		ipsm[fmt.Sprintf("eT_AssetCostAndImprovements%d", i)] = ""
+		ipsm[fmt.Sprintf("eT_AssetOwedAtAgeToSell%d", i)] = ""
+		ipsm[fmt.Sprintf("eT_AssetPrimaryResidence%d", i)] = ""
+		ipsm[fmt.Sprintf("eT_AssetRRatePercent%d", i)] = ""
+		ipsm[fmt.Sprintf("eT_AssetBrokeragePercent%d", i)] = ""
+	}
+	return ipsm
 }

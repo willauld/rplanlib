@@ -438,6 +438,10 @@ var InputStrDefs = []string{
 	"eT_RetireAge2",
 	"eT_PlanThroughAge1",
 	"eT_PlanThroughAge2",
+	"eT_DefinedContributionPlanStart1",
+	"eT_DefinedContributionPlanStart2",
+	"eT_DefinedContributionPlanEnd1",
+	"eT_DefinedContributionPlanEnd2",
 	"eT_PIA1",
 	"eT_PIA2",
 	"eT_SS_Start1",
@@ -471,6 +475,7 @@ var InputStrDefs = []string{
 	"eT_iRatePercent",
 	"eT_rRatePercent",
 	"eT_maximize",
+	"dollarsInThousands",
 }
 var InputStreamStrDefs = []string{
 	"eT_Income",

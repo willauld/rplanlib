@@ -231,6 +231,7 @@ func TestNewInputParams(t *testing.T) {
 				"eT_Aftatax_Contrib":         "",
 				"eT_Aftatax_ContribStartAge": "",
 				"eT_Aftatax_ContribEndAge":   "",
+				"dollarsInThousands":         "true",
 			},
 			prePlanYears: 1,
 			startPlan:    66,
@@ -279,6 +280,7 @@ func TestNewInputParams(t *testing.T) {
 				"eT_Aftatax_Contrib":         "",
 				"eT_Aftatax_ContribStartAge": "",
 				"eT_Aftatax_ContribEndAge":   "",
+				"dollarsInThousands":         "true",
 			},
 			prePlanYears: 1,
 			startPlan:    64,
@@ -327,6 +329,7 @@ func TestNewInputParams(t *testing.T) {
 				"eT_Aftatax_Contrib":         "",
 				"eT_Aftatax_ContribStartAge": "",
 				"eT_Aftatax_ContribEndAge":   "",
+				"dollarsInThousands":         "true",
 			},
 			prePlanYears: 0,
 			startPlan:    65,
@@ -375,6 +378,7 @@ func TestNewInputParams(t *testing.T) {
 				"eT_Aftatax_Contrib":         "",
 				"eT_Aftatax_ContribStartAge": "",
 				"eT_Aftatax_ContribEndAge":   "",
+				"dollarsInThousands":         "true",
 			},
 			prePlanYears: 20,
 			startPlan:    65,
@@ -386,7 +390,7 @@ func TestNewInputParams(t *testing.T) {
 	for i, elem := range tests {
 		modelip, err := NewInputParams(elem.ip)
 		if err != nil {
-			fmt.Printf("TestNewInputParents: %s\n", err)
+			fmt.Printf("TestNewInputParams case %d: %s\n", i, err)
 			continue
 		}
 		if modelip.PrePlanYears != elem.prePlanYears {

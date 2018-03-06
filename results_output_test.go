@@ -56,9 +56,10 @@ var sipSingle = map[string]string{
 	"eT_Aftatax_ContribStartAge": "",
 	"eT_Aftatax_ContribEndAge":   "",
 
-	"eT_iRatePercent": "2.5",
-	"eT_rRatePercent": "6",
-	"eT_maximize":     "Spending", // or "PlusEstate"
+	"eT_iRatePercent":    "2.5",
+	"eT_rRatePercent":    "6",
+	"eT_maximize":        "Spending", // or "PlusEstate"
+	"dollarsInThousands": "true",
 }
 
 var sipJoint = map[string]string{
@@ -102,9 +103,10 @@ var sipJoint = map[string]string{
 	"eT_Aftatax_ContribStartAge": "",
 	"eT_Aftatax_ContribEndAge":   "",
 
-	"eT_iRatePercent": "2.5",
-	"eT_rRatePercent": "6",
-	"eT_maximize":     "Spending", // or "PlusEstate"
+	"eT_iRatePercent":    "2.5",
+	"eT_rRatePercent":    "6",
+	"eT_maximize":        "Spending", // or "PlusEstate"
+	"dollarsInThousands": "true",
 }
 var sipSingle3Acc = map[string]string{
 	"setName":                    "activeParams",
@@ -147,9 +149,10 @@ var sipSingle3Acc = map[string]string{
 	"eT_Aftatax_ContribStartAge": "",
 	"eT_Aftatax_ContribEndAge":   "",
 
-	"eT_iRatePercent": "2.5",
-	"eT_rRatePercent": "6",
-	"eT_maximize":     "Spending", // or "PlusEstate"
+	"eT_iRatePercent":    "2.5",
+	"eT_rRatePercent":    "6",
+	"eT_maximize":        "Spending", // or "PlusEstate"
+	"dollarsInThousands": "true",
 }
 
 //def precheck_consistancy():

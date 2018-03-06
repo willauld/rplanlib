@@ -119,6 +119,7 @@ func TestProcessSS(t *testing.T) {
 				"eT_Aftatax_Contrib":         "",
 				"eT_Aftatax_ContribStartAge": "",
 				"eT_Aftatax_ContribEndAge":   "",
+				"dollarsInThousands":         "true",
 			},
 			warningmes: "",
 			expectnil:  false,
@@ -164,6 +165,7 @@ func TestProcessSS(t *testing.T) {
 				"eT_Aftatax_Contrib":         "",
 				"eT_Aftatax_ContribStartAge": "",
 				"eT_Aftatax_ContribEndAge":   "",
+				"dollarsInThousands":         "true",
 			},
 			warningmes: "Warning-SocialSecurityspousalbenefitsdonotincreaseafterFRA,resettingbenefitsstarttoFRA.Pleasecorrectretiree2'sSSageintheconfigurationfileto'66'.",
 			expectnil:  false,
@@ -209,6 +211,7 @@ func TestProcessSS(t *testing.T) {
 				"eT_Aftatax_Contrib":         "",
 				"eT_Aftatax_ContribStartAge": "",
 				"eT_Aftatax_ContribEndAge":   "",
+				"dollarsInThousands":         "true",
 			},
 			warningmes: "Warning - Social Security spousal benefit can only be claimed after the spouse claims benefits. Please correct retiree1's SS age in the configuration file to '72'.",
 			expectnil:  false,
@@ -255,9 +258,10 @@ func TestProcessSS(t *testing.T) {
 				"eT_Aftatax_ContribStartAge": "",
 				"eT_Aftatax_ContribEndAge":   "",
 
-				"eT_iRate":    "2.5",
-				"eT_rRate":    "6",
-				"eT_maximize": "Spending", // or "PlusEstate"
+				"eT_iRate":           "2.5",
+				"eT_rRate":           "6",
+				"eT_maximize":        "Spending", // or "PlusEstate"
+				"dollarsInThousands": "true",
 			},
 			warningmes: "",
 			expectnil:  true,
@@ -304,9 +308,10 @@ func TestProcessSS(t *testing.T) {
 				"eT_Aftatax_ContribStartAge": "",
 				"eT_Aftatax_ContribEndAge":   "",
 
-				"eT_iRate":    "2.5",
-				"eT_rRate":    "6",
-				"eT_maximize": "Spending", // or "PlusEstate"
+				"eT_iRate":           "2.5",
+				"eT_rRate":           "6",
+				"eT_maximize":        "Spending", // or "PlusEstate"
+				"dollarsInThousands": "true",
 			},
 			warningmes: "",
 			expectnil:  false,
@@ -353,9 +358,10 @@ func TestProcessSS(t *testing.T) {
 				"eT_Aftatax_ContribStartAge": "",
 				"eT_Aftatax_ContribEndAge":   "",
 
-				"eT_iRate":    "2.5",
-				"eT_rRate":    "6",
-				"eT_maximize": "Spending", // or "PlusEstate"
+				"eT_iRate":           "2.5",
+				"eT_rRate":           "6",
+				"eT_maximize":        "Spending", // or "PlusEstate"
+				"dollarsInThousands": "true",
 			},
 			warningmes: "",
 			expectnil:  false,

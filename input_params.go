@@ -153,6 +153,17 @@ func verifyFilingStatus(s string) error {
 func NewInputParams(ip map[string]string) (*InputParams, error) {
 
 	var err error
+
+	dollarsInThousands, ok := ip["dollarsInThousands"]
+	if !ok {
+		e := fmt.Errorf("NewInputParams: key: 'dollarsInThousands' not defined in API map")
+		return nil, e
+	}
+	multiplier := 1
+	if dollarsInThousands == "true" {
+		multiplier = 1000
+	}
+
 	rip := InputParams{}
 
 	rip.RRatePercent = getIPFloatValue(ip["eT_rRatePercent"]) // TODO add to mobile
@@ -198,7 +209,7 @@ func NewInputParams(ip map[string]string) (*InputParams, error) {
 			return nil, e
 		}
 	}
-	rip.PIA1 = kgetIPIntValue(ip["eT_PIA1"])
+	rip.PIA1 = getIPIntValue(ip["eT_PIA1"]) * multiplier
 	rip.SSStart1 = getIPIntValue(ip["eT_SS_Start1"])
 
 	if ip["eT_TDRA_Contrib1"] != "" ||
@@ -211,9 +222,9 @@ func NewInputParams(ip map[string]string) (*InputParams, error) {
 			return nil, e
 		}
 	}
-	rip.TDRA1 = kgetIPIntValue(ip["eT_TDRA1"])
+	rip.TDRA1 = getIPIntValue(ip["eT_TDRA1"]) * multiplier
 	rip.TDRARate1 = getIPFloatValue(ip["eT_TDRA_Rate1"])
-	rip.TDRAContrib1 = kgetIPIntValue(ip["eT_TDRA_Contrib1"])
+	rip.TDRAContrib1 = getIPIntValue(ip["eT_TDRA_Contrib1"]) * multiplier
 	rip.TDRAContribStart1 = getIPIntValue(ip["eT_TDRA_ContribStartAge1"])
 	rip.TDRAContribEnd1 = getIPIntValue(ip["eT_TDRA_ContribEndAge1"])
 	if rip.TDRA1 > 0 || rip.TDRAContrib1 > 0 {
@@ -230,9 +241,9 @@ func NewInputParams(ip map[string]string) (*InputParams, error) {
 			return nil, e
 		}
 	}
-	rip.Roth1 = kgetIPIntValue(ip["eT_Roth1"])
+	rip.Roth1 = getIPIntValue(ip["eT_Roth1"]) * multiplier
 	rip.RothRate1 = getIPFloatValue(ip["eT_Roth_Rate1"])
-	rip.RothContrib1 = kgetIPIntValue(ip["eT_Roth_Contrib1"])
+	rip.RothContrib1 = getIPIntValue(ip["eT_Roth_Contrib1"]) * multiplier
 	rip.RothContribStart1 = getIPIntValue(ip["eT_Roth_ContribStartAge1"])
 	rip.RothContribEnd1 = getIPIntValue(ip["eT_Roth_ContribEndAge1"])
 	if rip.Roth1 > 0 || rip.RothContrib1 > 0 {
@@ -270,7 +281,7 @@ func NewInputParams(ip map[string]string) (*InputParams, error) {
 				return nil, e
 			}
 		}
-		rip.PIA2 = kgetIPIntValue(ip["eT_PIA2"])
+		rip.PIA2 = getIPIntValue(ip["eT_PIA2"]) * multiplier
 		rip.SSStart2 = getIPIntValue(ip["eT_SS_Start2"])
 
 		if ip["eT_TDRA_Contrib2"] != "" ||
@@ -283,9 +294,9 @@ func NewInputParams(ip map[string]string) (*InputParams, error) {
 				return nil, e
 			}
 		}
-		rip.TDRA2 = kgetIPIntValue(ip["eT_TDRA2"])
+		rip.TDRA2 = getIPIntValue(ip["eT_TDRA2"]) * multiplier
 		rip.TDRARate2 = getIPFloatValue(ip["eT_TDRA_Rate2"])
-		rip.TDRAContrib2 = kgetIPIntValue(ip["eT_TDRA_Contrib2"])
+		rip.TDRAContrib2 = getIPIntValue(ip["eT_TDRA_Contrib2"]) * multiplier
 		rip.TDRAContribStart2 = getIPIntValue(ip["eT_TDRA_ContribStartAge2"])
 		rip.TDRAContribEnd2 = getIPIntValue(ip["eT_TDRA_ContribEndAge2"])
 		if rip.TDRA2 > 0 || rip.TDRAContrib2 > 0 {
@@ -302,9 +313,9 @@ func NewInputParams(ip map[string]string) (*InputParams, error) {
 				return nil, e
 			}
 		}
-		rip.Roth2 = kgetIPIntValue(ip["eT_Roth2"])
+		rip.Roth2 = getIPIntValue(ip["eT_Roth2"]) * multiplier
 		rip.RothRate2 = getIPFloatValue(ip["eT_Roth_Rate2"])
-		rip.RothContrib2 = kgetIPIntValue(ip["eT_Roth_Contrib2"])
+		rip.RothContrib2 = getIPIntValue(ip["eT_Roth_Contrib2"]) * multiplier
 		rip.RothContribStart2 = getIPIntValue(ip["eT_Roth_ContribStartAge2"])
 		rip.RothContribEnd2 = getIPIntValue(ip["eT_Roth_ContribEndAge2"])
 		if rip.Roth2 > 0 || rip.RothContrib2 > 0 {
@@ -327,9 +338,9 @@ func NewInputParams(ip map[string]string) (*InputParams, error) {
 			return nil, e
 		}
 	}
-	rip.Aftatax = kgetIPIntValue(ip["eT_Aftatax"])
+	rip.Aftatax = getIPIntValue(ip["eT_Aftatax"]) * multiplier
 	rip.AftataxRate = getIPFloatValue(ip["eT_Aftatax_Rate"])
-	rip.AftataxContrib = kgetIPIntValue(ip["eT_Aftatax_Contrib"])
+	rip.AftataxContrib = getIPIntValue(ip["eT_Aftatax_Contrib"]) * multiplier
 	rip.AftataxContribStart = getIPIntValue(ip["eT_Aftatax_ContribStartAge"])
 	rip.AftataxContribEnd = getIPIntValue(ip["eT_Aftatax_ContribEndAge"])
 	if rip.Aftatax > 0 || rip.AftataxContrib > 0 {
@@ -357,7 +368,7 @@ func NewInputParams(ip map[string]string) (*InputParams, error) {
 			}
 			sp := stream{
 				Tag:      ip[fmt.Sprintf("eT_Income%d", i)],
-				Amount:   kgetIPIntValue(ip[fmt.Sprintf("eT_IncomeAmount%d", i)]),
+				Amount:   getIPIntValue(ip[fmt.Sprintf("eT_IncomeAmount%d", i)]) * multiplier,
 				StartAge: getIPIntValue(ip[fmt.Sprintf("eT_IncomeStartAge%d", i)]),
 				EndAge:   getIPIntValue(ip[fmt.Sprintf("eT_IncomeEndAge%d", i)]),
 				Inflate:  getIPBoolValue(ip[fmt.Sprintf("eT_IncomeInflate%d", i)]),
@@ -381,7 +392,7 @@ func NewInputParams(ip map[string]string) (*InputParams, error) {
 			}
 			sp := stream{
 				Tag:      ip[fmt.Sprintf("eT_Expense%d", i)],
-				Amount:   kgetIPIntValue(ip[fmt.Sprintf("eT_ExpenseAmount%d", i)]),
+				Amount:   getIPIntValue(ip[fmt.Sprintf("eT_ExpenseAmount%d", i)]) * multiplier,
 				StartAge: getIPIntValue(ip[fmt.Sprintf("eT_ExpenseStartAge%d", i)]),
 				EndAge:   getIPIntValue(ip[fmt.Sprintf("eT_ExpenseEndAge%d", i)]),
 				Inflate:  getIPBoolValue(ip[fmt.Sprintf("eT_ExpenseInflate%d", i)]),
@@ -409,10 +420,10 @@ func NewInputParams(ip map[string]string) (*InputParams, error) {
 			}
 			ap := asset{
 				Tag:                 ip[fmt.Sprintf("eT_Asset%d", i)],
-				Value:               kgetIPIntValue(ip[fmt.Sprintf("eT_AssetValue%d", i)]),
+				Value:               getIPIntValue(ip[fmt.Sprintf("eT_AssetValue%d", i)]) * multiplier,
 				AgeToSell:           getIPIntValue(ip[fmt.Sprintf("eT_AssetAgeToSell%d", i)]),
-				CostAndImprovements: kgetIPIntValue(ip[fmt.Sprintf("eT_AssetCostAndImprovements%d", i)]),
-				OwedAtAgeToSell:     kgetIPIntValue(ip[fmt.Sprintf("eT_AssetOwedAtAgeToSell%d", i)]),
+				CostAndImprovements: getIPIntValue(ip[fmt.Sprintf("eT_AssetCostAndImprovements%d", i)]) * multiplier,
+				OwedAtAgeToSell:     getIPIntValue(ip[fmt.Sprintf("eT_AssetOwedAtAgeToSell%d", i)]) * multiplier,
 				PrimaryResidence:    getIPBoolValue(ip[fmt.Sprintf("eT_AssetPrimaryResidence%d", i)]),
 				AssetRRatePercent:   getIPFloatValue(ip[fmt.Sprintf("eT_AssetRRatePercent%d", i)]),
 				BrokeragePercent:    getIPFloatValue(ip[fmt.Sprintf("eT_AssetBrokeragePercent%d", i)]),

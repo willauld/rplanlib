@@ -487,7 +487,7 @@ var InputStrDefs = []string{
 	"eT_Aftatax_Contrib",
 	"eT_Aftatax_ContribStartAge",
 	"eT_Aftatax_ContribEndAge",
-	"eT_Aftatax_ContribInflate1",
+	"eT_Aftatax_ContribInflate",
 
 	"eT_DesiredIncome",
 	"eT_MaxIncome",

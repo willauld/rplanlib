@@ -14,7 +14,7 @@ func TestNewInputStringsMap(t *testing.T) {
 		size int
 	}{
 		{
-			size: 247,
+			size: 255,
 		},
 	}
 	for i, elem := range tests {

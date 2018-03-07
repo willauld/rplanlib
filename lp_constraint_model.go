@@ -518,8 +518,9 @@ func NewModelSpecs(vindx VectorVarIndex,
 	ms.Assettags = append(ms.Assettags, "combined assets")
 	ms.IlliquidAssetPlanStart = 0.0
 	ms.IlliquidAssetPlanEnd = 0.0
-	noSell := false
+	var noSell bool
 	for i := 0; i < len(ip.Assets); i++ {
+		noSell = false
 		tag := ip.Assets[i].Tag
 		value := float64(ip.Assets[i].Value)
 		ageToSell := ip.Assets[i].AgeToSell
@@ -528,7 +529,7 @@ func NewModelSpecs(vindx VectorVarIndex,
 		}
 		brokerageRate := ip.Assets[i].BrokeragePercent / 100.0
 		if brokerageRate == 0 {
-			brokerageRate = 0.04 // default to 4%
+			brokerageRate = 0.04 // default to 4% // TODO FIXME defaults should be set in NewInputParams
 		}
 		assetRRate := ip.Assets[i].AssetRRate
 		costAndImprovements := float64(ip.Assets[i].CostAndImprovements)

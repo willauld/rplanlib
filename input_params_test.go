@@ -184,6 +184,8 @@ func TestGetIPBoolValue(t *testing.T) {
 func TestNewInputParams(t *testing.T) {
 	tests := []struct {
 		ip           map[string]string
+		dplanStart1  int
+		dplanEnd1    int
 		prePlanYears int
 		startPlan    int
 		endPlan      int
@@ -233,6 +235,8 @@ func TestNewInputParams(t *testing.T) {
 				"eT_Aftatax_ContribEndAge":   "",
 				"dollarsInThousands":         "true",
 			},
+			dplanStart1:  0,
+			dplanEnd1:    0,
 			prePlanYears: 1,
 			startPlan:    66,
 			endPlan:      103,
@@ -282,6 +286,8 @@ func TestNewInputParams(t *testing.T) {
 				"eT_Aftatax_ContribEndAge":   "",
 				"dollarsInThousands":         "true",
 			},
+			dplanStart1:  0,
+			dplanEnd1:    0,
 			prePlanYears: 1,
 			startPlan:    64,
 			endPlan:      101,
@@ -331,6 +337,8 @@ func TestNewInputParams(t *testing.T) {
 				"eT_Aftatax_ContribEndAge":   "",
 				"dollarsInThousands":         "true",
 			},
+			dplanStart1:  0,
+			dplanEnd1:    0,
 			prePlanYears: 0,
 			startPlan:    65,
 			endPlan:      98,
@@ -380,6 +388,63 @@ func TestNewInputParams(t *testing.T) {
 				"eT_Aftatax_ContribEndAge":   "",
 				"dollarsInThousands":         "true",
 			},
+			dplanStart1:  0,
+			dplanEnd1:    0,
+			prePlanYears: 20,
+			startPlan:    65,
+			endPlan:      86,
+			numyr:        21,
+			accmap:       map[string]int{"IRA": 1, "roth": 1, "aftertax": 0},
+		},
+		{ // case 3 // test definedContributionPlan
+			ip: map[string]string{
+				"setName":                          "activeParams",
+				"filingStatus":                     "single",
+				"key1":                             "retiree1",
+				"key2":                             "retiree2",
+				"eT_Age1":                          "45",
+				"eT_Age2":                          "",
+				"eT_RetireAge1":                    "65",
+				"eT_RetireAge2":                    "",
+				"eT_PlanThroughAge1":               "85",
+				"eT_PlanThroughAge2":               "",
+				"eT_DefinedContributionPlanStart1": "54",
+				"eT_DefinedContributionPlanStart2": "54",
+				"eT_DefinedContributionPlanEnd1":   "65",
+				"eT_DefinedContributionPlanEnd2":   "65",
+				"eT_PIA1":                          "30", // 30k
+				"eT_PIA2":                          "-1",
+				"eT_SS_Start1":                     "70",
+				"eT_SS_Start2":                     "66",
+				"eT_TDRA1":                         "200", // 200k
+				"eT_TDRA2":                         "",
+				"eT_TDRA_Rate1":                    "",
+				"eT_TDRA_Rate2":                    "",
+				"eT_TDRA_Contrib1":                 "",
+				"eT_TDRA_Contrib2":                 "",
+				"eT_TDRA_ContribStartAge1":         "",
+				"eT_TDRA_ContribStartAge2":         "",
+				"eT_TDRA_ContribEndAge1":           "",
+				"eT_TDRA_ContribEndAge2":           "",
+				"eT_Roth1":                         "10", // 10K
+				"eT_Roth2":                         "",
+				"eT_Roth_Rate1":                    "",
+				"eT_Roth_Rate2":                    "",
+				"eT_Roth_Contrib1":                 "",
+				"eT_Roth_Contrib2":                 "",
+				"eT_Roth_ContribStartAge1":         "",
+				"eT_Roth_ContribStartAge2":         "",
+				"eT_Roth_ContribEndAge1":           "",
+				"eT_Roth_ContribEndAge2":           "",
+				"eT_Aftatax":                       "",
+				"eT_Aftatax_Rate":                  "7.25",
+				"eT_Aftatax_Contrib":               "",
+				"eT_Aftatax_ContribStartAge":       "",
+				"eT_Aftatax_ContribEndAge":         "",
+				"dollarsInThousands":               "true",
+			},
+			dplanStart1:  54,
+			dplanEnd1:    65,
 			prePlanYears: 20,
 			startPlan:    65,
 			endPlan:      86,
@@ -392,6 +457,12 @@ func TestNewInputParams(t *testing.T) {
 		if err != nil {
 			fmt.Printf("TestNewInputParams case %d: %s\n", i, err)
 			continue
+		}
+		if modelip.DefinedContributionPlanStart1 != elem.dplanStart1 {
+			t.Errorf("NewInputParams case %d: Failed - defined Contribution Plan start Expected %v but found %v\n", i, elem.dplanStart1, modelip.DefinedContributionPlanStart1)
+		}
+		if modelip.DefinedContributionPlanEnd1 != elem.dplanEnd1 {
+			t.Errorf("NewInputParams case %d: Failed - defined Contribution Plan start Expected %v but found %v\n", i, elem.dplanEnd1, modelip.DefinedContributionPlanEnd1)
 		}
 		if modelip.PrePlanYears != elem.prePlanYears {
 			t.Errorf("NewInputParams case %d: Failed - prePlanYears Expected %v but found %v\n", i, elem.prePlanYears, modelip.PrePlanYears)

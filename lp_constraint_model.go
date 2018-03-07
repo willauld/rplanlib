@@ -581,12 +581,12 @@ func NewModelSpecs(vindx VectorVarIndex,
 		if err != nil {
 			return nil, err
 		}
-		if ip.Income[i].Tax {
-			ms.CgAssetTaxed, err = mergeVectors(ms.CgAssetTaxed, tempvec)
-			if err != nil {
-				return nil, err
-			}
+		//if ip.Income[i].Tax {
+		ms.CgAssetTaxed, err = mergeVectors(ms.CgAssetTaxed, tempvec)
+		if err != nil {
+			return nil, err
 		}
+		//}
 		ms.AssetSale = append(ms.AssetSale, assvec)
 		ms.Assettags = append(ms.Assettags, tag)
 	}

@@ -203,9 +203,9 @@ func buildVector(yearly, startAge, endAge, vecStartAge, vecEndAge int, rate floa
 	if !zeroVector {
 		for i := 0; i < vecSize; i++ {
 			if i >= startAge-vecStartAge && i <= endAge-vecStartAge {
-				to := float64(startAge - baseAge + i)
+				to := float64(vecStartAge - baseAge + i)
 				adj := math.Pow(rate, to)
-				vec[i] = float64(yearly) * adj // or something like this FIXME TODO
+				vec[i] = float64(yearly) * adj
 			}
 		}
 	}
@@ -471,10 +471,12 @@ func NewModelSpecs(vindx VectorVarIndex,
 		if !ip.Income[i].Inflate {
 			infr = 1.0
 		}
+		//fmt.Printf("tag: %s, amount: %d, start: %d, end %d, infr: %.3f, splan: %d, eplan: %d, age1: %d\n", tag, amount, startage, endage, infr, ip.StartPlan, ip.EndPlan, ip.Age1)
 		income, err := buildVector(amount, startage, endage, ip.StartPlan, ip.EndPlan, infr, ip.Age1)
 		if err != nil {
 			return nil, err
 		}
+		//fmt.Printf("income: %#v\n", income)
 		ms.Income[0], err = mergeVectors(ms.Income[0], income)
 		if err != nil {
 			return nil, err

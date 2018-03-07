@@ -413,7 +413,7 @@ func NewInputParams(ip map[string]string) (*InputParams, error) {
 	rip.Max = getIPIntValue(ip["eT_MaxIncome"]) * multiplier
 
 	rip.Income = make([]stream, 0)
-	for i := 1; i < MaxStreams; i++ {
+	for i := 1; i < MaxStreams+1; i++ {
 		if ip[fmt.Sprintf("eT_Income%d", i)] != "" ||
 			ip[fmt.Sprintf("eT_IncomeAmount%d", i)] != "" ||
 			ip[fmt.Sprintf("eT_IncomeStartAge%d", i)] != "" ||
@@ -437,7 +437,7 @@ func NewInputParams(ip map[string]string) (*InputParams, error) {
 		}
 	}
 	rip.Expense = make([]stream, 0)
-	for i := 1; i < MaxStreams; i++ {
+	for i := 1; i < MaxStreams+1; i++ {
 		if ip[fmt.Sprintf("eT_Expense%d", i)] != "" ||
 			ip[fmt.Sprintf("eT_ExpenseAmount%d", i)] != "" ||
 			ip[fmt.Sprintf("eT_ExpenseStartAge%d", i)] != "" ||

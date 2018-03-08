@@ -56,7 +56,7 @@ func BinDumpModel(c []float64, A [][]float64, b []float64, x []float64, fname st
 	}
 	filem, err := os.Create(fname)
 	if err != nil {
-		e := fmt.Errorf("os.Open: %s\n", err)
+		e := fmt.Errorf("os.Open: %s", err)
 		return e
 	}
 	Endian := binary.LittleEndian
@@ -67,12 +67,12 @@ func BinDumpModel(c []float64, A [][]float64, b []float64, x []float64, fname st
 	header := []uint32{uint32(len(c)), 0, 0xDEADBEEF}
 	err = binary.Write(filem, Endian, &header)
 	if err != nil {
-		e := fmt.Errorf("BinDumpModel(1): %s\n", err)
+		e := fmt.Errorf("BinDumpModel(1): %s", err)
 		return e
 	}
 	err = binary.Write(filem, Endian, &c)
 	if err != nil {
-		e := fmt.Errorf("BinDumpModel(2): %s\n", err)
+		e := fmt.Errorf("BinDumpModel(2): %s", err)
 		return e
 	}
 	//fmt.Printf("c Header Rows: %d, Cols: %d, code: %#X\n", header[0], header[1], header[2])
@@ -81,13 +81,13 @@ func BinDumpModel(c []float64, A [][]float64, b []float64, x []float64, fname st
 	//fmt.Printf("A length: %d, %d, dumping\n", (len(A), len(A[0])))
 	err = binary.Write(filem, Endian, &header)
 	if err != nil {
-		e := fmt.Errorf("BinDumpModel(3): %s\n", err)
+		e := fmt.Errorf("BinDumpModel(3): %s", err)
 		return e
 	}
 	for _, row := range A {
 		err = binary.Write(filem, Endian, &row)
 		if err != nil {
-			e := fmt.Errorf("BinDumpModel(4): %s\n", err)
+			e := fmt.Errorf("BinDumpModel(4): %s", err)
 			return e
 		}
 	}
@@ -95,12 +95,12 @@ func BinDumpModel(c []float64, A [][]float64, b []float64, x []float64, fname st
 	//fmt.Printf("b length: %d, dumping\n", len(b))
 	err = binary.Write(filem, Endian, &header)
 	if err != nil {
-		e := fmt.Errorf("BinDumpModel(5): %s\n", err)
+		e := fmt.Errorf("BinDumpModel(5): %s", err)
 		return e
 	}
 	err = binary.Write(filem, Endian, &b)
 	if err != nil {
-		e := fmt.Errorf("BinDumpModel(6): %s\n", err)
+		e := fmt.Errorf("BinDumpModel(6): %s", err)
 		return e
 	}
 	xlen := 0
@@ -110,12 +110,12 @@ func BinDumpModel(c []float64, A [][]float64, b []float64, x []float64, fname st
 		//fmt.Printf("x length: %d, dumping\n", len(x))
 		err = binary.Write(filem, Endian, &header)
 		if err != nil {
-			e := fmt.Errorf("BinDumpModel(7): %s\n", err)
+			e := fmt.Errorf("BinDumpModel(7): %s", err)
 			return e
 		}
 		err = binary.Write(filem, Endian, &x)
 		if err != nil {
-			e := fmt.Errorf("BinDumpModel(8): %s\n", err)
+			e := fmt.Errorf("BinDumpModel(8): %s", err)
 			return e
 		}
 		xOverhead = 12
@@ -126,7 +126,7 @@ func BinDumpModel(c []float64, A [][]float64, b []float64, x []float64, fname st
 
 	stats, err := filem.Stat()
 	if err != nil {
-		e := fmt.Errorf("os.Stat: %s\n", err)
+		e := fmt.Errorf("os.Stat: %s", err)
 		return e
 	}
 	fsize := stats.Size()

@@ -7,12 +7,12 @@ import (
 )
 
 type retiree struct { // TODO limit the fields here maxContribution is bigest (only) user
-	age                     int
-	ageAtStart              int
-	throughAge              int
-	mykey                   string
-	definedContributionPlan bool
-	dcpBuckets              []float64
+	age                             int
+	ageAtStart                      int
+	throughAge                      int
+	mykey                           string
+	definedContributionPlanStartAge int
+	definedContributionPlanEndAge   int
 }
 type account struct {
 	bal       float64
@@ -255,7 +255,7 @@ func (ms ModelSpecs) verifyTaxableIncomeCoversContrib() error {
 		if ms.Ip.FilingStatus == "joint" {
 			// Need to check each retiree individually
 			for _, v := range ms.Retirees {
-				//print(v)
+				//fmt.Printf("Retriee: %#v\n", v)
 				contrib := 0.0
 				personalstartage := v.ageAtStart
 				MaxContrib := ms.Ti.maxContribution(year, year+ms.Ip.PrePlanYears, ms.Retirees, v.mykey, ms.Ip.IRate)
@@ -318,8 +318,8 @@ func NewModelSpecs(vindx VectorVarIndex,
 			ageAtStart: ip.Age1 + ip.PrePlanYears,
 			throughAge: ip.PlanThroughAge1,
 			mykey:      ip.MyKey1,
-			definedContributionPlan: false,
-			dcpBuckets:              nil,
+			definedContributionPlanStartAge: ip.DefinedContributionPlanStart1,
+			definedContributionPlanEndAge:   ip.DefinedContributionPlanEnd1,
 		},
 	}
 	if ip.FilingStatus == "joint" {
@@ -328,8 +328,8 @@ func NewModelSpecs(vindx VectorVarIndex,
 			ageAtStart: ip.Age2 + ip.PrePlanYears,
 			throughAge: ip.PlanThroughAge2,
 			mykey:      ip.MyKey2,
-			definedContributionPlan: false,
-			dcpBuckets:              nil,
+			definedContributionPlanStartAge: ip.DefinedContributionPlanStart2,
+			definedContributionPlanEndAge:   ip.DefinedContributionPlanEnd2,
 		}
 		retirees = append(retirees, r2)
 	}
@@ -344,6 +344,11 @@ func NewModelSpecs(vindx VectorVarIndex,
 		a.rRate = ip.RRate
 		if ip.TDRARate1 != 0.0 {
 			a.rRate = ip.TDRARate1
+			panic("This shoud already have default value from NewInputSpecs")
+		}
+		infr := 1.0
+		if ip.TDRAContribInflate1 == true {
+			infr = ip.IRate
 		}
 		a.acctype = "IRA"
 		a.mykey = ip.MyKey1
@@ -352,7 +357,7 @@ func NewModelSpecs(vindx VectorVarIndex,
 		a.contributions, dbal, _, err = genContrib(ip.TDRAContrib1,
 			ms.convertAge(ip.TDRAContribStart1, a.mykey),
 			ms.convertAge(ip.TDRAContribEnd1, a.mykey),
-			ip.StartPlan, ip.EndPlan, ip.IRate, a.rRate, ip.Age1)
+			ip.StartPlan, ip.EndPlan, infr, a.rRate, ip.Age1)
 		if err != nil {
 			return nil, err
 		}
@@ -365,6 +370,10 @@ func NewModelSpecs(vindx VectorVarIndex,
 		if ip.TDRARate2 != 0 {
 			a.rRate = ip.TDRARate2
 		}
+		infr := 1.0
+		if ip.TDRAContribInflate2 == true {
+			infr = ip.IRate
+		}
 		a.acctype = "IRA"
 		a.mykey = ip.MyKey2
 		a.origbal = float64(ip.TDRA2)
@@ -372,7 +381,7 @@ func NewModelSpecs(vindx VectorVarIndex,
 		a.contributions, dbal, _, err = genContrib(ip.TDRAContrib2,
 			ms.convertAge(ip.TDRAContribStart2, a.mykey),
 			ms.convertAge(ip.TDRAContribEnd2, a.mykey),
-			ip.StartPlan, ip.EndPlan, ip.IRate, a.rRate, ip.Age1)
+			ip.StartPlan, ip.EndPlan, infr, a.rRate, ip.Age1)
 		if err != nil {
 			return nil, err
 		}
@@ -385,6 +394,10 @@ func NewModelSpecs(vindx VectorVarIndex,
 		if ip.RothRate1 != 0 {
 			a.rRate = ip.RothRate1
 		}
+		infr := 1.0
+		if ip.RothContribInflate1 == true {
+			infr = ip.IRate
+		}
 		a.acctype = "roth"
 		a.mykey = ip.MyKey1
 		a.origbal = float64(ip.Roth1)
@@ -392,7 +405,7 @@ func NewModelSpecs(vindx VectorVarIndex,
 		a.contributions, dbal, _, err = genContrib(ip.RothContrib1,
 			ms.convertAge(ip.RothContribStart1, a.mykey),
 			ms.convertAge(ip.RothContribEnd1, a.mykey),
-			ip.StartPlan, ip.EndPlan, ip.IRate, a.rRate, ip.Age1)
+			ip.StartPlan, ip.EndPlan, infr, a.rRate, ip.Age1)
 		if err != nil {
 			return nil, err
 		}
@@ -406,6 +419,10 @@ func NewModelSpecs(vindx VectorVarIndex,
 		if ip.RothRate2 != 0 {
 			a.rRate = ip.RothRate2
 		}
+		infr := 1.0
+		if ip.RothContribInflate2 == true {
+			infr = ip.IRate
+		}
 		a.acctype = "roth"
 		a.mykey = ip.MyKey2
 		a.origbal = float64(ip.Roth2)
@@ -413,7 +430,7 @@ func NewModelSpecs(vindx VectorVarIndex,
 		a.contributions, dbal, _, err = genContrib(ip.RothContrib1,
 			ms.convertAge(ip.RothContribStart2, a.mykey),
 			ms.convertAge(ip.RothContribEnd2, a.mykey),
-			ip.StartPlan, ip.EndPlan, ip.IRate, a.rRate, ip.Age1)
+			ip.StartPlan, ip.EndPlan, infr, a.rRate, ip.Age1)
 		if err != nil {
 			return nil, err
 		}
@@ -427,6 +444,10 @@ func NewModelSpecs(vindx VectorVarIndex,
 		if ip.AftataxRate != 0 {
 			a.rRate = ip.AftataxRate
 		}
+		infr := 1.0
+		if ip.AftataxContribInflate == true {
+			infr = ip.IRate
+		}
 		a.acctype = "aftertax"
 		a.mykey = "" // need to make this definable for pc versions
 		a.origbal = float64(ip.Aftatax)
@@ -435,7 +456,7 @@ func NewModelSpecs(vindx VectorVarIndex,
 		a.contributions, dbal, dbasis, err = genContrib(ip.AftataxContrib,
 			ms.convertAge(ip.AftataxContribStart, a.mykey),
 			ms.convertAge(ip.AftataxContribEnd, a.mykey),
-			ip.StartPlan, ip.EndPlan, ip.IRate, a.rRate, ip.Age1)
+			ip.StartPlan, ip.EndPlan, infr, a.rRate, ip.Age1)
 		if err != nil {
 			return nil, err
 		}
@@ -530,6 +551,8 @@ func NewModelSpecs(vindx VectorVarIndex,
 		brokerageRate := ip.Assets[i].BrokeragePercent / 100.0
 		if brokerageRate == 0 {
 			brokerageRate = 0.04 // default to 4% // TODO FIXME defaults should be set in NewInputParams
+			e := fmt.Errorf("Default (non-zero) value for BrokeragePercent should be set prior to this in NewInputSpecs()")
+			panic(e)
 		}
 		assetRRate := ip.Assets[i].AssetRRate
 		costAndImprovements := float64(ip.Assets[i].CostAndImprovements)

@@ -182,16 +182,20 @@ func (ti Taxinfo) maxContribution(year int, yearsToInflateBy int, retirees []ret
 				max += ti.Contribspecs["TDRACatchup"]
 				//fmt.Printf("max += tiContribspecs[TDRACatchup]: %f\n", ti.Contribspecs["TDRACatchup"])
 			}
-			if v.definedContributionPlan {
-				a := v.dcpBuckets
+			if v.definedContributionPlanStartAge > 0 &&
+				v.definedContributionPlanEndAge >=
+					v.definedContributionPlanStartAge {
+				lower := v.definedContributionPlanStartAge - v.ageAtStart
+				upper := v.definedContributionPlanEndAge - v.ageAtStart
 				/* no lazy expantion in golang implementation, created in NewModelSpecs()
+				a := v.dcpBuckets
 				                    if a == nil {
 				                        // lazy expantion of the definedContributionPlan info
 				                        v.dcpBuckets = expandYears(startage, have_plan)
 				                        a = v.dcpBuckets
 									}
 				*/
-				if a[year] == 1 {
+				if year >= lower && year <= upper {
 					max += ti.Contribspecs["401k"]
 					if age >= int(ti.Contribspecs["CatchupAge"]) {
 						max += ti.Contribspecs["401kCatchup"]

@@ -1615,7 +1615,192 @@ func TestResultsOutput(t *testing.T) {
 		allowDeposits bool
 		iRate         float64
 	}{
-		{ // Case 0 // case to match mobile.toml
+		{ // case 0 // driver generated from AWill.toml
+			ip: map[string]string{
+				"key1":                         "will",
+				"key2":                         "yuli",
+				"eT_Age1":                      "56",
+				"eT_Age2":                      "54",
+				"eT_RetireAge1":                "57",
+				"eT_RetireAge2":                "62",
+				"eT_PlanThroughAge1":           "100",
+				"eT_PlanThroughAge2":           "100",
+				"eT_PIA1":                      "31000",
+				"eT_PIA2":                      "-1",
+				"eT_SS_Start1":                 "70",
+				"eT_SS_Start2":                 "68",
+				"eT_TDRA1":                     "1400000",
+				"eT_TDRA2":                     "18000",
+				"eT_TDRA_Contrib1":             "0",
+				"eT_Roth1":                     "0",
+				"eT_Roth2":                     "0",
+				"eT_Aftatax":                   "700000",
+				"eT_Aftatax_Basis":             "400000",
+				"eT_iRatePercent":              "2.5",
+				"eT_rRatePercent":              "6",
+				"dollarsInThousands":           "false",
+				"eT_Income1":                   "rental_Fessenden",
+				"eT_IncomeAmount1":             "36000",
+				"eT_IncomeStartAge1":           "57",
+				"eT_IncomeEndAge1":             "75",
+				"eT_IncomeInflate1":            "true",
+				"eT_IncomeTax1":                "true",
+				"eT_Expense1":                  "mortgage",
+				"eT_ExpenseAmount1":            "37131",
+				"eT_ExpenseStartAge1":          "56",
+				"eT_ExpenseEndAge1":            "61",
+				"eT_Asset1":                    "rental_VanHoutin",
+				"eT_AssetValue1":               "700000",
+				"eT_AssetAgeToSell1":           "80",
+				"eT_AssetCostAndImprovements1": "425000",
+				"eT_AssetOwedAtAgeToSell1":     "0",
+				"eT_AssetPrimaryResidence1":    "false",
+				"eT_AssetRRatePercent1":        "4",
+				"eT_Income2":                   "rental_VanHoutin",
+				"eT_IncomeAmount2":             "24000",
+				"eT_IncomeStartAge2":           "67",
+				"eT_IncomeEndAge2":             "80",
+				"eT_IncomeInflate2":            "true",
+				"eT_IncomeTax2":                "true",
+				"eT_Expense2":                  "college",
+				"eT_ExpenseAmount2":            "30000",
+				"eT_ExpenseStartAge2":          "56",
+				"eT_ExpenseEndAge2":            "59",
+				"eT_ExpenseInflate2":           "false",
+				"eT_Asset2":                    "home",
+				"eT_AssetValue2":               "550000",
+				"eT_AssetAgeToSell2":           "0",
+				"eT_AssetCostAndImprovements2": "300000",
+				"eT_AssetOwedAtAgeToSell2":     "0",
+				"eT_AssetPrimaryResidence2":    "true",
+				"eT_AssetRRatePercent2":        "4",
+				"eT_Asset3":                    "rental_Fessenden",
+				"eT_AssetValue3":               "900000",
+				"eT_AssetAgeToSell3":           "75",
+				"eT_AssetCostAndImprovements3": "450000",
+				"eT_AssetOwedAtAgeToSell3":     "0",
+				"eT_AssetPrimaryResidence3":    "false",
+				"eT_AssetRRatePercent3":        "4",
+				//Added
+				"filingStatus": "joint",
+				"eT_maximize":  "Spending", // or "PlusEstate"
+			},
+			verbose:       true,
+			allowDeposits: false,
+			iRate:         1.025,
+		},
+		{ // Case 1  // case to match AWill.toml Hand coded
+			ip: map[string]string{
+				"setName":                    "AWill.toml",
+				"filingStatus":               "joint",
+				"key1":                       "will",
+				"key2":                       "yuli",
+				"eT_Age1":                    "56",
+				"eT_Age2":                    "54",
+				"eT_RetireAge1":              "57",
+				"eT_RetireAge2":              "62",
+				"eT_PlanThroughAge1":         "100",
+				"eT_PlanThroughAge2":         "100",
+				"eT_PIA1":                    "31000", //31K
+				"eT_PIA2":                    "-1",
+				"eT_SS_Start1":               "70",
+				"eT_SS_Start2":               "68",
+				"eT_TDRA1":                   "1400000", //1.4M
+				"eT_TDRA2":                   "18000",   //18K
+				"eT_TDRA_Rate1":              "",
+				"eT_TDRA_Rate2":              "",
+				"eT_TDRA_Contrib1":           "",
+				"eT_TDRA_Contrib2":           "", // contribute 5k per year
+				"eT_TDRA_ContribStartAge1":   "",
+				"eT_TDRA_ContribStartAge2":   "",
+				"eT_TDRA_ContribEndAge1":     "",
+				"eT_TDRA_ContribEndAge2":     "",
+				"eT_Roth1":                   "0",
+				"eT_Roth2":                   "0",
+				"eT_Roth_Rate1":              "",
+				"eT_Roth_Rate2":              "",
+				"eT_Roth_Contrib1":           "",
+				"eT_Roth_Contrib2":           "",
+				"eT_Roth_ContribStartAge1":   "",
+				"eT_Roth_ContribStartAge2":   "",
+				"eT_Roth_ContribEndAge1":     "",
+				"eT_Roth_ContribEndAge2":     "",
+				"eT_Aftatax":                 "700000", //700k
+				"eT_Aftatax_Basis":           "400000", //400k
+				"eT_Aftatax_Rate":            "",
+				"eT_Aftatax_Contrib":         "",
+				"eT_Aftatax_ContribStartAge": "",
+				"eT_Aftatax_ContribEndAge":   "",
+
+				"eT_iRatePercent":    "2.5",
+				"eT_rRatePercent":    "6",
+				"eT_maximize":        "Spending", // or "PlusEstate"
+				"dollarsInThousands": "false",
+
+				"eT_Income1":         "rental_fessinden",
+				"eT_IncomeAmount1":   "36000",
+				"eT_IncomeStartAge1": "57",
+				"eT_IncomeEndAge1":   "75",
+				"eT_IncomeInflate1":  "true",
+				"eT_IncomeTax1":      "true",
+
+				//prototype entries below
+				"eT_Income2":         "rental_Van_Houten",
+				"eT_IncomeAmount2":   "24000",
+				"eT_IncomeStartAge2": "67",
+				"eT_IncomeEndAge2":   "80",
+				"eT_IncomeInflate2":  "true",
+				"eT_IncomeTax2":      "true",
+
+				//prototype entries below
+				"eT_Expense1":         "morgage",
+				"eT_ExpenseAmount1":   "37131",
+				"eT_ExpenseStartAge1": "56",
+				"eT_ExpenseEndAge1":   "61",
+				"eT_ExpenseInflate1":  "",
+				"eT_ExpenseTax1":      "", //ignored, or should be
+
+				//prototype entries below
+				"eT_Expense2":         "college",
+				"eT_ExpenseAmount2":   "30000",
+				"eT_ExpenseStartAge2": "56",
+				"eT_ExpenseEndAge2":   "59",
+				"eT_ExpenseInflate2":  "false",
+				"eT_ExpenseTax2":      "", //ignored, or should be
+
+				//prototype entries below
+				"eT_Asset1":                    "rental_fessenden",
+				"eT_AssetValue1":               "900000",
+				"eT_AssetAgeToSell1":           "75",
+				"eT_AssetCostAndImprovements1": "450000",
+				"eT_AssetOwedAtAgeToSell1":     "0",
+				"eT_AssetPrimaryResidence1":    "false",
+				"eT_AssetRRatePercent1":        "4",
+				"eT_AssetBrokeragePercent1":    "",
+
+				"eT_Asset2":                    "rental_van_houten",
+				"eT_AssetValue2":               "700000",
+				"eT_AssetAgeToSell2":           "80",
+				"eT_AssetCostAndImprovements2": "425000",
+				"eT_AssetOwedAtAgeToSell2":     "0",
+				"eT_AssetPrimaryResidence2":    "false",
+				"eT_AssetRRatePercent2":        "4", // python defaults to global rate
+				"eT_AssetBrokeragePercent2":    "",
+
+				"eT_Asset3":                    "home",
+				"eT_AssetValue3":               "550000",
+				"eT_AssetAgeToSell3":           "0",
+				"eT_AssetCostAndImprovements3": "300000",
+				"eT_AssetOwedAtAgeToSell3":     "0",
+				"eT_AssetPrimaryResidence3":    "true",
+				"eT_AssetRRatePercent3":        "4", // python defaults to global rate
+				"eT_AssetBrokeragePercent3":    "",
+			},
+			verbose:       true,
+			allowDeposits: false,
+			iRate:         1.025,
+		},
+		{ // Case 2 // case to match mobile.toml
 			ip: map[string]string{
 				"setName":                    "activeParams",
 				"filingStatus":               "joint",
@@ -1717,7 +1902,7 @@ func TestResultsOutput(t *testing.T) {
 			allowDeposits: false,
 			iRate:         1.025,
 		},
-		{ // Case 1 // case to match mobile.toml
+		{ // Case 3 // case to match mobile.toml
 			ip: map[string]string{
 				"setName":                    "activeParams",
 				"filingStatus":               "single",
@@ -1769,10 +1954,28 @@ func TestResultsOutput(t *testing.T) {
 		},
 	}
 	if !(testing.Short() && testing.Verbose()) { //Skip unless set "-v -short"
+		/*
+			ip0, err := NewInputParams(tests[0].ip)
+			if err != nil {
+				t.Errorf("TestResultsOutput PRE case %d: %s", 0, err)
+			}
+			ip1, err := NewInputParams(tests[1].ip)
+			if err != nil {
+				t.Errorf("TestResultsOutput PRE case %d: %s", 1, err)
+			}
+			m0 := structs.Map(ip0)
+			m1 := structs.Map(ip1)
+			for k, v := range m0 {
+				c0 := fmt.Sprintf("%#v", v)
+				c1 := fmt.Sprintf("%#v", m1[k])
+				if c0 != c1 {
+					fmt.Printf("\nNo match at: '%s', found\n\tm0: '%#v'\n\t m1: '%#v'\n\n", k, v, m1[k])
+				}
+			}*/
 		t.Skip("TestResultsOutput(): skipping unless set '-v -short'")
 	}
 	for i, elem := range tests {
-		if i > 0 {
+		if i != 1 {
 			continue
 		}
 		fmt.Printf("======== CASE %d ========\n", i)
@@ -1827,12 +2030,14 @@ func TestResultsOutput(t *testing.T) {
 		res := lpsimplex.LPSimplex(c, a, b, nil, nil, nil, callback, disp, maxiter, tol, bland)
 		elapsed := time.Since(start)
 
-		err = BinDumpModel(c, a, b, res.X, "./RPlanModelgo.datX")
-		if err != nil {
-			t.Errorf("TestResultsOutput case %d: %s", i, err)
-			continue
-		}
-		BinCheckModelFiles("./RPlanModelgo.datX", "./RPlanModelpython.datX", &vindx)
+		/*
+			err = BinDumpModel(c, a, b, res.X, "./RPlanModelgo.datX")
+			if err != nil {
+				t.Errorf("TestResultsOutput case %d: %s", i, err)
+				continue
+			}
+			BinCheckModelFiles("./RPlanModelgo.datX", "./RPlanModelpython.datX", &vindx)
+		*/
 
 		//fmt.Printf("Res: %#v\n", res)
 		str := fmt.Sprintf("Message: %v\n", res.Message)

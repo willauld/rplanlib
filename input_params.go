@@ -100,10 +100,11 @@ type asset struct {
 	BrokeragePercent    float64 // avg rate paid for brokerage services
 }
 
-//TODO: TESTME
+/*/TODO: REMOVE ME
 func kgetIPIntValue(str string) int {
 	return 1000 * getIPIntValue(str)
 }
+*/
 
 func getIPIntValue(str string) int {
 	if str == "" {
@@ -161,6 +162,8 @@ const ReturnRatePercent = 6.0
 const InflactionRatePercent = 2.5
 const MaximizeDefault = "Spending"
 const FilingStatusDefault = "joint"
+const BrokeragePercentDefault = 4.0
+const InflateContribDefault = false
 
 // NewInputParams takes string inputs and converts them to model inputs
 // assigning default values where needed
@@ -240,7 +243,7 @@ func NewInputParams(ip map[string]string) (*InputParams, error) {
 		}
 	}
 	rip.DefinedContributionPlanStart1 = getIPIntValue(ip["eT_DefinedContributionPlanStart1"])
-	rip.DefinedContributionPlanEnd1 = getIPIntValue(ip["eT_DefinedContributionPlanEnd2"])
+	rip.DefinedContributionPlanEnd1 = getIPIntValue(ip["eT_DefinedContributionPlanEnd1"])
 
 	if ip["eT_PIA1"] != "" || ip["eT_SS_Start1"] != "" {
 		if ip["eT_PIA1"] == "" || ip["eT_SS_Start1"] == "" {
@@ -319,8 +322,8 @@ func NewInputParams(ip map[string]string) (*InputParams, error) {
 				return nil, e
 			}
 		}
-		rip.DefinedContributionPlanStart1 = getIPIntValue(ip["eT_DefinedContributionPlanStart2"])
-		rip.DefinedContributionPlanEnd1 = getIPIntValue(ip["eT_DefinedContributionPlanEnd2"])
+		rip.DefinedContributionPlanStart2 = getIPIntValue(ip["eT_DefinedContributionPlanStart2"])
+		rip.DefinedContributionPlanEnd2 = getIPIntValue(ip["eT_DefinedContributionPlanEnd2"])
 
 		if ip["eT_PIA2"] != "" || ip["eT_SS_Start2"] != "" ||
 			ip["eT_PIA1"] != "" {
@@ -383,13 +386,13 @@ func NewInputParams(ip map[string]string) (*InputParams, error) {
 	rip.AgeDelta = rip.Age1 - rip.Age2
 	rip.Numyr = rip.EndPlan - rip.StartPlan
 
-	if ip["eT_Aftatax_Contrib"] != "" ||
+	if (ip["eT_Aftatax_Contrib"] != "" && getIPIntValue(ip["eT_Aftatax_Contrib"]) != 0) ||
 		ip["eT_Aftatax_ContribStartAge"] != "" ||
 		ip["eT_Aftatax_ContribEndAge"] != "" {
 		if ip["eT_Aftatax_Contrib"] == "" ||
 			ip["eT_Aftatax_ContribStartAge"] == "" ||
 			ip["eT_Aftatax_ContribEndAge"] == "" {
-			e := fmt.Errorf("NewInputParams: retiree After tax account contribution requires contribution amount, start and end age for contributions be specified")
+			e := fmt.Errorf("NewInputParams: retiree After tax account contribution requires contribution amount, start and end age for contributions to be specified")
 			return nil, e
 		}
 	}
@@ -488,6 +491,9 @@ func NewInputParams(ip map[string]string) (*InputParams, error) {
 				BrokeragePercent:    getIPFloatValue(ip[fmt.Sprintf("eT_AssetBrokeragePercent%d", i)]),
 			}
 			ap.AssetRRate = 1 + ap.AssetRRatePercent/100.0
+			if ap.BrokeragePercent == 0 {
+				ap.BrokeragePercent = BrokeragePercentDefault
+			}
 			rip.Assets = append(rip.Assets, ap)
 		}
 	}

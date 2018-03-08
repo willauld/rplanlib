@@ -85,16 +85,12 @@ func TestMaxContribution(t *testing.T) {
 			ageAtStart: 57,
 			throughAge: 100,
 			mykey:      "retiree1",
-			definedContributionPlan: false,
-			dcpBuckets:              nil,
 		},
 		{ // retireeindx == 1
 			age:        54,
 			ageAtStart: 55,
 			throughAge: 100,
 			mykey:      "retiree2",
-			definedContributionPlan: false,
-			dcpBuckets:              nil,
 		},
 	}
 	for i, elem := range tests {
@@ -126,8 +122,6 @@ func TestApplyEarlyPenalty(t *testing.T) {
 		ageAtStart: 57,
 		throughAge: 100,
 		mykey:      "retiree1",
-		definedContributionPlan: false,
-		dcpBuckets:              nil,
 	}
 
 	tests := []struct {
@@ -185,8 +179,6 @@ func TestRmdNeeded(t *testing.T) {
 		ageAtStart: 57,
 		throughAge: 100,
 		mykey:      "retiree1",
-		definedContributionPlan: false,
-		dcpBuckets:              nil,
 	}
 
 	tests := []struct {

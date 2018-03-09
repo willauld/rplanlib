@@ -374,6 +374,7 @@ func BinCheckModelFiles(f1, f2 string) {
 			if x[i] > 0 && x1[i] < 0 || x[i] < 0 && x1[i] > 0 ||
 				math.Abs(x[i]-x1[i]) > 0.00000001 {
 				fmt.Printf("x[%d] is:\nf2: %g\nf1: %g\n", i, x[i], x1[i])
+				fmt.Printf("duo x[%d] is:\nf2: %[4]*.[5]*[2]f\nf1: %[4]*.[5]*[3]f\n", i, x[i], x1[i], 20, 4)
 				if v != nil {
 					fmt.Printf("	%s\n", v.Varstr(i))
 				}

@@ -80,6 +80,12 @@ func checkIndexSequence(years, taxbins, cgbins int, accmap map[string]int, varin
 	return passOk
 }
 
+var accountCat = []string{
+	"IRA",
+	"roth",
+	"aftertax",
+}
+
 // VectorVarIndex contains the index information to convert from variable index to vector index
 type VectorVarIndex struct {
 	// inplements the vector var index functions
@@ -88,6 +94,7 @@ type VectorVarIndex struct {
 	Cgbins   int
 	Accounts int
 	Accmap   map[string]int
+	Accname  []string
 	Xcount   int
 	Ycount   int
 	Wcount   int
@@ -132,7 +139,12 @@ func NewVectorVarIndex(iyears, itaxbins, icgbins int,
 	}
 
 	iaccounts := 0
-	for _, n := range iaccmap {
+	accname := make([]string, 5)
+	for j := 0; j < len(iaccmap); j++ {
+		n := iaccmap[accountCat[j]]
+		for i := 0; i < n; i++ {
+			accname[iaccounts+i] = fmt.Sprintf("%s%d", accountCat[j], i+1)
+		}
 		iaccounts += n
 	}
 	//fmt.Printf("iaccounts: %d, iaccmap: %v\n", iaccounts, iaccmap)
@@ -158,6 +170,7 @@ func NewVectorVarIndex(iyears, itaxbins, icgbins int,
 		Cgbins:   icgbins,
 		Accounts: iaccounts,
 		Accmap:   iaccmap,
+		Accname:  accname,
 		Xcount:   xcount,
 		Ycount:   ycount,
 		Wcount:   wcount,
@@ -224,27 +237,30 @@ func (v VectorVarIndex) D(i, j int) int {
 // Varstr returns the variable name and index(s) for the variable at indx in the variable vector
 func (v VectorVarIndex) Varstr(indx int) string {
 	var a, b, c int
+	var name string
 
 	//assert indx < v.Vsize
 	if indx < v.Xcount {
 		a = indx / v.Taxbins
 		b = indx % v.Taxbins
-		return fmt.Sprintf("x[%d,%d]", a, b) // add actual values for i,j
+		return fmt.Sprintf("x[%d,%d]", a, b)
 	} else if indx < v.Xcount+v.Ycount {
 		c = indx - v.Xcount
 		a = c / v.Cgbins
 		b = c % v.Cgbins
-		return fmt.Sprintf("y[%d,%d]", a, b) // add actual values for i,j
+		return fmt.Sprintf("y[%d,%d]", a, b)
 	} else if indx < v.Xcount+v.Ycount+v.Wcount {
 		c = indx - (v.Xcount + v.Ycount)
 		a = c / v.Accounts
 		b = c % v.Accounts
-		return fmt.Sprintf("w[%d,%d]", a, b) // add actual values for i,j
+		name = v.Accname[b]
+		return fmt.Sprintf("w[%d,%d=%s]", a, b, name)
 	} else if indx < v.Xcount+v.Ycount+v.Wcount+v.Bcount {
 		c = indx - (v.Xcount + v.Ycount + v.Wcount)
 		a = c / v.Accounts
 		b = c % v.Accounts
-		return fmt.Sprintf("b[%d,%d]", a, b) // add actual values for i,j
+		name = v.Accname[b]
+		return fmt.Sprintf("b[%d,%d=%s]", a, b, name)
 	} else if indx < v.Xcount+v.Ycount+v.Wcount+v.Bcount+v.Scount {
 		c = indx - (v.Xcount + v.Ycount + v.Wcount + v.Bcount)
 		//a = c / v.Years
@@ -254,7 +270,8 @@ func (v VectorVarIndex) Varstr(indx int) string {
 		c = indx - (v.Xcount + v.Ycount + v.Wcount + v.Bcount + v.Scount)
 		a = c / v.Accounts
 		b = c % v.Accounts
-		return fmt.Sprintf("D[%d,%d]", a, b) // add actual values for i,j
+		name = v.Accname[b]
+		return fmt.Sprintf("D[%d,%d=%s]", a, b, name)
 	} else {
 		fmt.Fprintf(v.errfile, "\nError -- varstr() corupted\n")
 	}

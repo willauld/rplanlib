@@ -50,7 +50,9 @@ func TersPrintMatrix(a [][]float64) error {
 	return nil
 }
 
-func BinDumpModel(c []float64, A [][]float64, b []float64, x []float64, fname string) error {
+// BinDumpModel writes a comparable binary version of the retirement plan model
+func BinDumpModel(c []float64, A [][]float64, b []float64, x []float64,
+	vid *[]int32, fname string) error {
 	if fname == "" {
 		fname = "./RPlanModelgo.dat"
 	}
@@ -77,6 +79,7 @@ func BinDumpModel(c []float64, A [][]float64, b []float64, x []float64, fname st
 	}
 	//fmt.Printf("c Header Rows: %d, Cols: %d, code: %#X\n", header[0], header[1], header[2])
 
+	// write A matrix
 	header = []uint32{uint32(len(A)), uint32(len(A[0])), 0xDEADBEEF}
 	//fmt.Printf("A length: %d, %d, dumping\n", (len(A), len(A[0])))
 	err = binary.Write(filem, Endian, &header)
@@ -91,6 +94,8 @@ func BinDumpModel(c []float64, A [][]float64, b []float64, x []float64, fname st
 			return e
 		}
 	}
+
+	// write b vector
 	header = []uint32{uint32(len(b)), 0, 0xDEADBEEF}
 	//fmt.Printf("b length: %d, dumping\n", len(b))
 	err = binary.Write(filem, Endian, &header)
@@ -103,6 +108,8 @@ func BinDumpModel(c []float64, A [][]float64, b []float64, x []float64, fname st
 		e := fmt.Errorf("BinDumpModel(6): %s", err)
 		return e
 	}
+
+	// Write x vector
 	xlen := 0
 	xOverhead := 0
 	if x != nil {
@@ -122,6 +129,25 @@ func BinDumpModel(c []float64, A [][]float64, b []float64, x []float64, fname st
 		xlen = len(x)
 	}
 
+	// Write Vector index data
+	vidlen := 0
+	vidOverhead := 0
+	if vid != nil {
+		header = []uint32{uint32(len(*vid)), 0, 0xDEADBEEF}
+		fmt.Printf("vid length: %d, dumping\n", len(*vid))
+		err = binary.Write(filem, Endian, &header)
+		if err != nil {
+			e := fmt.Errorf("BinDumpModel(9): %s", err)
+			return e
+		}
+		err = binary.Write(filem, Endian, vid)
+		if err != nil {
+			e := fmt.Errorf("BinDumpModel(10): %s", err)
+			return e
+		}
+		vidOverhead = 12
+		vidlen = len(*vid)
+	}
 	//filem.Close()
 
 	stats, err := filem.Stat()
@@ -131,24 +157,35 @@ func BinDumpModel(c []float64, A [][]float64, b []float64, x []float64, fname st
 	}
 	fsize := stats.Size()
 
-	overhead := 3*12 + xOverhead
+	overhead := 3*12 + xOverhead + vidOverhead
 	csize := 8 * len(c)
 	Asize := 8 * len(A) * len(A[0])
 	bsize := 8 * len(b)
 	xsize := 8 * xlen
-	if fsize != int64(overhead+csize+Asize+bsize+xsize) {
-		fmt.Printf("BinDumpModel Error - dump file size error, filesize: %d, len(c): %d, len(A): %d, Len(A[0]): %d, len(b): %d, len(x): %d\n", fsize, len(c), len(A), len(A[0]), len(b), xlen)
+	vidsize := 4 * vidlen
+	fmt.Printf("xOverhead: %d, vidOverhead: %d, xlen: %d, vidlen: %d\n", xOverhead, vidOverhead, xlen, vidlen)
+	calcsize := int64(overhead + csize + Asize + bsize + xsize + vidsize)
+	diff := fsize - calcsize
+	if fsize != calcsize {
+		fmt.Printf("BinDumpModel Error - dump file size error, filesize: %d,\n\tlen(c): %d,\n\tlen(A): %d,\n\tLen(A[0]): %d,\n\tlen(b): %d,\n\tlen(x): %d,\n\tvidlen: %d,\n\t\tdiff: %d\n", fsize, len(c), len(A), len(A[0]), len(b), xlen, vidlen, diff)
 	}
-	binDumpCheck(c, A, b, x, fname)
+	binDumpCheck(c, A, b, x, vid, fname)
 	return nil
 }
 
-func binDumpCheck(c []float64, A [][]float64, b []float64, x []float64, ftocheck string) {
+func binDumpCheck(c []float64, A [][]float64, b []float64, x []float64,
+	vid *[]int32, ftocheck string) {
 	xlen := 0
 	xOverhead := 0
 	if x != nil {
 		xlen = len(x)
 		xOverhead = 12
+	}
+	vidlen := 0
+	vidOverhead := 0
+	if vid != nil {
+		vidlen = len(*vid)
+		vidOverhead = 12
 	}
 	filex, err := os.Open(ftocheck) // For read access.
 	if err != nil {
@@ -161,10 +198,12 @@ func binDumpCheck(c []float64, A [][]float64, b []float64, x []float64, ftocheck
 	}
 	fsize := stats.Size()
 	filex.Close()
-	if int(fsize) != xOverhead+3*12+8*len(c)+8*len(A)*len(A[0])+8*len(b)+8*xlen {
-		fmt.Printf("binDumpCheck Error - dump file size error, filesize: %d, len(c): %d, len(A): %d, Len(A[0]): %d, len(b): %d, xlen: %d, overhead: %d\n", fsize, len(c), len(A), len(A[0]), len(b), xlen, xOverhead+3*12)
+	calcsize := xOverhead + vidOverhead + 3*12 + 8*len(c) + 8*len(A)*len(A[0]) + 8*len(b) + 8*xlen + 4*vidlen
+	diff := int(fsize) - calcsize
+	if int(fsize) != calcsize {
+		fmt.Printf("binDumpCheck Error - dump file size error, filesize: %d,\n\tlen(c): %d,\n\tlen(A): %d,\n\tLen(A[0]): %d,\n\tlen(b): %d,\n\txlen: %d, vidlen: %d\n\toverhead: %d\n\t\tdiff: %d\n", fsize, len(c), len(A), len(A[0]), len(b), xlen, vidlen, vidOverhead+xOverhead+3*12, diff)
 	}
-	c1, A1, b1, x1 := BinLoadModel(ftocheck)
+	c1, A1, b1, x1, vid1 := BinLoadModel(ftocheck)
 	// Check loaded C vector
 	if len(c) != len(c1) {
 		fmt.Printf("modelio error: len(c): %d does not match len(c1) %d\n", len(c), len(c1))
@@ -208,9 +247,20 @@ func binDumpCheck(c []float64, A [][]float64, b []float64, x []float64, ftocheck
 			}
 		}
 	}
+	if vid != nil && vid1 != nil {
+		if (*vid)[0] != (*vid1)[0] ||
+			(*vid)[1] != (*vid1)[1] ||
+			(*vid)[2] != (*vid1)[2] ||
+			(*vid)[3] != (*vid1)[3] ||
+			(*vid)[4] != (*vid1)[4] ||
+			(*vid)[5] != (*vid1)[5] {
+			fmt.Printf("vid: %#v not eaqual to vid1: %#v\n", vid, vid1)
+		}
+	}
 }
 
-func BinCheckModelFiles(f1, f2 string, v *VectorVarIndex) {
+func BinCheckModelFiles(f1, f2 string) {
+	var v *VectorVarIndex
 	filex, err := os.Open(f1) // For read access.
 	if err != nil {
 		log.Fatal(err)
@@ -236,8 +286,39 @@ func BinCheckModelFiles(f1, f2 string, v *VectorVarIndex) {
 	if f1size != f2size {
 		fmt.Printf("Error - file sizes do not match %d vs %d\n", f1size, f2size)
 	}
-	c, A, b, x := BinLoadModel(f2)
-	c1, A1, b1, x1 := BinLoadModel(f1)
+	c, A, b, x, vid := BinLoadModel(f2)
+	c1, A1, b1, x1, vid1 := BinLoadModel(f1)
+
+	// Check vid
+	if vid != nil && vid1 != nil {
+		if (*vid)[0] != (*vid1)[0] ||
+			(*vid)[1] != (*vid1)[1] ||
+			(*vid)[2] != (*vid1)[2] ||
+			(*vid)[3] != (*vid1)[3] ||
+			(*vid)[4] != (*vid1)[4] ||
+			(*vid)[5] != (*vid1)[5] {
+			fmt.Printf("vid: %#v not eaqual to vid1: %#v\n", vid, vid1)
+			//TODO come up with a v to work in this case
+		} else {
+
+			years := int((*vid)[0])
+			taxbins := int((*vid)[1])
+			cgbins := int((*vid)[2])
+			m := map[string]int{
+				"IRA":      int((*vid)[3]),
+				"roth":     int((*vid)[4]),
+				"aftertax": int((*vid)[5]),
+			}
+			tmp, err := NewVectorVarIndex(years, taxbins,
+				cgbins, m, os.Stdout)
+			v = &tmp
+			if err != nil {
+				fmt.Printf("BinCheckModelFiles: %s\n", err)
+				os.Exit(1)
+			}
+		}
+	}
+
 	// Check loaded C vector
 	if len(c) != len(c1) {
 		fmt.Printf("modelio error: len(c): %d does not match len(c1) %d\n", len(c), len(c1))
@@ -312,7 +393,8 @@ func BinCheckModelFiles(f1, f2 string, v *VectorVarIndex) {
 //TODO: unit test
 
 // BinLoadModel reads a binary file, extracting c, A, b of a Linear Program
-func BinLoadModel(filename string) ([]float64, [][]float64, []float64, []float64) {
+func BinLoadModel(filename string) ([]float64, [][]float64, []float64,
+	[]float64, *[]int32) {
 	if filename == "" {
 		filename = "./RPlanModelpython.dat"
 	}
@@ -405,12 +487,39 @@ func BinLoadModel(filename string) ([]float64, [][]float64, []float64, []float64
 		//fmt.Printf("X: %v\n", x)
 	}
 
+	//
+	// Currently Assumes X or no VIndexData // FIXME TODO
+	//
+
+	// Load Vector Index Data array
+	vida := make([]int32, 6)
+	vid := &vida
+	vidlen := 0
+	vidOverhead := 0
+	err = binary.Read(filem, Endian, &header)
+	if err != nil {
+		fmt.Printf("x binary.Read failed: %s\n", err)
+	} else {
+		if header[2] != 0xDEADBEEF {
+			fmt.Printf("header code is not 0xDEADBEEF: %#X\n", header[2])
+			os.Exit(1)
+		}
+		//fmt.Printf("x Header Rows: %d, Cols: %d, code: %#X\n", header[0], header[1], header[2])
+		err = binary.Read(filem, Endian, vid)
+		if err != nil {
+			fmt.Printf("x binary.Read failed: %s\n", err)
+			os.Exit(1)
+		}
+		vidlen = len(*vid)
+		vidOverhead = 12
+		//fmt.Printf("X: %v\n", x)
+	}
 	filem.Close()
-	contentsize := xOverhead + 3*12 + len(c)*8 + len(A)*len(A[0])*8 + len(b)*8 + 8*xlen
+	contentsize := xOverhead + vidOverhead + 3*12 + len(c)*8 + len(A)*len(A[0])*8 + len(b)*8 + 8*xlen + 4*vidlen
 	if size != int64(contentsize) {
 		fmt.Printf("BinLoadModel: file size (%d) and content size (%d) do not match\n", size, contentsize)
 	}
-	return c, A, b, x
+	return c, A, b, x, vid
 }
 
 /*

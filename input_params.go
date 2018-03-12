@@ -585,6 +585,22 @@ var InputStreamStrDefs = []string{
 	"eT_AssetBrokeragePercent",
 }
 
+func UpdateInputStringsMap(ipsm *map[string]string, key, value string) error {
+	if *ipsm == nil {
+		//fmt.Printf("ipsm is nil, Calling NewInputStringsMap()\n")
+		*ipsm = NewInputStringsMap()
+		//fmt.Printf("ipsm new size is: %d\n", len(*ipsm))
+	}
+	fmt.Printf("ipsm type: %T, %#v\n", ipsm, ipsm)
+	_, ok := (*ipsm)[key]
+	if !ok {
+		e := fmt.Errorf("UpdateInputStringsMap: Attempting to update non-present field: %q", key)
+		return e
+	}
+	(*ipsm)[key] = value
+	return nil
+}
+
 // NewInputStringsMap returns a map with all available settings set to the empty string
 func NewInputStringsMap() map[string]string {
 	//This functions is the One Source of Truth for the avalable settings

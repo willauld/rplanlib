@@ -9,6 +9,32 @@ import (
 // Testing for input_params.go
 //
 
+func TestUpdateInputStringsMap(t *testing.T) {
+	tests := []struct {
+		size  int
+		key   string
+		value string
+	}{
+		{ //case 0
+			size:  255,
+			key:   "eT_SS_Start1",
+			value: "65",
+		},
+	}
+	var ipsm map[string]string
+	for i, elem := range tests {
+		fmt.Printf("========= Case %d: ===========\n", i)
+		err := UpdateInputStringsMap(&ipsm, elem.key, elem.value)
+		if err != nil {
+			t.Errorf("TestUpdateInputStringsMap() case %d: Failed - key: %q, value: %q\n", i, elem.key, elem.value)
+		}
+		if ipsm[elem.key] != elem.value {
+			t.Errorf("TestUpdateInputStringsMap() case %d: Failed - fro key: %q, expected value: %q but found %q\n", i, elem.key, elem.value, ipsm[elem.key])
+		}
+	}
+	//fmt.Printf("ipsm: %d: %#v\n", len(ipsm), ipsm)
+}
+
 func TestNewInputStringsMap(t *testing.T) {
 	tests := []struct {
 		size int

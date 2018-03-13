@@ -23,7 +23,7 @@ func TestUpdateInputStringsMap(t *testing.T) {
 	}
 	var ipsm map[string]string
 	for i, elem := range tests {
-		fmt.Printf("========= Case %d: ===========\n", i)
+		//fmt.Printf("========= Case %d: ===========\n", i)
 		err := UpdateInputStringsMap(&ipsm, elem.key, elem.value)
 		if err != nil {
 			t.Errorf("TestUpdateInputStringsMap() case %d: Failed - key: %q, value: %q\n", i, elem.key, elem.value)

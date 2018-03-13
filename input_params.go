@@ -221,6 +221,9 @@ func NewInputParams(ip map[string]string) (*InputParams, error) {
 	if ip["eT_Age1"] == "" ||
 		ip["eT_RetireAge1"] == "" ||
 		ip["eT_PlanThroughAge1"] == "" {
+		if rip.MyKey1 == "" {
+			rip.MyKey1 = "retiree1"
+		}
 		e := fmt.Errorf("NewInputParams: retiree '%s' age, retirement age and plan through age must all be specified", rip.MyKey1)
 		return nil, e
 	}
@@ -297,22 +300,7 @@ func NewInputParams(ip map[string]string) (*InputParams, error) {
 
 	var through2 int
 	if rip.FilingStatus == "joint" {
-		rip.MyKey2 = ip["key2"]
-		if ip["eT_Age2"] == "" ||
-			ip["eT_RetireAge2"] == "" ||
-			ip["eT_PlanThroughAge2"] == "" {
-			e := fmt.Errorf("NewInputParams: retiree '%s' age, retirement age and plan through age must all be specified", rip.MyKey2)
-			return nil, e
-		}
-		rip.Age2 = getIPIntValue(ip["eT_Age2"])
-		rip.RetireAge2 = getIPIntValue(ip["eT_RetireAge2"])
-		if rip.RetireAge2 < rip.Age2 {
-			rip.RetireAge2 = rip.Age2
-		}
-		rip.PlanThroughAge2 = getIPIntValue(ip["eT_PlanThroughAge2"])
-		yearsToRetire2 := rip.RetireAge2 - rip.Age2
-		rip.PrePlanYears = intMin(yearsToRetire1, yearsToRetire2)
-		through2 = rip.PlanThroughAge2 - rip.Age2
+		needRetiree2 := false
 
 		if ip["eT_DefinedContributionPlanStart2"] != "" ||
 			ip["eT_DefinedContributionPlanEnd2"] != "" {
@@ -321,6 +309,7 @@ func NewInputParams(ip map[string]string) (*InputParams, error) {
 				e := fmt.Errorf("NewInputParams: retiree '%s' defined contribution plan start and end ages must be specified", rip.MyKey2)
 				return nil, e
 			}
+			needRetiree2 = true
 		}
 		rip.DefinedContributionPlanStart2 = getIPIntValue(ip["eT_DefinedContributionPlanStart2"])
 		rip.DefinedContributionPlanEnd2 = getIPIntValue(ip["eT_DefinedContributionPlanEnd2"])
@@ -336,6 +325,7 @@ func NewInputParams(ip map[string]string) (*InputParams, error) {
 				e := fmt.Errorf("NewInputParams: retiree '%s' social security PIA and start age both must be specified", rip.MyKey2)
 				return nil, e
 			}
+			needRetiree2 = true
 		}
 		rip.PIA2 = getIPIntValue(ip["eT_PIA2"]) * multiplier
 		rip.SSStart2 = getIPIntValue(ip["eT_SS_Start2"])
@@ -349,6 +339,7 @@ func NewInputParams(ip map[string]string) (*InputParams, error) {
 				e := fmt.Errorf("NewInputParams: retiree '%s' TDRA contribution requires contribution amount, start and end age for contributions be specified", rip.MyKey2) //TODO should TDRA be changed to IRA for should Toml IRA be changed to TDRA
 				return nil, e
 			}
+			needRetiree2 = true
 		}
 		rip.TDRA2 = getIPIntValue(ip["eT_TDRA2"]) * multiplier
 		rip.TDRARate2 = getIPFloatValue(ip["eT_TDRA_Rate2"])
@@ -369,6 +360,7 @@ func NewInputParams(ip map[string]string) (*InputParams, error) {
 				e := fmt.Errorf("NewInputParams: retiree '%s' Roth contribution requires contribution amount, start and end age for contributions be specified", rip.MyKey2)
 				return nil, e
 			}
+			needRetiree2 = true
 		}
 		rip.Roth2 = getIPIntValue(ip["eT_Roth2"]) * multiplier
 		rip.RothRate2 = getIPFloatValue(ip["eT_Roth_Rate2"])
@@ -379,6 +371,29 @@ func NewInputParams(ip map[string]string) (*InputParams, error) {
 		if rip.Roth2 > 0 || rip.RothContrib2 > 0 {
 			rip.Accmap["roth"]++
 		}
+		rip.MyKey2 = ip["key2"]
+		if needRetiree2 || (ip["eT_Age2"] != "" ||
+			ip["eT_RetireAge2"] != "" ||
+			ip["eT_PlanThroughAge2"] != "") {
+			if ip["eT_Age2"] == "" ||
+				ip["eT_RetireAge2"] == "" ||
+				ip["eT_PlanThroughAge2"] == "" {
+				if rip.MyKey2 == "" {
+					rip.MyKey2 = "retiree2"
+				}
+				e := fmt.Errorf("NewInputParams: retiree '%s' age, retirement age and plan through age must all be specified", rip.MyKey2)
+				return nil, e
+			}
+		}
+		rip.Age2 = getIPIntValue(ip["eT_Age2"])
+		rip.RetireAge2 = getIPIntValue(ip["eT_RetireAge2"])
+		if rip.RetireAge2 < rip.Age2 {
+			rip.RetireAge2 = rip.Age2
+		}
+		rip.PlanThroughAge2 = getIPIntValue(ip["eT_PlanThroughAge2"])
+		yearsToRetire2 := rip.RetireAge2 - rip.Age2
+		rip.PrePlanYears = intMin(yearsToRetire1, yearsToRetire2)
+		through2 = rip.PlanThroughAge2 - rip.Age2
 	}
 	// the following must be after "joint" section
 	rip.StartPlan = rip.PrePlanYears + rip.Age1
@@ -591,7 +606,7 @@ func UpdateInputStringsMap(ipsm *map[string]string, key, value string) error {
 		*ipsm = NewInputStringsMap()
 		//fmt.Printf("ipsm new size is: %d\n", len(*ipsm))
 	}
-	fmt.Printf("ipsm type: %T, %#v\n", ipsm, ipsm)
+	//fmt.Printf("ipsm type: %T, %#v\n", ipsm, ipsm)
 	_, ok := (*ipsm)[key]
 	if !ok {
 		e := fmt.Errorf("UpdateInputStringsMap: Attempting to update non-present field: %q", key)

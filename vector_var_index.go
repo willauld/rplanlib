@@ -5,7 +5,7 @@ import (
 	"os"
 )
 
-func checkIndexSequence(years, taxbins, cgbins int, accmap map[string]int, varindex VectorVarIndex) bool {
+func checkIndexSequence(years, taxbins, cgbins int, accmap map[string]int, varindex VectorVarIndex, errfile *os.File) bool {
 	accounts := 0
 	for _, acc := range accmap {
 		accounts += acc
@@ -19,7 +19,7 @@ func checkIndexSequence(years, taxbins, cgbins int, accmap map[string]int, varin
 		for k := 0; k < taxbins; k++ {
 			if varindex.X(i, k) != ky {
 				passOk = false
-				fmt.Fprintf(varindex.errfile, "varindex.x(%d,%d) is %d not %d as it should be",
+				fmt.Fprintf(errfile, "varindex.x(%d,%d) is %d not %d as it should be",
 					i, k, varindex.X(i, k), ky)
 			}
 			ky++
@@ -30,7 +30,7 @@ func checkIndexSequence(years, taxbins, cgbins int, accmap map[string]int, varin
 			for l := 0; l < cgbins; l++ {
 				if varindex.Y(i, l) != ky {
 					passOk = false
-					fmt.Fprintf(varindex.errfile, "varindex.y(%d,%d) is %d not %d as it should be",
+					fmt.Fprintf(errfile, "varindex.y(%d,%d) is %d not %d as it should be",
 						i, l, varindex.Y(i, l), ky)
 				}
 				ky++
@@ -41,7 +41,7 @@ func checkIndexSequence(years, taxbins, cgbins int, accmap map[string]int, varin
 		for j := 0; j < accounts; j++ {
 			if varindex.W(i, j) != ky {
 				passOk = false
-				fmt.Fprintf(varindex.errfile, "varindex.w(%d,%d) is %d not %d as it should be",
+				fmt.Fprintf(errfile, "varindex.w(%d,%d) is %d not %d as it should be",
 					i, j, varindex.W(i, j), ky)
 			}
 			ky++
@@ -51,7 +51,7 @@ func checkIndexSequence(years, taxbins, cgbins int, accmap map[string]int, varin
 		for j := 0; j < accounts; j++ {
 			if varindex.B(i, j) != ky {
 				passOk = false
-				fmt.Fprintf(varindex.errfile, "varindex.b(%d,%d) is %d not %d as it should be",
+				fmt.Fprintf(errfile, "varindex.b(%d,%d) is %d not %d as it should be",
 					i, j, varindex.B(i, j), ky)
 			}
 			ky++
@@ -60,7 +60,7 @@ func checkIndexSequence(years, taxbins, cgbins int, accmap map[string]int, varin
 	for i := 0; i < years; i++ {
 		if varindex.S(i) != ky {
 			passOk = false
-			fmt.Fprintf(varindex.errfile, "varindex.s(%d) is %d not %d as it should be",
+			fmt.Fprintf(errfile, "varindex.s(%d) is %d not %d as it should be",
 				i, varindex.S(i), ky)
 		}
 		ky++
@@ -70,7 +70,7 @@ func checkIndexSequence(years, taxbins, cgbins int, accmap map[string]int, varin
 			for j := 0; j < accounts; j++ {
 				if varindex.D(i, j) != ky {
 					passOk = false
-					fmt.Fprintf(varindex.errfile, "varindex.D(%d,%d) is %d not %d as it should be",
+					fmt.Fprintf(errfile, "varindex.D(%d,%d) is %d not %d as it should be",
 						i, j, varindex.D(i, j), ky)
 				}
 				ky++
@@ -272,7 +272,8 @@ func (v VectorVarIndex) Varstr(indx int) string {
 		b = c % v.Accounts
 		name = v.Accname[b]
 		return fmt.Sprintf("D[%d,%d=%s]", a, b, name)
-	} else {
+	}
+	if v.errfile != nil {
 		fmt.Fprintf(v.errfile, "\nError -- varstr() corupted\n")
 	}
 	return "don't know"

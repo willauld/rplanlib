@@ -37,7 +37,7 @@ func TestVectorVarIndex(t *testing.T) {
 			continue
 		}
 		OK := checkIndexSequence(elem.years, elem.taxbins,
-			elem.cgbins, elem.accmap, vvindex)
+			elem.cgbins, elem.accmap, vvindex, os.Stdout)
 		if OK != true {
 			t.Errorf("VectorVarIndex case %d: Failed\n", i)
 		}

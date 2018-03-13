@@ -809,7 +809,7 @@ func (ms ModelSpecs) BuildModel() ([]float64, [][]float64, []float64, []ModelNot
 		// include non-taxed anueities that don't count.
 		None := ""
 		infyears := ms.Ip.PrePlanYears + year
-		b = append(b, math.Min(ms.Taxed[year], ms.Ti.maxContribution(year, infyears, ms.Retirees, None, ms.Ip.IRate)))
+		b = append(b, math.Min(accessVector(ms.Taxed, year), ms.Ti.maxContribution(year, infyears, ms.Retirees, None, ms.Ip.IRate)))
 	}
 	//
 	// Add constaints for (7') rows

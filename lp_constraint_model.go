@@ -955,13 +955,14 @@ func (ms ModelSpecs) BuildModel() ([]float64, [][]float64, []float64, []ModelNot
 			}
 			// Awful Hack! If year of asset sale, assume w(i,j)-D(i,j) is
 			// negative so taxable from this is zero
-			if ms.CgAssetTaxed[year] <= 0 { // i.e., no sale
+			cgt := accessVector(ms.CgAssetTaxed, year)
+			if cgt <= 0 { // i.e., no sale
 				j := len(ms.Accounttable) - 1 // last Acc is investment / stocks
 				row[ms.Vindx.W(year, j)] = -1 * f
 				row[ms.Vindx.D(year, j)] = f
 			}
 			A = append(A, row)
-			b = append(b, ms.CgAssetTaxed[year])
+			b = append(b, cgt)
 		}
 	}
 	//
@@ -974,7 +975,8 @@ func (ms ModelSpecs) BuildModel() ([]float64, [][]float64, []float64, []ModelNot
 			row := make([]float64, nvars)
 			////// Awful Hack! If year of asset sale, assume w(i,j)-D(i,j) is
 			////// negative so taxable from this is zero
-			if ms.CgAssetTaxed[year] <= 0 { // i.e., no sale
+			cgt := accessVector(ms.CgAssetTaxed, year)
+			if cgt <= 0 { // i.e., no sale
 				j := len(ms.Accounttable) - 1 // last Acc is investment / stocks
 				row[ms.Vindx.W(year, j)] = f
 				row[ms.Vindx.D(year, j)] = -f
@@ -983,7 +985,7 @@ func (ms ModelSpecs) BuildModel() ([]float64, [][]float64, []float64, []ModelNot
 				row[ms.Vindx.Y(year, l)] = -1
 			}
 			A = append(A, row)
-			b = append(b, -ms.CgAssetTaxed[year])
+			b = append(b, -1*cgt)
 		}
 	}
 	//

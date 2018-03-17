@@ -429,7 +429,16 @@ func NewInputParams(ip map[string]string) (*InputParams, error) {
 
 	rip.Min = getIPIntValue(ip["eT_DesiredIncome"]) * multiplier
 	rip.Max = getIPIntValue(ip["eT_MaxIncome"]) * multiplier
-
+	if rip.Min > 0 && rip.Maximize != "PlusEstate" {
+		e := fmt.Errorf("Error - [min.income] ($%d) is only valid with \"maximize='PlusEstate'\" however maximize currently set to '%s'",
+			rip.Min, rip.Maximize)
+		return nil, e
+	}
+	if rip.Max > 0 && rip.Maximize != "Spending" {
+		e := fmt.Errorf("Error - [max.income] ($%d) is only valid with \"maximize='Spinding'\" however maximize currently set to '%s'",
+			rip.Max, rip.Maximize)
+		return nil, e
+	}
 	rip.Income = make([]stream, 0)
 	for i := 1; i < MaxStreams+1; i++ {
 		if ip[fmt.Sprintf("eT_Income%d", i)] != "" ||

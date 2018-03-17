@@ -198,8 +198,8 @@ func NewInputParams(ip map[string]string) (*InputParams, error) {
 	rip.Max = getIPIntValue(ip["eT_MaxIncome"])     // TODO add to mobile
 	//	maximize:                "Spending", // or "PlusEstate"
 	rip.Maximize = MaximizeDefault
-	if ip["eT_Maximize"] != "" {
-		rip.Maximize = ip["eT_Maximize"] // TODO add to mobile
+	if ip["eT_maximize"] != "" {
+		rip.Maximize = ip["eT_maximize"] // TODO add to mobile
 	}
 	err = verifyMaximize(rip.Maximize)
 	if err != nil {

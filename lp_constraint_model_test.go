@@ -532,6 +532,55 @@ func TestBuildModel(t *testing.T) {
 				"eT_Aftatax_Contrib":         "",
 				"eT_Aftatax_ContribStartAge": "",
 				"eT_Aftatax_ContribEndAge":   "",
+				"dollarsInThousands":         "true",
+			},
+			verbose:       true,
+			allowDeposits: false,
+			iRate:         1.025,
+		},
+		{ // Case 1 // joint
+			ip: map[string]string{
+				"setName":                    "activeParams",
+				"filingStatus":               "joint",
+				"key1":                       "retiree1",
+				"key2":                       "retiree2",
+				"eT_Age1":                    "65",
+				"eT_Age2":                    "63",
+				"eT_RetireAge1":              "66",
+				"eT_RetireAge2":              "66",
+				"eT_PlanThroughAge1":         "100",
+				"eT_PlanThroughAge2":         "100",
+				"eT_PIA1":                    "30", // 30k
+				"eT_PIA2":                    "-1",
+				"eT_SS_Start1":               "70",
+				"eT_SS_Start2":               "66",
+				"eT_TDRA1":                   "200", // 200k
+				"eT_TDRA2":                   "100", // 100k
+				"eT_TDRA_Rate1":              "",
+				"eT_TDRA_Rate2":              "",
+				"eT_TDRA_Contrib1":           "",
+				"eT_TDRA_Contrib2":           "",
+				"eT_TDRA_ContribStartAge1":   "",
+				"eT_TDRA_ContribStartAge2":   "",
+				"eT_TDRA_ContribEndAge1":     "",
+				"eT_TDRA_ContribEndAge2":     "",
+				"eT_Roth1":                   "",
+				"eT_Roth2":                   "50", // 50k
+				"eT_Roth_Rate1":              "",
+				"eT_Roth_Rate2":              "",
+				"eT_Roth_Contrib1":           "",
+				"eT_Roth_Contrib2":           "",
+				"eT_Roth_ContribStartAge1":   "",
+				"eT_Roth_ContribStartAge2":   "",
+				"eT_Roth_ContribEndAge1":     "",
+				"eT_Roth_ContribEndAge2":     "",
+				"eT_Aftatax":                 "50", // 50k
+				"eT_Aftatax_Rate":            "7.25",
+				"eT_Aftatax_Contrib":         "",
+				"eT_Aftatax_ContribStartAge": "",
+				"eT_Aftatax_ContribEndAge":   "",
+				"eT_maximize":                "PlusEstate",
+				"dollarsInThousands":         "true",
 			},
 			verbose:       true,
 			allowDeposits: false,
@@ -548,6 +597,7 @@ func TestBuildModel(t *testing.T) {
 			fmt.Printf("TestNewModelSpecs: %s\n", err)
 			continue
 		}
+		fmt.Printf("ip.Maximize: %#v\n", ip.Maximize)
 		taxbins := len(*ti.Taxtable)
 		cgbins := len(*ti.Capgainstable)
 		vindx, err := NewVectorVarIndex(ip.Numyr, taxbins,

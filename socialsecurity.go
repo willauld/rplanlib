@@ -84,7 +84,7 @@ func processSS(ip *InputParams) (SS, SS1, SS2 []float64, tags []string) {
 		ageAtStart: ip.Age1 + ip.PrePlanYears,
 		currAge:    ip.Age1,
 	}
-	if dt.fraamount < 0 && ip.FilingStatus != "joint" {
+	if dt.fraamount < 0 && ip.FilingStatus != Joint {
 		return nil, nil, nil, nil
 	}
 	if dt.fraamount < 0 { // place default spousal support in second slot
@@ -93,7 +93,7 @@ func processSS(ip *InputParams) (SS, SS1, SS2 []float64, tags []string) {
 		ssi[index] = dt
 		index++
 	}
-	if ip.FilingStatus == "joint" {
+	if ip.FilingStatus == Joint {
 
 		sections = 2
 		dt = ssI{

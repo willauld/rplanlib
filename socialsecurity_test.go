@@ -426,7 +426,7 @@ func TestProcessSS(t *testing.T) {
 				t.Errorf("TestProcessSS case %d:  ss1[%d]: %f should equal zero, it's before starting SS\n", i, j, ss1[j])
 			}
 		}
-		if ip.FilingStatus != "joint" {
+		if ip.FilingStatus != Joint {
 			for j := 0; j < len(ss); j++ { // TODO: FIXME if not joint to need ss1 separate from ss - remove it
 				if ss[j] != ss1[j] {
 					t.Errorf("TestProcessSS case %d:  SS[%d](%f) must equal SS1[%d](%f)\n", i, j, ss[j], j, ss1[j])

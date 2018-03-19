@@ -106,7 +106,7 @@ type Taxinfo struct {
 // TODO: Should I merge NewTaxInfo() and set_retirement_staus() I'm thinking I should!!!
 
 //NewTaxInfo creates the applicable tax structure
-func NewTaxInfo(status string) Taxinfo {
+func NewTaxInfo(status TaxStatus) Taxinfo {
 	sstaxable := 0.85
 	ssnontaxable := 1 - sstaxable
 	ti := Taxinfo{
@@ -125,19 +125,19 @@ func NewTaxInfo(status string) Taxinfo {
 		SStaxable:    sstaxable, // maximum portion of SS that is taxable
 		SSnotTaxable: ssnontaxable,
 	}
-	if status == "single" {
+	if status == Single {
 		ti.Taxtable = singletax2017
 		ti.Capgainstable = singlecapitalgains2017
 		ti.Stded = float64(singlestded2017)
 		ti.RMD = singleRMD
 		ti.Primeresidence = float64(singleprimresidence2017)
-	} else if status == "mseparate" {
+	} else if status == Mseparate {
 		ti.Taxtable = marriedseparatetax2017
 		ti.Capgainstable = marriedseparatecapitalgains2017
 		ti.Stded = float64(marriedseparatestded2017)
 		ti.RMD = marriedseparateRMD
 		ti.Primeresidence = float64(singleprimresidence2017)
-	} else { // status == 'joint':
+	} else { // status == Joint:
 		ti.Taxtable = marriedjointtax2017
 		ti.Capgainstable = marriedjointcapitalgains2017
 		ti.Stded = float64(marriedjointstded2017)

@@ -1518,7 +1518,7 @@ func TestPrintBaseConfig(t *testing.T) {
 			sip: sipSingle,
 			sxp: xpSingle,
 			expect: `======
-Optimized for Spending with single status
+Optimized for Spending with Single status
 	starting at age 65 with an estate of $379_660 liquid and $0 illiquid
 
 No desired minium or maximum amount specified
@@ -1538,7 +1538,7 @@ Total spendable (after tax money): $463_934`,
 			sip: sipJoint,
 			sxp: xpJoint,
 			expect: `======
-Optimized for Spending with joint status
+Optimized for Spending with Joint status
 	starting at age 65 with an estate of $379_660 liquid and $0 illiquid
 
 No desired minium or maximum amount specified

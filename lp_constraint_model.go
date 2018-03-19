@@ -252,7 +252,7 @@ func (ms ModelSpecs) verifyTaxableIncomeCoversContrib() error {
 			return e
 		}
 		//print("TYPE: ", self.retirement_type)
-		if ms.Ip.FilingStatus == "joint" {
+		if ms.Ip.FilingStatus == Joint {
 			// Need to check each retiree individually
 			for _, v := range ms.Retirees {
 				//fmt.Printf("Retriee: %#v\n", v)
@@ -322,7 +322,7 @@ func NewModelSpecs(vindx VectorVarIndex,
 			definedContributionPlanEndAge:   ip.DefinedContributionPlanEnd1,
 		},
 	}
-	if ip.FilingStatus == "joint" {
+	if ip.FilingStatus == Joint {
 		r2 := retiree{
 			age:        ip.Age2,
 			ageAtStart: ip.Age2 + ip.PrePlanYears,
@@ -641,7 +641,7 @@ func NewModelSpecs(vindx VectorVarIndex,
 		return nil, err
 	}
 
-	if ip.FilingStatus == "joint" {
+	if ip.FilingStatus == Joint {
 		// do nothing
 	} else { // single or mseparate zero retiree2 info
 		// TODO FIXME

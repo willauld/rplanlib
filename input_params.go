@@ -9,9 +9,32 @@ import (
 // MaxStreams is the maximam number of streams for each: income, expense, asset
 const MaxStreams = 10
 
+// TaxStatus is tax type for the plan to be created
+type TaxStatus int
+
+const (
+	Unknown   TaxStatus = iota
+	Joint     TaxStatus = iota
+	Mseparate TaxStatus = iota
+	Single    TaxStatus = iota
+)
+
+func (a TaxStatus) String() string {
+	names := [...]string{
+		"Unknown",
+		"Joint",
+		"Mseparate",
+		"Single",
+	}
+	if a < Unknown || a > Single {
+		return "Unknown"
+	}
+	return names[a]
+}
+
 // InputParams are the model params constructed from driver program string input
 type InputParams struct {
-	FilingStatus                  string
+	FilingStatus                  TaxStatus
 	MyKey1                        string
 	MyKey2                        string
 	Age1                          int
@@ -149,19 +172,25 @@ func verifyMaximize(s string) error {
 	}
 	return e
 }
-func verifyFilingStatus(s string) error {
-	e := error(nil)
-	if s != "joint" && s != "mseparate" && s != "single" {
-		e = fmt.Errorf("verifyFilingStatus: '%s' is not a valid option", s)
+func verifyFilingStatus(s string) (TaxStatus, error) {
+	if s == "joint" {
+		return Joint, nil
 	}
-	return e
+	if s == "mseparate" {
+		return Mseparate, nil
+	}
+	if s == "single" {
+		return Single, nil
+	}
+	e := fmt.Errorf("verifyFilingStatus: '%s' is not a valid option", s)
+	return Unknown, e
 }
 
 // Default values is not defined
 const ReturnRatePercent = 6.0
 const InflactionRatePercent = 2.5
 const MaximizeDefault = "Spending"
-const FilingStatusDefault = "joint"
+const FilingStatusDefault = Joint
 const BrokeragePercentDefault = 4.0
 const InflateContribDefault = false
 
@@ -210,11 +239,10 @@ func NewInputParams(ip map[string]string) (*InputParams, error) {
 
 	rip.FilingStatus = FilingStatusDefault
 	if ip["filingStatus"] != "" {
-		rip.FilingStatus = ip["filingStatus"]
-	}
-	err = verifyFilingStatus(rip.FilingStatus)
-	if err != nil {
-		return nil, err
+		rip.FilingStatus, err = verifyFilingStatus(ip["filingStatus"])
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	rip.MyKey1 = ip["key1"]
@@ -300,7 +328,7 @@ func NewInputParams(ip map[string]string) (*InputParams, error) {
 	var through2 int
 	var yearsToRetire2 int
 	needRetiree2 := false
-	if rip.FilingStatus == "joint" {
+	if rip.FilingStatus == Joint {
 
 		if ip["eT_DefinedContributionPlanStart2"] != "" ||
 			ip["eT_DefinedContributionPlanEnd2"] != "" {

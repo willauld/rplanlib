@@ -1,6 +1,7 @@
 package rplanlib
 
 import (
+	"fmt"
 	"math"
 	"testing"
 )
@@ -33,7 +34,12 @@ func TestTaxinfo(t *testing.T) {
 		},
 	}
 	for i, elem := range tests {
-		ti := NewTaxInfo(elem.filingStatus)
+		status, err := verifyFilingStatus(elem.filingStatus)
+		if err != nil {
+			fmt.Printf("TestNewModelSpecs: %s\n", err)
+			continue
+		}
+		ti := NewTaxInfo(status)
 		brackets := len(*ti.Taxtable)
 		if brackets != elem.brackets {
 			t.Errorf("Taxinfo case %d: Failed - Expected %d brackes but found %d\n", i, elem.brackets, brackets)
@@ -94,7 +100,12 @@ func TestMaxContribution(t *testing.T) {
 		},
 	}
 	for i, elem := range tests {
-		ti := NewTaxInfo(elem.filingStatus)
+		status, err := verifyFilingStatus(elem.filingStatus)
+		if err != nil {
+			fmt.Printf("TestNewModelSpecs: %s\n", err)
+			continue
+		}
+		ti := NewTaxInfo(status)
 		retireekey := ""
 		if elem.retireeindx > 0 {
 			retireekey = retirees[elem.retireeindx].mykey
@@ -156,7 +167,12 @@ func TestApplyEarlyPenalty(t *testing.T) {
 		},
 	}
 	for i, elem := range tests {
-		ti := NewTaxInfo(elem.filingStatus)
+		status, err := verifyFilingStatus(elem.filingStatus)
+		if err != nil {
+			fmt.Printf("TestNewModelSpecs: %s\n", err)
+			continue
+		}
+		ti := NewTaxInfo(status)
 		response := ti.applyEarlyPenalty(elem.year, elem.retireer)
 		if response != elem.response {
 			t.Errorf("applyEarlyPenalty case %d: Failed - Expected %v but found %v\n", i, elem.response, response)
@@ -219,7 +235,12 @@ func TestRmdNeeded(t *testing.T) {
 		},
 	}
 	for i, elem := range tests {
-		ti := NewTaxInfo(elem.filingStatus)
+		status, err := verifyFilingStatus(elem.filingStatus)
+		if err != nil {
+			fmt.Printf("TestNewModelSpecs: %s\n", err)
+			continue
+		}
+		ti := NewTaxInfo(status)
 		response := ti.rmdNeeded(elem.year, elem.retireer)
 		if response != elem.response {
 			t.Errorf("rmdNeeded case %d: Failed - Expected %v but found %v\n", i, elem.response, response)

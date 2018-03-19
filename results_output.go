@@ -114,7 +114,7 @@ func (ms ModelSpecs) activitySummaryHeader(fieldwidth int) {
 	var ageWidth int
 
 	names := ""
-	if ms.Ip.MyKey2 != "" && ms.Ip.FilingStatus == "joint" {
+	if ms.Ip.MyKey2 != "" && ms.Ip.FilingStatus == Joint {
 		names = fmt.Sprintf("%s/%s\n", ms.Ip.MyKey1, ms.Ip.MyKey2)
 		ageWidth = 8
 	} else {
@@ -166,7 +166,7 @@ func (ms ModelSpecs) PrintActivitySummary(xp *[]float64) {
 			deposit[ms.Accounttable[j].acctype] += ms.depositAmount(xp, year, j)
 		}
 
-		if ms.Ip.MyKey2 != "" && ms.Ip.FilingStatus == "joint" {
+		if ms.Ip.MyKey2 != "" && ms.Ip.FilingStatus == Joint {
 			//delta := ms.Ip.Age1 - ms.Ip.Age2
 			ms.Ao.output(fmt.Sprintf("%3d/%3d:", year+ms.Ip.StartPlan, year+ms.Ip.StartPlan-ms.Ip.AgeDelta))
 		} else {
@@ -204,7 +204,7 @@ func (ms ModelSpecs) printIncomeHeader(headerkeylist []string, countlist []int, 
 	}
 	var ageWidth int
 	names := ""
-	if ms.Ip.MyKey2 != "" && ms.Ip.FilingStatus == "joint" {
+	if ms.Ip.MyKey2 != "" && ms.Ip.FilingStatus == Joint {
 		names = fmt.Sprintf("%s/%s", ms.Ip.MyKey1, ms.Ip.MyKey2)
 		ageWidth = 8
 	} else {
@@ -295,7 +295,7 @@ func (ms ModelSpecs) PrintIncomeExpenseDetails() {
 	fieldwidth := 8
 	ms.printIncomeHeader(headerlist, countlist, incomeCat, fieldwidth)
 	for year := 0; year < ms.Ip.Numyr; year++ {
-		if ms.Ip.MyKey2 != "" && ms.Ip.FilingStatus == "joint" {
+		if ms.Ip.MyKey2 != "" && ms.Ip.FilingStatus == Joint {
 			ms.Ao.output(fmt.Sprintf("%3d/%3d:", year+ms.Ip.StartPlan, year+ms.Ip.StartPlan-ms.Ip.AgeDelta))
 		} else {
 			ms.Ao.output(fmt.Sprintf(" %3d:", year+ms.Ip.StartPlan))
@@ -310,7 +310,7 @@ func (ms ModelSpecs) PrintIncomeExpenseDetails() {
 }
 
 func (ms ModelSpecs) printAccHeader() {
-	if ms.Ip.FilingStatus == "joint" && ms.Ip.MyKey2 != "" {
+	if ms.Ip.FilingStatus == Joint && ms.Ip.MyKey2 != "" {
 		ms.Ao.output(fmt.Sprintf("%s/%s\n", ms.Ip.MyKey1, ms.Ip.MyKey2))
 		ms.Ao.output("    age ")
 	} else {
@@ -352,7 +352,7 @@ func (ms ModelSpecs) PrintAccountTrans(xp *[]float64) {
 	// Print pre-plan info
 	//
 	var index int
-	if ms.Ip.MyKey2 != "" && ms.Ip.FilingStatus == "joint" {
+	if ms.Ip.MyKey2 != "" && ms.Ip.FilingStatus == Joint {
 		ms.Ao.output(fmt.Sprintf("%3d/%3d:", ms.Ip.Age1, ms.Ip.Age1-ms.Ip.AgeDelta))
 	} else {
 		ms.Ao.output(fmt.Sprintf(" %3d:", ms.Ip.Age1))
@@ -394,7 +394,7 @@ func (ms ModelSpecs) PrintAccountTrans(xp *[]float64) {
 			}
 		}
 
-		if ms.Ip.MyKey2 != "" && ms.Ip.FilingStatus == "joint" {
+		if ms.Ip.MyKey2 != "" && ms.Ip.FilingStatus == Joint {
 			ms.Ao.output(fmt.Sprintf("%3d/%3d:", year+ms.Ip.StartPlan, year+ms.Ip.StartPlan-ms.Ip.AgeDelta))
 		} else {
 			ms.Ao.output(fmt.Sprintf(" %3d:", year+ms.Ip.StartPlan))
@@ -451,7 +451,7 @@ func (ms ModelSpecs) PrintAccountTrans(xp *[]float64) {
 	// Post plan info
 	//
 	year := ms.Ip.Numyr
-	if ms.Ip.MyKey2 != "" && ms.Ip.FilingStatus == "joint" {
+	if ms.Ip.MyKey2 != "" && ms.Ip.FilingStatus == Joint {
 		ms.Ao.output(fmt.Sprintf("%3d/%3d:", year+ms.Ip.StartPlan, ms.Ip.Numyr+ms.Ip.StartPlan-ms.Ip.AgeDelta))
 	} else {
 		ms.Ao.output(fmt.Sprintf(" %3d:", year+ms.Ip.StartPlan))
@@ -478,7 +478,7 @@ func (ms ModelSpecs) PrintAccountTrans(xp *[]float64) {
 }
 
 func (ms ModelSpecs) printHeaderTax() {
-	if ms.Ip.MyKey2 != "" && ms.Ip.FilingStatus == "joint" {
+	if ms.Ip.MyKey2 != "" && ms.Ip.FilingStatus == Joint {
 		ms.Ao.output(fmt.Sprintf("%s/%s\n", ms.Ip.MyKey1, ms.Ip.MyKey2))
 		ms.Ao.output("    age ")
 	} else {
@@ -511,7 +511,7 @@ func (ms ModelSpecs) PrintTax(xp *[]float64) {
 			withdrawal[ms.Accounttable[j].acctype] += (*xp)[ms.Vindx.W(year, j)]
 			deposit[ms.Accounttable[j].acctype] += ms.depositAmount(xp, year, j)
 		}
-		if ms.Ip.MyKey2 != "" && ms.Ip.FilingStatus == "joint" {
+		if ms.Ip.MyKey2 != "" && ms.Ip.FilingStatus == Joint {
 			ms.Ao.output(fmt.Sprintf("%3d/%3d:", age, age-ms.Ip.AgeDelta))
 		} else {
 			ms.Ao.output(fmt.Sprintf(" %3d:", year+ms.Ip.StartPlan))
@@ -545,7 +545,7 @@ func (ms ModelSpecs) PrintTax(xp *[]float64) {
 
 func (ms ModelSpecs) printHeaderTaxBrackets() {
 	spaces := 44
-	if ms.Ip.MyKey2 != "" && ms.Ip.FilingStatus == "joint" {
+	if ms.Ip.MyKey2 != "" && ms.Ip.FilingStatus == Joint {
 		//ao.output("@@@@@@@%64s" % "Marginal Rate(%):")
 		spaces = 47
 	}
@@ -559,7 +559,7 @@ func (ms ModelSpecs) printHeaderTaxBrackets() {
 		ms.Ao.output(fmt.Sprintf("&@%6.0f", rate*100))
 	}
 	ms.Ao.output("\n")
-	if ms.Ip.MyKey2 != "" && ms.Ip.FilingStatus == "joint" {
+	if ms.Ip.MyKey2 != "" && ms.Ip.FilingStatus == Joint {
 		ms.Ao.output(fmt.Sprintf("%s/%s\n", ms.Ip.MyKey1, ms.Ip.MyKey2))
 		ms.Ao.output("    age ")
 	} else {
@@ -587,7 +587,7 @@ func (ms ModelSpecs) PrintTaxBrackets(xp *[]float64) {
 		//T, spendable, tax, rate, cgtax, earlytax, rothearly := ms.IncomeSummary(year, xp)
 		T, _, tax, _, _, _, _ := ms.IncomeSummary(year, xp)
 		//ttax := tax + cgtax
-		if ms.Ip.MyKey2 != "" && ms.Ip.FilingStatus == "joint" {
+		if ms.Ip.MyKey2 != "" && ms.Ip.FilingStatus == Joint {
 			ms.Ao.output(fmt.Sprintf("%3d/%3d:", age, age-ms.Ip.AgeDelta))
 		} else {
 			ms.Ao.output(fmt.Sprintf(" %3d:", age))
@@ -617,7 +617,7 @@ func (ms ModelSpecs) PrintTaxBrackets(xp *[]float64) {
 
 func (ms ModelSpecs) printHeaderCapgainsBrackets() {
 	spaces := 36
-	if ms.Ip.MyKey2 != "" && ms.Ip.FilingStatus == "joint" {
+	if ms.Ip.MyKey2 != "" && ms.Ip.FilingStatus == Joint {
 		spaces = 39
 	}
 	ampWidth := spaces
@@ -628,7 +628,7 @@ func (ms ModelSpecs) printHeaderCapgainsBrackets() {
 		ms.Ao.output(fmt.Sprintf("&@%6.0f", rate*100))
 	}
 	ms.Ao.output("\n")
-	if ms.Ip.MyKey2 != "" && ms.Ip.FilingStatus == "joint" {
+	if ms.Ip.MyKey2 != "" && ms.Ip.FilingStatus == Joint {
 		ms.Ao.output(fmt.Sprintf("%s/%s\n", ms.Ip.MyKey1, ms.Ip.MyKey2))
 		ms.Ao.output("    age ")
 	} else {
@@ -678,7 +678,7 @@ func (ms ModelSpecs) PrintCapGainsBrackets(xp *[]float64) {
 		//T, spendable, tax, rate, cgtax, earlytax, rothearly := ms.IncomeSummary(year, xp)
 		T, _, _, _, cgtax, _, _ := ms.IncomeSummary(year, xp)
 		//ttax := tax + cgtax
-		if ms.Ip.MyKey2 != "" && ms.Ip.FilingStatus == "joint" {
+		if ms.Ip.MyKey2 != "" && ms.Ip.FilingStatus == Joint {
 			ms.Ao.output(fmt.Sprintf("%3d/%3d:", age, age-ms.Ip.AgeDelta))
 		} else {
 			ms.Ao.output(fmt.Sprintf(" %3d:", age))

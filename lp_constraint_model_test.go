@@ -591,7 +591,12 @@ func TestBuildModel(t *testing.T) {
 		t.Skip("TestBuildModel(): skipping unless set '-v -short'")
 	}
 	for i, elem := range tests {
-		ti := NewTaxInfo(elem.ip["filingStatus"])
+		status, err := verifyFilingStatus(elem.ip["filingStatus"])
+		if err != nil {
+			fmt.Printf("TestNewModelSpecs: %s\n", err)
+			continue
+		}
+		ti := NewTaxInfo(status)
 		ip, err := NewInputParams(elem.ip)
 		if err != nil {
 			fmt.Printf("TestNewModelSpecs: %s\n", err)

@@ -9,14 +9,35 @@ import (
 // MaxStreams is the maximam number of streams for each: income, expense, asset
 const MaxStreams = 10
 
+// MaxWhat is what is to be maximized while creating a plan (Spending, PlusEstate)
+type MaxWhat int
+
+const (
+	UnknownMaxWhat MaxWhat = iota
+	Spending       MaxWhat = iota
+	PlusEstate     MaxWhat = iota
+)
+
+func (a MaxWhat) String() string {
+	names := [...]string{
+		"Unknown",
+		"Spending",
+		"PlusEstate",
+	}
+	if a < UnknownMaxWhat || a > PlusEstate {
+		return "Unknown"
+	}
+	return names[a]
+}
+
 // TaxStatus is tax type for the plan to be created
 type TaxStatus int
 
 const (
-	Unknown   TaxStatus = iota
-	Joint     TaxStatus = iota
-	Mseparate TaxStatus = iota
-	Single    TaxStatus = iota
+	UnknownTaxStatus TaxStatus = iota
+	Joint            TaxStatus = iota
+	Mseparate        TaxStatus = iota
+	Single           TaxStatus = iota
 )
 
 func (a TaxStatus) String() string {
@@ -26,7 +47,7 @@ func (a TaxStatus) String() string {
 		"Mseparate",
 		"Single",
 	}
-	if a < Unknown || a > Single {
+	if a < UnknownTaxStatus || a > Single {
 		return "Unknown"
 	}
 	return names[a]
@@ -86,7 +107,7 @@ type InputParams struct {
 	IRate                         float64 // local, not mobile
 	RRatePercent                  float64 // TODO add to Mobile
 	RRate                         float64 // local, not mobile
-	Maximize                      string  // "Spending" or "PlusEstate" // TODO add to Mobile
+	Maximize                      MaxWhat // "Spending" or "PlusEstate" // TODO add to Mobile
 	Min                           int     // TODO add to Mobile
 	Max                           int     // TODO add to Mobile
 
@@ -165,13 +186,17 @@ func getIPBoolValue(str string) bool {
 	}
 	return b
 }
-func verifyMaximize(s string) error {
-	e := error(nil)
-	if s != "Spending" && s != "PlusEstate" {
-		e = fmt.Errorf("verifyMaximize: %s is not a valid option", s)
+func verifyMaximize(s string) (MaxWhat, error) {
+	if s == "Spending" {
+		return Spending, nil
 	}
-	return e
+	if s == "PlusEstate" {
+		return PlusEstate, nil
+	}
+	e := fmt.Errorf("verifyMaximize: %s is not a valid option", s)
+	return UnknownMaxWhat, e
 }
+
 func verifyFilingStatus(s string) (TaxStatus, error) {
 	if s == "joint" {
 		return Joint, nil
@@ -183,13 +208,13 @@ func verifyFilingStatus(s string) (TaxStatus, error) {
 		return Single, nil
 	}
 	e := fmt.Errorf("verifyFilingStatus: '%s' is not a valid option", s)
-	return Unknown, e
+	return UnknownTaxStatus, e
 }
 
 // Default values is not defined
 const ReturnRatePercent = 6.0
 const InflactionRatePercent = 2.5
-const MaximizeDefault = "Spending"
+const MaximizeDefault = Spending
 const FilingStatusDefault = Joint
 const BrokeragePercentDefault = 4.0
 const InflateContribDefault = false
@@ -228,11 +253,10 @@ func NewInputParams(ip map[string]string) (*InputParams, error) {
 	//	maximize:                "Spending", // or "PlusEstate"
 	rip.Maximize = MaximizeDefault
 	if ip["eT_maximize"] != "" {
-		rip.Maximize = ip["eT_maximize"] // TODO add to mobile
-	}
-	err = verifyMaximize(rip.Maximize)
-	if err != nil {
-		return nil, err
+		rip.Maximize, err = verifyMaximize(ip["eT_maximize"])
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	rip.Accmap = map[string]int{"IRA": 0, "roth": 0, "aftertax": 0}
@@ -464,14 +488,14 @@ func NewInputParams(ip map[string]string) (*InputParams, error) {
 
 	rip.Min = getIPIntValue(ip["eT_DesiredIncome"]) * multiplier
 	rip.Max = getIPIntValue(ip["eT_MaxIncome"]) * multiplier
-	if rip.Min > 0 && rip.Maximize != "PlusEstate" {
+	if rip.Min > 0 && rip.Maximize != PlusEstate {
 		e := fmt.Errorf("Error - [min.income] ($%d) is only valid with 'maximize=\"PlusEstate\"' however maximize currently set to '%s'",
-			rip.Min, rip.Maximize)
+			rip.Min, rip.Maximize.String())
 		return nil, e
 	}
-	if rip.Max > 0 && rip.Maximize != "Spending" {
+	if rip.Max > 0 && rip.Maximize != Spending {
 		e := fmt.Errorf("Error - [max.income] ($%d) is only valid with 'maximize=\"Spinding\"' however maximize currently set to '%s'",
-			rip.Max, rip.Maximize)
+			rip.Max, rip.Maximize.String())
 		return nil, e
 	}
 	rip.Income = make([]stream, 0)

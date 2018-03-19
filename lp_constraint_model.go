@@ -690,7 +690,7 @@ func (ms ModelSpecs) BuildModel() ([]float64, [][]float64, []float64, []ModelNot
 	// Adder objective function (R1') when PlusEstate is added
 	//
 	//fmt.Printf("ms.Ip.Maximize: %#v\n", ms.Ip.Maximize)
-	if ms.Ip.Maximize == "PlusEstate" {
+	if ms.Ip.Maximize == PlusEstate {
 		for j := 0; j < len(ms.Accounttable); j++ {
 			estateTax := ms.Ti.AccountEstateTax[ms.Accounttable[j].acctype]
 			c[ms.Vindx.B(ms.Ip.Numyr, j)] = -1 * estateTax // account discount rate

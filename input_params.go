@@ -234,7 +234,6 @@ func NewInputParams(ip map[string]string) (*InputParams, error) {
 	}
 	rip.PlanThroughAge1 = getIPIntValue(ip["eT_PlanThroughAge1"])
 	yearsToRetire1 := rip.RetireAge1 - rip.Age1
-	rip.PrePlanYears = yearsToRetire1
 	through1 := rip.PlanThroughAge1 - rip.Age1
 
 	if ip["eT_DefinedContributionPlanStart1"] != "" ||
@@ -299,8 +298,9 @@ func NewInputParams(ip map[string]string) (*InputParams, error) {
 	}
 
 	var through2 int
+	var yearsToRetire2 int
+	needRetiree2 := false
 	if rip.FilingStatus == "joint" {
-		needRetiree2 := false
 
 		if ip["eT_DefinedContributionPlanStart2"] != "" ||
 			ip["eT_DefinedContributionPlanEnd2"] != "" {
@@ -391,15 +391,22 @@ func NewInputParams(ip map[string]string) (*InputParams, error) {
 			rip.RetireAge2 = rip.Age2
 		}
 		rip.PlanThroughAge2 = getIPIntValue(ip["eT_PlanThroughAge2"])
-		yearsToRetire2 := rip.RetireAge2 - rip.Age2
-		rip.PrePlanYears = intMin(yearsToRetire1, yearsToRetire2)
+		yearsToRetire2 = rip.RetireAge2 - rip.Age2
 		through2 = rip.PlanThroughAge2 - rip.Age2
 	}
 	// the following must be after "joint" section
+	rip.PrePlanYears = yearsToRetire1
 	rip.StartPlan = rip.PrePlanYears + rip.Age1
-	rip.EndPlan = intMax(through1, through2) + 1 + rip.Age1
-	rip.AgeDelta = rip.Age1 - rip.Age2
+	rip.EndPlan = through1 + 1 + rip.Age1
+	rip.AgeDelta = 0
 	rip.Numyr = rip.EndPlan - rip.StartPlan
+	if needRetiree2 {
+		rip.PrePlanYears = intMin(yearsToRetire1, yearsToRetire2)
+		rip.StartPlan = rip.PrePlanYears + rip.Age1
+		rip.EndPlan = intMax(through1, through2) + 1 + rip.Age1
+		rip.AgeDelta = rip.Age1 - rip.Age2
+		rip.Numyr = rip.EndPlan - rip.StartPlan
+	}
 
 	if (ip["eT_Aftatax_Contrib"] != "" && getIPIntValue(ip["eT_Aftatax_Contrib"]) != 0) ||
 		ip["eT_Aftatax_ContribStartAge"] != "" ||

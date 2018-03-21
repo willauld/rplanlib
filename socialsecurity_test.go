@@ -1,6 +1,7 @@
 package rplanlib
 
 import (
+	"strings"
 	"testing"
 )
 
@@ -167,8 +168,10 @@ func TestProcessSS(t *testing.T) {
 				"eT_Aftatax_ContribEndAge":   "",
 				"dollarsInThousands":         "true",
 			},
-			warningmes: "Warning-SocialSecurityspousalbenefitsdonotincreaseafterFRA,resettingbenefitsstarttoFRA.Pleasecorrectretiree2'sSSageintheconfigurationfileto'66'.",
-			expectnil:  false,
+			warningmes: `Warning - Social Security spousal benefits do not increase after FRA,
+	resetting benefits start to FRA.
+	Please correct retiree2's SS age in the configuration file to '66'.`,
+			expectnil: false,
 		},
 		{ // case 2
 			ip: map[string]string{
@@ -213,8 +216,10 @@ func TestProcessSS(t *testing.T) {
 				"eT_Aftatax_ContribEndAge":   "",
 				"dollarsInThousands":         "true",
 			},
-			warningmes: "Warning - Social Security spousal benefit can only be claimed after the spouse claims benefits. Please correct retiree1's SS age in the configuration file to '72'.",
-			expectnil:  false,
+			warningmes: `Warning - Social Security spousal benefit can only be claimed
+	after the spouse claims benefits.
+	Please correct retiree1's SS age in the configuration file to '72'.`,
+			expectnil: false,
 		},
 		{ // Case 3 // case to match mobile.toml
 			ip: map[string]string{
@@ -380,7 +385,7 @@ func TestProcessSS(t *testing.T) {
 			continue
 		}
 
-		doNothing := false // Turn on/off Stdio redirection
+		doNothing := false //true //false // Turn on/off Stdio redirection
 		mychan := make(chan string)
 		oldout, w, err := RedirectStdout(mychan, doNothing)
 		if err != nil {
@@ -390,10 +395,9 @@ func TestProcessSS(t *testing.T) {
 		ss, ss1, ss2, tags := processSS(ip)
 
 		str := RestoreStdout(mychan, oldout, w, doNothing)
-		strn := stripWhitespace(str)
-		warningmes := stripWhitespace(elem.warningmes)
-		if warningmes != strn {
-			t.Errorf("TestProcessSS case %d:  expected Warning '%s'\n\tbut found: '%s'\n", i, warningmes, strn)
+		strn := strings.TrimSpace(str)
+		if elem.warningmes != strn {
+			t.Errorf("TestProcessSS case %d:  expected Warning:\n\t'%s'\n\tbut found:\n\t'%s'\n", i, elem.warningmes, strn)
 		}
 
 		if ss == nil {

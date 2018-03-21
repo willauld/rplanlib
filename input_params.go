@@ -237,6 +237,16 @@ func NewInputParams(ip map[string]string) (*InputParams, error) {
 
 	rip := InputParams{}
 
+	// Add this first so they are available for error msg
+	rip.MyKey1 = ip["key1"]
+	if rip.MyKey1 == "" {
+		rip.MyKey1 = "Retiree1"
+	}
+	rip.MyKey2 = ip["key2"]
+	if rip.MyKey2 == "" {
+		rip.MyKey2 = "Retiree1"
+	}
+
 	rip.RRatePercent = getIPFloatValue(ip["eT_rRatePercent"]) // TODO add to mobile
 	if rip.RRatePercent <= 0 {
 		rip.RRatePercent = ReturnRatePercent
@@ -269,13 +279,13 @@ func NewInputParams(ip map[string]string) (*InputParams, error) {
 		}
 	}
 
-	rip.MyKey1 = ip["key1"]
+	//rip.MyKey1 = ip["key1"]
 	if ip["eT_Age1"] == "" ||
 		ip["eT_RetireAge1"] == "" ||
 		ip["eT_PlanThroughAge1"] == "" {
-		if rip.MyKey1 == "" {
-			rip.MyKey1 = "retiree1"
-		}
+		//if rip.MyKey1 == "" {
+		//	rip.MyKey1 = "retiree1"
+		//}
 		e := fmt.Errorf("NewInputParams: retiree '%s' age, retirement age and plan through age must all be specified", rip.MyKey1)
 		return nil, e
 	}
@@ -423,16 +433,16 @@ func NewInputParams(ip map[string]string) (*InputParams, error) {
 		if rip.Roth2 > 0 || rip.RothContrib2 > 0 {
 			rip.Accmap["roth"]++
 		}
-		rip.MyKey2 = ip["key2"]
+		//rip.MyKey2 = ip["key2"]
 		if needRetiree2 || (ip["eT_Age2"] != "" ||
 			ip["eT_RetireAge2"] != "" ||
 			ip["eT_PlanThroughAge2"] != "") {
 			if ip["eT_Age2"] == "" ||
 				ip["eT_RetireAge2"] == "" ||
 				ip["eT_PlanThroughAge2"] == "" {
-				if rip.MyKey2 == "" {
-					rip.MyKey2 = "retiree2"
-				}
+				//if rip.MyKey2 == "" {
+				//	rip.MyKey2 = "retiree2"
+				//}
 				e := fmt.Errorf("NewInputParams: retiree '%s' age, retirement age and plan through age must all be specified", rip.MyKey2)
 				return nil, e
 			}

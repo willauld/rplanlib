@@ -376,13 +376,7 @@ func NewInputParams(ip map[string]string) (*InputParams, error) {
 		rip.DefinedContributionPlanStart2 = getIPIntValue(ip["eT_DefinedContributionPlanStart2"])
 		rip.DefinedContributionPlanEnd2 = getIPIntValue(ip["eT_DefinedContributionPlanEnd2"])
 
-		if ip["eT_PIA2"] != "" || ip["eT_SS_Start2"] != "" ||
-			ip["eT_PIA1"] != "" {
-			if ip["eT_PIA1"] == "" {
-				// if any SS set both must be specified
-				e := fmt.Errorf("NewInputParams: both retiree social security PIA and start age must be specified if either retiree is")
-				return nil, e
-			}
+		if ip["eT_PIA2"] != "" || ip["eT_SS_Start2"] != "" {
 			if ip["eT_PIA2"] == "" || ip["eT_SS_Start2"] == "" {
 				e := fmt.Errorf("NewInputParams: retiree '%s' social security PIA and start age both must be specified", rip.MyKey2)
 				return nil, e
@@ -391,6 +385,16 @@ func NewInputParams(ip map[string]string) (*InputParams, error) {
 		}
 		rip.PIA2 = getIPIntValue(ip["eT_PIA2"]) * multiplier
 		rip.SSStart2 = getIPIntValue(ip["eT_SS_Start2"])
+		/* Really want this to be a warning - however, I don't know how
+		   Can't write directly to stdout for mobile case...
+			if rip.PIA2 != 0 || rip.PIA1 != 0 {
+				if rip.PIA2 == 0 || rip.PIA1 == 0 {
+				// if any SS set both must be specified
+					e := fmt.Errorf("NewInputParams: both retiree social security PIA and start age must be specified if either retiree is")
+					return nil, e
+				}
+			}
+		*/
 
 		if (ip["eT_TDRA_Contrib2"] != "" && getIPIntValue(ip["eT_TDRA_Contrib2"]) != 0) ||
 			ip["eT_TDRA_ContribStartAge2"] != "" ||

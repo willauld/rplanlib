@@ -93,8 +93,7 @@ func processSS(ip *InputParams) (SS, SS1, SS2 []float64, tags []string) {
 		ssi[index] = dt
 		index++
 	}
-	if ip.FilingStatus == Joint {
-
+	if ip.FilingStatus == Joint && ip.Age2 != 0 {
 		sections = 2
 		dt = ssI{
 			fraamount:  ip.PIA2,            // fraamount := v["amount"]
@@ -108,8 +107,8 @@ func processSS(ip *InputParams) (SS, SS1, SS2 []float64, tags []string) {
 		ssi[index] = dt
 		tags = append(tags, ip.MyKey2)
 	}
-	//fmt.Printf("ssi[0]: %#v\n", ssi[0])
-	//fmt.Printf("ssi[1]: %#v\n", ssi[1])
+	//fmt.Printf("ssi[0]: %#v\n\n", ssi[0])
+	//fmt.Printf("ssi[1]: %#v\n\n", ssi[1])
 	//
 	// spousal benefit can not start before SS primary starts taking SS
 	//
@@ -158,8 +157,8 @@ func processSS(ip *InputParams) (SS, SS1, SS2 []float64, tags []string) {
 			if year < 0 {
 				// ERROR if ever happens
 				fmt.Printf("ERROR - this should never happen. local code 11111\n")
-				fmt.Printf("age: %d, year: %d, endage: %d, ageAtStart: %d\n", age, year, endage, ssi[i].ageAtStart)
-				//fmt.Printf("ssi[%d]: %#v\n", i, ssi[i])
+				fmt.Printf("age: %d, year: %d, endage: %d, ageAtStart: %d, name: %s\n", age, year, endage, ssi[i].ageAtStart, ssi[i].key)
+				fmt.Printf("ssi[%d]: %#v\n", i, ssi[i])
 				break
 			} else if year >= ip.Numyr {
 				// ERROR if ever happens

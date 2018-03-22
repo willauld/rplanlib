@@ -243,9 +243,6 @@ func NewInputParams(ip map[string]string) (*InputParams, error) {
 		rip.MyKey1 = "Retiree1"
 	}
 	rip.MyKey2 = ip["key2"]
-	if rip.MyKey2 == "" {
-		rip.MyKey2 = "Retiree1"
-	}
 
 	rip.RRatePercent = getIPFloatValue(ip["eT_rRatePercent"]) // TODO add to mobile
 	if rip.RRatePercent <= 0 {

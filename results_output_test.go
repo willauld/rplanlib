@@ -370,7 +370,7 @@ func TestPrintIncomeHeader(t *testing.T) {
 			countlist:  []int{1, 0, 0, 0},
 			headerlist: []string{"nokey"},
 			expect: `retiree1 SSincome
-    age        SS`,
+    age`,
 			csvfile:   (*os.File)(nil),
 			tablefile: os.Stdout,
 		},

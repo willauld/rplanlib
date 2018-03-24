@@ -231,7 +231,7 @@ func (ms ModelSpecs) printIncomeHeader(headerkeylist []string, countlist []int, 
 	ms.Ao.output(str)
 	for _, str := range headerkeylist {
 		if str == "nokey" { // HAACCKKK
-			str = "SS"
+			str = "  "
 		}
 		ms.Ao.output(fmt.Sprintf("&@%[2]*.[2]*[1]s", str, fieldwidth))
 	}

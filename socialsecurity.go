@@ -84,16 +84,16 @@ func processSS(ip *InputParams) (SS, SS1, SS2 []float64, tags []string) {
 		ageAtStart: ip.Age1 + ip.PrePlanYears,
 		currAge:    ip.Age1,
 	}
-	if dt.fraamount < 0 && ip.FilingStatus != Joint {
+	if dt.fraamount <= 0 && ip.FilingStatus != Joint {
 		return nil, nil, nil, nil
 	}
-	if dt.fraamount < 0 { // place default spousal support in second slot
+	if dt.fraamount <= 0 { // place default spousal support in second slot
 		ssi[1] = dt
 	} else {
 		ssi[index] = dt
 		index++
 	}
-	if ip.FilingStatus == Joint && ip.Age2 != 0 {
+	if ip.FilingStatus == Joint && ip.Age2 != 0 && ip.SSStart2 > 0 {
 		sections = 2
 		dt = ssI{
 			fraamount:  ip.PIA2,            // fraamount := v["amount"]
@@ -123,7 +123,7 @@ func processSS(ip *InputParams) (SS, SS1, SS2 []float64, tags []string) {
 		//fraamount := ssi[i].fraamount
 		//ageAtStart := ssi[i].ageAtStart
 		//currAge := ssi[i].currAge
-		if ssi[i].fraamount >= 0 { // TODO check if this needs to be able to equal zero ; FIXME maybe explicitly check for zero and return nils
+		if ssi[i].fraamount > 0 { // TODO check if this needs to be able to equal zero ; FIXME maybe explicitly check for zero and return nils
 			// alter amount for start age vs fra (minus if before fra and + is after)
 			amount = adjPIA(float64(ssi[i].fraamount), ssi[i].fraage, disperseage)
 		} else {

@@ -427,7 +427,7 @@ func NewModelSpecs(vindx VectorVarIndex,
 		a.mykey = ip.MyKey2
 		a.origbal = float64(ip.Roth2)
 		a.contrib = float64(ip.RothContrib2)
-		a.contributions, dbal, _, err = genContrib(ip.RothContrib1,
+		a.contributions, dbal, _, err = genContrib(ip.RothContrib2,
 			ms.convertAge(ip.RothContribStart2, a.mykey),
 			ms.convertAge(ip.RothContribEnd2, a.mykey),
 			ip.StartPlan, ip.EndPlan, infr, a.rRate, ip.Age1)

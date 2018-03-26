@@ -175,7 +175,7 @@ func (ms ModelSpecs) PrintActivitySummary(xp *[]float64) {
 		items := []float64{withdrawal["IRA"] / ms.OneK, deposit["IRA"] / ms.OneK, rmdref / ms.OneK, // IRA
 			withdrawal["roth"] / ms.OneK, deposit["roth"] / ms.OneK, // Roth
 			withdrawal["aftertax"] / ms.OneK, deposit["aftertax"] / ms.OneK, //D, // AftaTax
-			accessVector(ms.Income[0], year) / ms.OneK, accessVector(ms.SS[0], year) / ms.OneK, accessVector(ms.Expenses[0], year) / ms.OneK,
+			AccessVector(ms.Income[0], year) / ms.OneK, AccessVector(ms.SS[0], year) / ms.OneK, AccessVector(ms.Expenses[0], year) / ms.OneK,
 			(tax + cgtax + earlytax) / ms.OneK}
 		for _, f := range items {
 			format := fmt.Sprintf("&@%%%d.0f", fieldwidth)
@@ -523,8 +523,8 @@ func (ms ModelSpecs) PrintTax(xp *[]float64) {
 		str := fmt.Sprintf("&@%7.0f&@%7.0f&@%7.0f&@%7.0f&@%7.0f&@%7.0f",
 			withdrawal["IRA"]/ms.OneK,
 			deposit["IRA"]/ms.OneK,
-			accessVector(ms.Taxed, year)/ms.OneK,
-			ms.Ti.SStaxable*accessVector(ms.SS[0], year)/ms.OneK,
+			AccessVector(ms.Taxed, year)/ms.OneK,
+			ms.Ti.SStaxable*AccessVector(ms.SS[0], year)/ms.OneK,
 			ms.Ti.Stded*iMul/ms.OneK,
 			T/ms.OneK)
 		str += fmt.Sprintf("&@%6.0f%c", earlytax/ms.OneK, star)
@@ -601,8 +601,8 @@ func (ms ModelSpecs) PrintTaxBrackets(xp *[]float64) {
 		str := fmt.Sprintf("&@%7.0f&@%7.0f&@%7.0f&@%7.0f&@%7.0f&@%7.0f&@%7.0f",
 			withdrawal["IRA"]/ms.OneK,
 			deposit["IRA"]/ms.OneK,
-			accessVector(ms.Taxed, year)/ms.OneK,
-			ms.Ti.SStaxable*accessVector(ms.SS[0], year)/ms.OneK,
+			AccessVector(ms.Taxed, year)/ms.OneK,
+			ms.Ti.SStaxable*AccessVector(ms.SS[0], year)/ms.OneK,
 			ms.Ti.Stded*iMul/ms.OneK, T/ms.OneK, tax/ms.OneK)
 		ms.Ao.output(str)
 		bt := 0.0
@@ -670,9 +670,9 @@ func (ms ModelSpecs) PrintCapGainsBrackets(xp *[]float64) {
 			// separately in S.cg_asset_taxed. Given this we only ad to
 			// cg_taxable the withdrawals over deposits, as is normal, plus
 			// the taxable amounts from asset sales.
-			att = (f * ((*xp)[ms.Vindx.W(year, j)] - (*xp)[ms.Vindx.D(year, j)])) + accessVector(ms.CgAssetTaxed, year)/ms.OneK // non-basis fraction / cg taxable $
+			att = (f * ((*xp)[ms.Vindx.W(year, j)] - (*xp)[ms.Vindx.D(year, j)])) + AccessVector(ms.CgAssetTaxed, year)/ms.OneK // non-basis fraction / cg taxable $
 			if atd > atw {
-				att = accessVector(ms.CgAssetTaxed, year) / ms.OneK // non-basis fraction / cg taxable $
+				att = AccessVector(ms.CgAssetTaxed, year) / ms.OneK // non-basis fraction / cg taxable $
 			}
 		}
 		//T, spendable, tax, rate, cgtax, earlytax, rothearly := ms.IncomeSummary(year, xp)
@@ -714,7 +714,7 @@ func (ms ModelSpecs) PrintCapGainsBrackets(xp *[]float64) {
 func (ms ModelSpecs) depositAmount(xp *[]float64, year int, index int) float64 {
 	amount := (*xp)[ms.Vindx.D(year, index)]
 	if ms.Accounttable[index].acctype == "aftertax" {
-		amount += accessVector(ms.AssetSale[0], year)
+		amount += AccessVector(ms.AssetSale[0], year)
 	}
 	return amount
 }
@@ -728,7 +728,7 @@ func (ms ModelSpecs) ordinaryTaxable(year int, xp *[]float64) float64 {
 			deposits += ms.depositAmount(xp, year, j)
 		}
 	}
-	T := withdrawals - deposits + accessVector(ms.Taxed, year) + ms.Ti.SStaxable*accessVector(ms.SS[0], year) - (ms.Ti.Stded * math.Pow(ms.Ip.IRate, float64(ms.Ip.PrePlanYears+year)))
+	T := withdrawals - deposits + AccessVector(ms.Taxed, year) + ms.Ti.SStaxable*AccessVector(ms.SS[0], year) - (ms.Ti.Stded * math.Pow(ms.Ip.IRate, float64(ms.Ip.PrePlanYears+year)))
 	if T < 0 {
 		T = 0
 	}
@@ -778,7 +778,7 @@ func (ms ModelSpecs) IncomeSummary(year int, xp *[]float64) (T, spendable, tax, 
 	for j := 0; j < len(ms.Accounttable); j++ {
 		totWithdrawals += (*xp)[ms.Vindx.W(year, j)]
 	}
-	spendable = totWithdrawals - D + accessVector(ms.Income[0], year) + accessVector(ms.SS[0], year) - accessVector(ms.Expenses[0], year) - tax - ncgtax - earlytax + accessVector(ms.AssetSale[0], year)
+	spendable = totWithdrawals - D + AccessVector(ms.Income[0], year) + AccessVector(ms.SS[0], year) - AccessVector(ms.Expenses[0], year) - tax - ncgtax - earlytax + AccessVector(ms.AssetSale[0], year)
 	return T, spendable, tax, rate, ncgtax, earlytax, rothearly
 }
 
@@ -793,7 +793,7 @@ func (ms ModelSpecs) getResultTotals(xp *[]float64) (twithd, tcombined, tT, ttax
 			totWithdrawals += (*xp)[ms.Vindx.W(year, j)]
 		}
 		twithd += totWithdrawals
-		tincome += accessVector(ms.Income[0], year) + accessVector(ms.SS[0], year) // + withdrawals
+		tincome += AccessVector(ms.Income[0], year) + AccessVector(ms.SS[0], year) // + withdrawals
 		ttax += tax
 		tcgtax += cgtax
 		tearlytax += earlytax

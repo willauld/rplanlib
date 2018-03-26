@@ -80,7 +80,7 @@ func checkStrconvError(e error) { // TODO: should I remove this?
 	}
 }
 
-func accessVector(v []float64, index int) float64 {
+func AccessVector(v []float64, index int) float64 {
 	if v != nil {
 		return v[index]
 	}
@@ -243,8 +243,8 @@ func (ms ModelSpecs) verifyTaxableIncomeCoversContrib() error {
 			}
 		}
 		//print("Contrib amount: ", contrib)
-		if accessVector(ms.Taxed, year) < contrib {
-			e := fmt.Errorf("Error - IRS requires contributions to retirement accounts\n\tbe less than your ordinary taxable income.\n\tHowever, contributions of $%.0f at age %d,\n\tfrom the PRIMARY age line, exceeds the taxable\n\tincome of $%.0f", contrib, ms.Ip.StartPlan+year, accessVector(ms.Taxed, year))
+		if AccessVector(ms.Taxed, year) < contrib {
+			e := fmt.Errorf("Error - IRS requires contributions to retirement accounts\n\tbe less than your ordinary taxable income.\n\tHowever, contributions of $%.0f at age %d,\n\tfrom the PRIMARY age line, exceeds the taxable\n\tincome of $%.0f", contrib, ms.Ip.StartPlan+year, AccessVector(ms.Taxed, year))
 			return e
 		}
 		if jointMaxContrib < contrib {
@@ -266,7 +266,7 @@ func (ms ModelSpecs) verifyTaxableIncomeCoversContrib() error {
 						if acc.mykey == v.mykey {
 							carray := acc.contributions
 							if carray != nil {
-								contrib += accessVector(carray, year)
+								contrib += AccessVector(carray, year)
 							}
 						}
 					}
@@ -739,9 +739,9 @@ func (ms ModelSpecs) BuildModel() ([]float64, [][]float64, []float64, []ModelNot
 		}
 		row[ms.Vindx.S(year)] = 1
 		A = append(A, row)
-		inc := accessVector(ms.Income[0], year)
-		ss := accessVector(ms.SS[0], year)
-		exp := accessVector(ms.Expenses[0], year)
+		inc := AccessVector(ms.Income[0], year)
+		ss := AccessVector(ms.SS[0], year)
+		exp := AccessVector(ms.Expenses[0], year)
 		b = append(b, inc+ss-exp)
 	}
 	//
@@ -810,7 +810,7 @@ func (ms ModelSpecs) BuildModel() ([]float64, [][]float64, []float64, []ModelNot
 		// include non-taxed anueities that don't count.
 		None := ""
 		infyears := ms.Ip.PrePlanYears + year
-		b = append(b, math.Min(accessVector(ms.Taxed, year), ms.Ti.maxContribution(year, infyears, ms.Retirees, None, ms.Ip.IRate)))
+		b = append(b, math.Min(AccessVector(ms.Taxed, year), ms.Ti.maxContribution(year, infyears, ms.Retirees, None, ms.Ip.IRate)))
 	}
 	//
 	// Add constaints for (7') rows
@@ -929,7 +929,7 @@ func (ms ModelSpecs) BuildModel() ([]float64, [][]float64, []float64, []ModelNot
 			row[ms.Vindx.X(year, k)] = -1
 		}
 		A = append(A, row)
-		b = append(b, ms.Ti.Stded*adjInf-accessVector(ms.Taxed, year)-ms.Ti.SStaxable*accessVector(ms.SS[0], year))
+		b = append(b, ms.Ti.Stded*adjInf-AccessVector(ms.Taxed, year)-ms.Ti.SStaxable*AccessVector(ms.SS[0], year))
 	}
 	//
 	// Add constraints for (12')
@@ -956,7 +956,7 @@ func (ms ModelSpecs) BuildModel() ([]float64, [][]float64, []float64, []ModelNot
 			}
 			// Awful Hack! If year of asset sale, assume w(i,j)-D(i,j) is
 			// negative so taxable from this is zero
-			cgt := accessVector(ms.CgAssetTaxed, year)
+			cgt := AccessVector(ms.CgAssetTaxed, year)
 			if cgt <= 0 { // i.e., no sale
 				j := len(ms.Accounttable) - 1 // last Acc is investment / stocks
 				row[ms.Vindx.W(year, j)] = -1 * f
@@ -976,7 +976,7 @@ func (ms ModelSpecs) BuildModel() ([]float64, [][]float64, []float64, []ModelNot
 			row := make([]float64, nvars)
 			////// Awful Hack! If year of asset sale, assume w(i,j)-D(i,j) is
 			////// negative so taxable from this is zero
-			cgt := accessVector(ms.CgAssetTaxed, year)
+			cgt := AccessVector(ms.CgAssetTaxed, year)
 			if cgt <= 0 { // i.e., no sale
 				j := len(ms.Accounttable) - 1 // last Acc is investment / stocks
 				row[ms.Vindx.W(year, j)] = f
@@ -1025,7 +1025,7 @@ func (ms ModelSpecs) BuildModel() ([]float64, [][]float64, []float64, []ModelNot
 			// In the event of a sell of an asset for the year
 			temp := 0.0
 			if ms.Accounttable[j].acctype == "aftertax" {
-				temp = accessVector(ms.AssetSale[0], year) * ms.Accounttable[j].rRate //TODO test
+				temp = AccessVector(ms.AssetSale[0], year) * ms.Accounttable[j].rRate //TODO test
 			}
 			b = append(b, temp)
 		}
@@ -1045,7 +1045,7 @@ func (ms ModelSpecs) BuildModel() ([]float64, [][]float64, []float64, []ModelNot
 			A = append(A, row)
 			temp := 0.0
 			if ms.Accounttable[j].acctype == "aftertax" {
-				temp = -1 * accessVector(ms.AssetSale[0], year) * ms.Accounttable[j].rRate //TODO test
+				temp = -1 * AccessVector(ms.AssetSale[0], year) * ms.Accounttable[j].rRate //TODO test
 			}
 			b = append(b, temp)
 		}

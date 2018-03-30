@@ -5,7 +5,7 @@ import (
 	"os"
 )
 
-func checkIndexSequence(years, taxbins, cgbins int, accmap map[string]int, varindex VectorVarIndex, errfile *os.File) bool {
+func checkIndexSequence(years, taxbins, cgbins int, accmap map[Acctype]int, varindex VectorVarIndex, errfile *os.File) bool {
 	accounts := 0
 	for _, acc := range accmap {
 		accounts += acc
@@ -25,7 +25,7 @@ func checkIndexSequence(years, taxbins, cgbins int, accmap map[string]int, varin
 			ky++
 		}
 	}
-	if accmap["aftertax"] > 0 {
+	if accmap[Aftertax] > 0 {
 		for i := 0; i < years; i++ {
 			for l := 0; l < cgbins; l++ {
 				if varindex.Y(i, l) != ky {
@@ -65,7 +65,7 @@ func checkIndexSequence(years, taxbins, cgbins int, accmap map[string]int, varin
 		}
 		ky++
 	}
-	if accmap["aftertax"] > 0 {
+	if accmap[Aftertax] > 0 {
 		for i := 0; i < years; i++ {
 			for j := 0; j < accounts; j++ {
 				if varindex.D(i, j) != ky {
@@ -80,11 +80,13 @@ func checkIndexSequence(years, taxbins, cgbins int, accmap map[string]int, varin
 	return passOk
 }
 
+/* TODO FIXME ReMOVEME
 var accountCat = []string{
 	"IRA",
 	"roth",
 	"aftertax",
 }
+*/
 
 // VectorVarIndex contains the index information to convert from variable index to vector index
 type VectorVarIndex struct {
@@ -93,7 +95,7 @@ type VectorVarIndex struct {
 	Taxbins  int
 	Cgbins   int
 	Accounts int
-	Accmap   map[string]int
+	Accmap   map[Acctype]int
 	Accname  []string
 	Xcount   int
 	Ycount   int
@@ -112,7 +114,7 @@ type VectorVarIndex struct {
 
 // NewVectorVarIndex creates an object for index translation
 func NewVectorVarIndex(iyears, itaxbins, icgbins int,
-	iaccmap map[string]int, errfile *os.File) (VectorVarIndex, error) {
+	iaccmap map[Acctype]int, errfile *os.File) (VectorVarIndex, error) {
 
 	if iyears < 1 || iyears > 100 {
 		e := fmt.Errorf("NewVectorVarIndex: invalid value for year, %d", iyears)
@@ -130,9 +132,9 @@ func NewVectorVarIndex(iyears, itaxbins, icgbins int,
 		e := fmt.Errorf("NewVectorVarIndex: invalid value, accmap length != 3 but rather %d, accmap: %v", len(iaccmap), iaccmap)
 		return VectorVarIndex{}, e
 	}
-	_, okIRA := iaccmap["IRA"]
-	_, okRoth := iaccmap["roth"]
-	_, okAftertax := iaccmap["aftertax"]
+	_, okIRA := iaccmap[IRA]
+	_, okRoth := iaccmap[Roth]
+	_, okAftertax := iaccmap[Aftertax]
 	if !okIRA || !okRoth || !okAftertax {
 		e := fmt.Errorf("NewVectorVarIndex: accmap missing one of (IRA, roth, aftertax) key values, has: %v", iaccmap)
 		return VectorVarIndex{}, e
@@ -140,16 +142,16 @@ func NewVectorVarIndex(iyears, itaxbins, icgbins int,
 
 	iaccounts := 0
 	accname := make([]string, 5)
-	for j := 0; j < len(iaccmap); j++ {
-		n := iaccmap[accountCat[j]]
+	for j := Acctype(0); j < Acctype(len(iaccmap)); j++ {
+		n := iaccmap[j]
 		for i := 0; i < n; i++ {
-			accname[iaccounts+i] = fmt.Sprintf("%s%d", accountCat[j], i+1)
+			accname[iaccounts+i] = fmt.Sprintf("%s%d", j.String(), i+1)
 		}
 		iaccounts += n
 	}
 	//fmt.Printf("iaccounts: %d, iaccmap: %v\n", iaccounts, iaccmap)
 	ycount := 0
-	if iaccmap["aftertax"] > 0 { // no cgbins if no aftertax account
+	if iaccmap[Aftertax] > 0 { // no cgbins if no aftertax account
 		ycount = iyears * icgbins
 	}
 	xcount := iyears * itaxbins

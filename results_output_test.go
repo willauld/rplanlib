@@ -1429,10 +1429,10 @@ func TestDepositAmount(t *testing.T) {
 			Errfile: os.Stderr,
 			Accounttable: []account{
 				{
-					acctype: "IRA",
+					acctype: IRA,
 				},
 				{
-					acctype: "aftertax",
+					acctype: Aftertax,
 				},
 			},
 			AssetSale: make([][]float64, 0),

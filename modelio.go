@@ -304,10 +304,10 @@ func BinCheckModelFiles(f1, f2 string) {
 			years := int((*vid)[0])
 			taxbins := int((*vid)[1])
 			cgbins := int((*vid)[2])
-			m := map[string]int{
-				"IRA":      int((*vid)[3]),
-				"roth":     int((*vid)[4]),
-				"aftertax": int((*vid)[5]),
+			m := map[Acctype]int{
+				IRA:      int((*vid)[3]),
+				Roth:     int((*vid)[4]),
+				Aftertax: int((*vid)[5]),
 			}
 			tmp, err := NewVectorVarIndex(years, taxbins,
 				cgbins, m, os.Stdout)

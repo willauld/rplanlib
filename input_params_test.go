@@ -216,7 +216,7 @@ func TestNewInputParams(t *testing.T) {
 		startPlan    int
 		endPlan      int
 		numyr        int
-		accmap       map[string]int
+		accmap       map[Acctype]int
 	}{
 		{ // case 0
 			ip: map[string]string{
@@ -267,7 +267,7 @@ func TestNewInputParams(t *testing.T) {
 			startPlan:    66,
 			endPlan:      103,
 			numyr:        37,
-			accmap:       map[string]int{"IRA": 2, "roth": 0, "aftertax": 1},
+			accmap:       map[Acctype]int{IRA: 2, Roth: 0, Aftertax: 1},
 		},
 		{ // case 1 // switch retirees
 			ip: map[string]string{
@@ -318,7 +318,7 @@ func TestNewInputParams(t *testing.T) {
 			startPlan:    64,
 			endPlan:      101,
 			numyr:        37,
-			accmap:       map[string]int{"IRA": 1, "roth": 0, "aftertax": 1},
+			accmap:       map[Acctype]int{IRA: 1, Roth: 0, Aftertax: 1},
 		},
 		{ // case 2 // switch retirees
 			ip: map[string]string{
@@ -369,7 +369,7 @@ func TestNewInputParams(t *testing.T) {
 			startPlan:    65,
 			endPlan:      98,
 			numyr:        33,
-			accmap:       map[string]int{"IRA": 2, "roth": 1, "aftertax": 0},
+			accmap:       map[Acctype]int{IRA: 2, Roth: 1, Aftertax: 0},
 		},
 		{ // case 2 // switch retirees
 			ip: map[string]string{
@@ -420,7 +420,7 @@ func TestNewInputParams(t *testing.T) {
 			startPlan:    65,
 			endPlan:      86,
 			numyr:        21,
-			accmap:       map[string]int{"IRA": 1, "roth": 1, "aftertax": 0},
+			accmap:       map[Acctype]int{IRA: 1, Roth: 1, Aftertax: 0},
 		},
 		{ // case 3 // test definedContributionPlan
 			ip: map[string]string{
@@ -475,7 +475,7 @@ func TestNewInputParams(t *testing.T) {
 			startPlan:    65,
 			endPlan:      86,
 			numyr:        21,
-			accmap:       map[string]int{"IRA": 1, "roth": 1, "aftertax": 0},
+			accmap:       map[Acctype]int{IRA: 1, Roth: 1, Aftertax: 0},
 		},
 	}
 	for i, elem := range tests {
@@ -502,14 +502,14 @@ func TestNewInputParams(t *testing.T) {
 		if modelip.Numyr != elem.numyr {
 			t.Errorf("NewInputParams case %d: Failed - numyr Expected %v but found %v\n", i, elem.numyr, modelip.Numyr)
 		}
-		if modelip.Accmap["IRA"] != elem.accmap["IRA"] {
-			t.Errorf("NewInputParams case %d: Failed - IRA accounts Expected %v but found %v\n", i, elem.accmap["IRA"], modelip.Accmap["IRA"])
+		if modelip.Accmap[IRA] != elem.accmap[IRA] {
+			t.Errorf("NewInputParams case %d: Failed - IRA accounts Expected %v but found %v\n", i, elem.accmap[IRA], modelip.Accmap[IRA])
 		}
-		if modelip.Accmap["roth"] != elem.accmap["roth"] {
-			t.Errorf("NewInputParams case %d: Failed - roth accounts Expected %v but found %v\n", i, elem.accmap["roth"], modelip.Accmap["roth"])
+		if modelip.Accmap[Roth] != elem.accmap[Roth] {
+			t.Errorf("NewInputParams case %d: Failed - roth accounts Expected %v but found %v\n", i, elem.accmap[Roth], modelip.Accmap[Roth])
 		}
-		if modelip.Accmap["aftertax"] != elem.accmap["aftertax"] {
-			t.Errorf("NewInputParams case %d: Failed - aftertax accounts Expected %v but found %v\n", i, elem.accmap["aftertax"], modelip.Accmap["aftertax"])
+		if modelip.Accmap[Aftertax] != elem.accmap[Aftertax] {
+			t.Errorf("NewInputParams case %d: Failed - aftertax accounts Expected %v but found %v\n", i, elem.accmap[Aftertax], modelip.Accmap[Aftertax])
 		}
 	}
 }

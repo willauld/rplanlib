@@ -23,7 +23,7 @@ type account struct {
 	contributions []float64
 	contrib       float64
 	rRate         float64
-	acctype       string
+	acctype       Acctype
 	mykey         string
 }
 
@@ -228,13 +228,13 @@ func (ms ModelSpecs) verifyTaxableIncomeCoversContrib() error {
 		//print("jointMaxContrib: ", jointMaxContrib)
 		//jointMaxContrib = maxContribution(year, None)
 		for _, acc := range ms.Accounttable {
-			if acc.acctype != "aftertax" {
+			if acc.acctype != Aftertax {
 				carray := acc.contributions
 				if carray != nil && carray[year] > 0 {
 					contrib += carray[year]
 					ownerage := ms.accountOwnerAge(year, acc)
 					if ownerage >= 70 {
-						if acc.acctype == "IRA" {
+						if acc.acctype == IRA {
 							e := fmt.Errorf("Error - IRS does not allow contributions to TDRA accounts after age 70.\n\tPlease correct the contributions at age %d,\n\tfrom the PRIMARY age line, for account type %s and owner %s", ms.Ip.StartPlan+year, acc.acctype, acc.mykey)
 							return e
 						}
@@ -262,7 +262,7 @@ func (ms ModelSpecs) verifyTaxableIncomeCoversContrib() error {
 				//print("MaxContrib: ", MaxContrib, v.mykey)
 				for _, acc := range ms.Accounttable {
 					//print(acc)
-					if acc.acctype != "aftertax" {
+					if acc.acctype != Aftertax {
 						if acc.mykey == v.mykey {
 							carray := acc.contributions
 							if carray != nil {
@@ -350,7 +350,7 @@ func NewModelSpecs(vindx VectorVarIndex,
 		if ip.TDRAContribInflate1 == true {
 			infr = ip.IRate
 		}
-		a.acctype = "IRA"
+		a.acctype = IRA
 		a.mykey = ip.MyKey1
 		a.origbal = float64(ip.TDRA1)
 		a.contrib = float64(ip.TDRAContrib1)
@@ -374,7 +374,7 @@ func NewModelSpecs(vindx VectorVarIndex,
 		if ip.TDRAContribInflate2 == true {
 			infr = ip.IRate
 		}
-		a.acctype = "IRA"
+		a.acctype = IRA
 		a.mykey = ip.MyKey2
 		a.origbal = float64(ip.TDRA2)
 		a.contrib = float64(ip.TDRAContrib2)
@@ -398,7 +398,7 @@ func NewModelSpecs(vindx VectorVarIndex,
 		if ip.RothContribInflate1 == true {
 			infr = ip.IRate
 		}
-		a.acctype = "roth"
+		a.acctype = Roth
 		a.mykey = ip.MyKey1
 		a.origbal = float64(ip.Roth1)
 		a.contrib = float64(ip.RothContrib1)
@@ -423,7 +423,7 @@ func NewModelSpecs(vindx VectorVarIndex,
 		if ip.RothContribInflate2 == true {
 			infr = ip.IRate
 		}
-		a.acctype = "roth"
+		a.acctype = Roth
 		a.mykey = ip.MyKey2
 		a.origbal = float64(ip.Roth2)
 		a.contrib = float64(ip.RothContrib2)
@@ -448,7 +448,7 @@ func NewModelSpecs(vindx VectorVarIndex,
 		if ip.AftataxContribInflate == true {
 			infr = ip.IRate
 		}
-		a.acctype = "aftertax"
+		a.acctype = Aftertax
 		a.mykey = "" // need to make this definable for pc versions
 		a.origbal = float64(ip.Aftatax)
 		a.origbasis = float64(ip.AftataxBasis)
@@ -595,7 +595,7 @@ func NewModelSpecs(vindx VectorVarIndex,
 			if cgtaxable < 0 {
 				cgtaxable = 0
 			}
-			if income > 0 && ip.Accmap["aftertax"] <= 0 {
+			if income > 0 && ip.Accmap[Aftertax] <= 0 {
 				e := fmt.Errorf("Error - Assets to be sold must have an 'aftertax' investment\naccount into which to deposit the net proceeds. Please\nadd an 'aftertax' account to yourn configuration; the bal may be zero")
 				return nil, e
 			}
@@ -719,7 +719,7 @@ func (ms ModelSpecs) BuildModel() ([]float64, [][]float64, []float64, []ModelNot
 		row := make([]float64, nvars)
 		for j := 0; j < len(ms.Accounttable); j++ {
 			p := 1.0
-			if ms.Accounttable[j].acctype != "aftertax" {
+			if ms.Accounttable[j].acctype != Aftertax {
 				if ms.Ti.applyEarlyPenalty(year, ms.matchRetiree(ms.Accounttable[j].mykey)) { // TODO: should applyEarlyPenalty() return the penalty amount, spimplifying things?
 					p = 1 - ms.Ti.Penalty
 				}
@@ -729,7 +729,7 @@ func (ms ModelSpecs) BuildModel() ([]float64, [][]float64, []float64, []ModelNot
 		for k := 0; k < len(*ms.Ti.Taxtable); k++ {
 			row[ms.Vindx.X(year, k)] = (*ms.Ti.Taxtable)[k][2] // income tax
 		}
-		if ms.Ip.Accmap["aftertax"] > 0 {
+		if ms.Ip.Accmap[Aftertax] > 0 {
 			for l := 0; l < len(*ms.Ti.Capgainstable); l++ {
 				row[ms.Vindx.Y(year, l)] = (*ms.Ti.Capgainstable)[l][2] // cap gains tax
 			}
@@ -800,7 +800,7 @@ func (ms ModelSpecs) BuildModel() ([]float64, [][]float64, []float64, []ModelNot
 	for year := 0; year < ms.Ip.Numyr; year++ {
 		row := make([]float64, nvars)
 		for j := 0; j < len(ms.Accounttable); j++ {
-			if ms.Accounttable[j].acctype != "aftertax" {
+			if ms.Accounttable[j].acctype != Aftertax {
 				row[ms.Vindx.D(year, j)] = 1 // TODO if this is not executed, DONT register this constrain, DONT add to A and b
 			}
 		}
@@ -858,7 +858,7 @@ func (ms ModelSpecs) BuildModel() ([]float64, [][]float64, []float64, []ModelNot
 		for j := 0; j < intMin(2, len(ms.Accounttable)); j++ {
 			// at most the first two accounts are type IRA w/
 			// RMD requirement
-			if ms.Accounttable[j].acctype == "IRA" {
+			if ms.Accounttable[j].acctype == IRA {
 				ownerage := ms.accountOwnerAge(year, ms.Accounttable[j])
 				if ownerage >= 70 {
 					row := make([]float64, nvars)
@@ -881,7 +881,7 @@ func (ms ModelSpecs) BuildModel() ([]float64, [][]float64, []float64, []ModelNot
 				if v != nil {
 					max = v[year]
 				}
-				if ms.Accounttable[j].acctype != "aftertax" { //Todo: move this if statement up just under the for to remove all unnessasary work
+				if ms.Accounttable[j].acctype != Aftertax { //Todo: move this if statement up just under the for to remove all unnessasary work
 					row := make([]float64, nvars)
 					row[ms.Vindx.D(year, j)] = 1
 					A = append(A, row)
@@ -898,7 +898,7 @@ func (ms ModelSpecs) BuildModel() ([]float64, [][]float64, []float64, []ModelNot
 		for j := 0; j < intMin(2, len(ms.Accounttable)); j++ {
 			// at most the first two accounts are type IRA
 			// w/ RMD requirement
-			if ms.Accounttable[j].acctype == "IRA" {
+			if ms.Accounttable[j].acctype == IRA {
 				rmd := ms.Ti.rmdNeeded(year, ms.matchRetiree(ms.Accounttable[j].mykey))
 				if rmd > 0 {
 					row := make([]float64, nvars)
@@ -920,7 +920,7 @@ func (ms ModelSpecs) BuildModel() ([]float64, [][]float64, []float64, []ModelNot
 		row := make([]float64, nvars)
 		for j := 0; j < intMin(2, len(ms.Accounttable)); j++ {
 			// IRA can only be in the first two accounts
-			if ms.Accounttable[j].acctype == "IRA" {
+			if ms.Accounttable[j].acctype == IRA {
 				row[ms.Vindx.W(year, j)] = 1  // Account 0 is TDRA
 				row[ms.Vindx.D(year, j)] = -1 // Account 0 is TDRA
 			}
@@ -947,7 +947,7 @@ func (ms ModelSpecs) BuildModel() ([]float64, [][]float64, []float64, []ModelNot
 	// Add constraints for (13a')
 	//
 	notes = append(notes, ModelNote{len(A), "Constraints 13a':"})
-	if ms.Ip.Accmap["aftertax"] > 0 {
+	if ms.Ip.Accmap[Aftertax] > 0 {
 		for year := 0; year < ms.Ip.Numyr; year++ {
 			f := ms.cgTaxableFraction(year)
 			row := make([]float64, nvars)
@@ -970,7 +970,7 @@ func (ms ModelSpecs) BuildModel() ([]float64, [][]float64, []float64, []ModelNot
 	// Add constraints for (13b')
 	//
 	notes = append(notes, ModelNote{len(A), "Constraints 13b':"})
-	if ms.Ip.Accmap["aftertax"] > 0 {
+	if ms.Ip.Accmap[Aftertax] > 0 {
 		for year := 0; year < ms.Ip.Numyr; year++ {
 			f := ms.cgTaxableFraction(year)
 			row := make([]float64, nvars)
@@ -993,7 +993,7 @@ func (ms ModelSpecs) BuildModel() ([]float64, [][]float64, []float64, []ModelNot
 	// Add constraints for (14')
 	//
 	notes = append(notes, ModelNote{len(A), "Constraints 14':"})
-	if ms.Ip.Accmap["aftertax"] > 0 {
+	if ms.Ip.Accmap[Aftertax] > 0 {
 		for year := 0; year < ms.Ip.Numyr; year++ {
 			adjInf := math.Pow(ms.Ip.IRate, float64(ms.Ip.PrePlanYears+year))
 			for l := 0; l < len(*ms.Ti.Capgainstable)-1; l++ {
@@ -1024,7 +1024,7 @@ func (ms ModelSpecs) BuildModel() ([]float64, [][]float64, []float64, []ModelNot
 			A = append(A, row)
 			// In the event of a sell of an asset for the year
 			temp := 0.0
-			if ms.Accounttable[j].acctype == "aftertax" {
+			if ms.Accounttable[j].acctype == Aftertax {
 				temp = AccessVector(ms.AssetSale[0], year) * ms.Accounttable[j].rRate //TODO test
 			}
 			b = append(b, temp)
@@ -1044,7 +1044,7 @@ func (ms ModelSpecs) BuildModel() ([]float64, [][]float64, []float64, []ModelNot
 			row[ms.Vindx.B(year+1, j)] = -1 ////// b[i,j] supports an extra year
 			A = append(A, row)
 			temp := 0.0
-			if ms.Accounttable[j].acctype == "aftertax" {
+			if ms.Accounttable[j].acctype == Aftertax {
 				temp = -1 * AccessVector(ms.AssetSale[0], year) * ms.Accounttable[j].rRate //TODO test
 			}
 			b = append(b, temp)
@@ -1127,10 +1127,10 @@ func (ms ModelSpecs) convertAge(age int, key string) int {
 func (ms ModelSpecs) cgTaxableFraction(year int) float64 {
 	// applies only in Plan years
 	f := 1.0
-	if ms.Ip.Accmap["aftertax"] > 0 {
+	if ms.Ip.Accmap[Aftertax] > 0 {
 		//TODO: FIXME REMOVE THIS LOOP
 		for _, v := range ms.Accounttable {
-			if v.acctype == "aftertax" {
+			if v.acctype == Aftertax {
 				if v.bal > 0 { // don't want to divide by zero
 					//
 					// v.bal includes the rRate and v.basis includes
@@ -1245,7 +1245,7 @@ func (ms ModelSpecs) printModelRow(row []float64, suppressNewline bool) {
 			}
 		}
 	}
-	if ms.Ip.Accmap["aftertax"] > 0 {
+	if ms.Ip.Accmap[Aftertax] > 0 {
 		for i := 0; i < ms.Ip.Numyr; i++ { // y[]
 			for l := 0; l < len(*ms.Ti.Capgainstable); l++ {
 				if row[ms.Vindx.Y(i, l)] != 0 {

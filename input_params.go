@@ -53,6 +53,28 @@ func (a TaxStatus) String() string {
 	return names[a]
 }
 
+type Acctype int
+
+const (
+	IRA            Acctype = iota
+	Roth           Acctype = iota
+	Aftertax       Acctype = iota
+	UnknownAcctype Acctype = iota
+)
+
+func (a Acctype) String() string {
+	names := [...]string{
+		"IRA",
+		"Roth",
+		"Aftertax",
+		"UnknownAcctype",
+	}
+	if a < IRA || a > UnknownAcctype {
+		return "Unknown"
+	}
+	return names[a]
+}
+
 // InputParams are the model params constructed from driver program string input
 type InputParams struct {
 	FilingStatus                  TaxStatus
@@ -116,7 +138,7 @@ type InputParams struct {
 	EndPlan      int
 	AgeDelta     int
 	Numyr        int
-	Accmap       map[string]int
+	Accmap       map[Acctype]int
 	Numacc       int
 
 	Income  []stream
@@ -266,7 +288,7 @@ func NewInputParams(ip map[string]string) (*InputParams, error) {
 		}
 	}
 
-	rip.Accmap = map[string]int{"IRA": 0, "roth": 0, "aftertax": 0}
+	rip.Accmap = map[Acctype]int{IRA: 0, Roth: 0, Aftertax: 0}
 
 	rip.FilingStatus = FilingStatusDefault
 	if ip["filingStatus"] != "" {
@@ -333,7 +355,7 @@ func NewInputParams(ip map[string]string) (*InputParams, error) {
 	rip.TDRAContribEnd1 = getIPIntValue(ip["eT_TDRA_ContribEndAge1"])
 	rip.TDRAContribInflate1 = getIPBoolValue(ip["eT_TDRA_ContribInflate1"])
 	if rip.TDRA1 > 0 || rip.TDRAContrib1 > 0 {
-		rip.Accmap["IRA"]++
+		rip.Accmap[IRA]++
 	}
 
 	if (ip["eT_Roth_Contrib1"] != "" && getIPIntValue(ip["eT_Roth_Contrib1"]) != 0) ||
@@ -353,7 +375,7 @@ func NewInputParams(ip map[string]string) (*InputParams, error) {
 	rip.RothContribEnd1 = getIPIntValue(ip["eT_Roth_ContribEndAge1"])
 	rip.RothContribInflate1 = getIPBoolValue(ip["eT_Roth_ContribInflate1"])
 	if rip.Roth1 > 0 || rip.RothContrib1 > 0 {
-		rip.Accmap["roth"]++
+		rip.Accmap[Roth]++
 	}
 
 	var through2 int
@@ -411,7 +433,7 @@ func NewInputParams(ip map[string]string) (*InputParams, error) {
 		rip.TDRAContribEnd2 = getIPIntValue(ip["eT_TDRA_ContribEndAge2"])
 		rip.TDRAContribInflate2 = getIPBoolValue(ip["eT_TDRA_ContribInflate2"])
 		if rip.TDRA2 > 0 || rip.TDRAContrib2 > 0 {
-			rip.Accmap["IRA"]++
+			rip.Accmap[IRA]++
 		}
 
 		if (ip["eT_Roth_Contrib2"] != "" && getIPIntValue(ip["eT_Roth_Contrib2"]) != 0) ||
@@ -432,7 +454,7 @@ func NewInputParams(ip map[string]string) (*InputParams, error) {
 		rip.RothContribEnd2 = getIPIntValue(ip["eT_Roth_ContribEndAge2"])
 		rip.RothContribInflate2 = getIPBoolValue(ip["eT_Roth_ContribInflate2"])
 		if rip.Roth2 > 0 || rip.RothContrib2 > 0 {
-			rip.Accmap["roth"]++
+			rip.Accmap[Roth]++
 		}
 		//rip.MyKey2 = ip["key2"]
 		if needRetiree2 || (ip["eT_Age2"] != "" ||
@@ -489,7 +511,7 @@ func NewInputParams(ip map[string]string) (*InputParams, error) {
 	rip.AftataxContribEnd = getIPIntValue(ip["eT_Aftatax_ContribEndAge"])
 	rip.AftataxContribInflate = getIPBoolValue(ip["eT_Aftatax_ContribInflate"])
 	if rip.Aftatax > 0 || rip.AftataxContrib > 0 {
-		rip.Accmap["aftertax"]++
+		rip.Accmap[Aftertax]++
 	}
 
 	rip.Numacc = 0

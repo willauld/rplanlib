@@ -95,7 +95,7 @@ type Taxinfo struct {
 	Stded          float64    // standard deduction
 	Primeresidence float64    // exclusion for prime residence
 
-	AccountEstateTax map[string]float64
+	AccountEstateTax map[Acctype]float64
 	Contribspecs     map[string]float64
 
 	Penalty      float64 // for early withdrawal
@@ -111,10 +111,10 @@ func NewTaxInfo(status TaxStatus) Taxinfo {
 	ssnontaxable := 1 - sstaxable
 	ti := Taxinfo{
 		// Account specs contains some initial information # TODO if maxcontrib not used delete
-		AccountEstateTax: map[string]float64{
-			"IRA":      0.85,
-			"roth":     1.0,
-			"aftertax": 0.9,
+		AccountEstateTax: map[Acctype]float64{
+			IRA:      0.85,
+			Roth:     1.0,
+			Aftertax: 0.9,
 		},
 
 		// 401(k), 403(b) and TSP currently have the same limits

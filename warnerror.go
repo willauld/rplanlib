@@ -55,3 +55,11 @@ func (s *warnErrorList) GetError(i int) string {
 	}
 	return ""
 }
+
+func (s *warnErrorList) ClearWarnings() {
+	s.warnList = &[]string{}
+}
+
+func (s *warnErrorList) ClearErrors() {
+	s.errorList = &[]string{}
+}

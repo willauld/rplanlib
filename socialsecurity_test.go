@@ -1,6 +1,7 @@
 package rplanlib
 
 import (
+	"fmt"
 	"strings"
 	"testing"
 )
@@ -379,6 +380,8 @@ func TestProcessSS(t *testing.T) {
 			}
 			fmt.Printf("\nCase %d::\n", i)
 		*/
+		wel := NewWarnErrorList()
+
 		ip, err := NewInputParams(elem.ip)
 		if err != nil {
 			t.Errorf("TestProcessSS: %s\n", err)
@@ -392,7 +395,10 @@ func TestProcessSS(t *testing.T) {
 			t.Errorf("RedirectStdout: %s\n", err)
 			return // should this be continue?
 		}
-		ss, ss1, ss2, tags := processSS(ip)
+		ss, ss1, ss2, tags := processSS(ip, wel)
+		for j := 0; j < wel.GetWarningCount(); j++ {
+			fmt.Printf("%s\n", wel.GetWarning(j))
+		}
 
 		str := RestoreStdout(mychan, oldout, w, doNothing)
 		strn := strings.TrimSpace(str)

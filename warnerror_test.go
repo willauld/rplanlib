@@ -65,6 +65,12 @@ func TestAppendWarnErrorList(t *testing.T) {
 		if s2 != elem.str2 {
 			t.Errorf("TestAppendWarnErrorList() case %d: Failed - GetWarning(1) should have returned %q but returned %q\n", i, elem.str2, s2)
 		}
+		l.ClearWarnings()
+		c = l.GetWarningCount()
+		if c != 0 {
+			t.Errorf("TestAppendWarnErrorList() case %d: Failed - ClearWarnings() should have left warninglist empty but reporting %d\n", i, c)
+		}
+
 		l.AppendError(elem.str1)
 		l.AppendError(elem.str2)
 		c = l.GetErrorCount()
@@ -78,6 +84,11 @@ func TestAppendWarnErrorList(t *testing.T) {
 		s2 = l.GetError(1)
 		if s2 != elem.str2 {
 			t.Errorf("TestAppendWarnErrorList() case %d: Failed - GetError(1) should have returned %q but returned %q\n", i, elem.str2, s2)
+		}
+		l.ClearErrors()
+		c = l.GetErrorCount()
+		if c != 0 {
+			t.Errorf("TestAppendWarnErrorList() case %d: Failed - ClearErrors() should have left Errorlist empty but reporting %d\n", i, c)
 		}
 	}
 }

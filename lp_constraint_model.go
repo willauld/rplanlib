@@ -292,7 +292,8 @@ func NewModelSpecs(vindx VectorVarIndex,
 	errfile *os.File,
 	logfile *os.File,
 	csvfile *os.File,
-	tablefile *os.File) (*ModelSpecs, error) {
+	tablefile *os.File,
+	wel *warnErrorList) (*ModelSpecs, error) {
 
 	//fmt.Printf("InputParams: %#v\n", ip)
 	ms := ModelSpecs{
@@ -471,7 +472,7 @@ func NewModelSpecs(vindx VectorVarIndex,
 	}
 
 	ms.SS = make([][]float64, 0)
-	SS, SS1, SS2, tags := processSS(&ip)
+	SS, SS1, SS2, tags := processSS(&ip, wel)
 	ms.SS = append(ms.SS, SS)
 	ms.SS = append(ms.SS, SS1)
 	ms.SS = append(ms.SS, SS2)

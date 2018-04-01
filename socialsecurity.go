@@ -60,7 +60,7 @@ type ssI struct {
 	bucket     []float64
 }
 
-func processSS(ip *InputParams) (SS, SS1, SS2 []float64, tags []string) {
+func processSS(ip *InputParams, warnList *warnErrorList) (SS, SS1, SS2 []float64, tags []string) {
 
 	//fmt.Printf("PIA1: %d, PIA2: %d\n", ip.PIA1, ip.PIA2)
 	ssi := make([]ssI, 2)
@@ -134,14 +134,17 @@ func processSS(ip *InputParams) (SS, SS1, SS2 []float64, tags []string) {
 			name := ssi[i].key
 			if firstdisperseyear > ssi[i].startSSAge-ssi[i].ageAtStart {
 				disperseage = firstdisperseyear + ssi[i].ageAtStart
-				fmt.Printf("Warning - Social Security spousal benefit can only be claimed\n\tafter the spouse claims benefits.\n\tPlease correct %s's SS age in the configuration file to '%d'.\n", name, disperseage)
+				str := fmt.Sprintf("Warning - Social Security spousal benefit can only be claimed\n\tafter the spouse claims benefits.\n\tPlease correct %s's SS age in the configuration file to '%d'.", name, disperseage)
+				warnList.AppendWarning(str)
 			} else if ssi[i].startSSAge > ssi[i].fraage && firstdisperseyear != ssi[i].startSSAge-ssi[i].ageAtStart {
 				if firstdisperseyear <= ssi[i].fraage-ssi[i].ageAtStart {
 					disperseage = ssi[i].fraage
-					fmt.Printf("Warning - Social Security spousal benefits do not increase after FRA,\n\tresetting benefits start to FRA.\n\tPlease correct %s's SS age in the configuration file to '%d'.\n", name, ssi[i].fraage)
+					str := fmt.Sprintf("Warning - Social Security spousal benefits do not increase after FRA,\n\tresetting benefits start to FRA.\n\tPlease correct %s's SS age in the configuration file to '%d'.", name, ssi[i].fraage)
+					warnList.AppendWarning(str)
 				} else {
 					disperseage = firstdisperseyear + ssi[i].ageAtStart
-					fmt.Printf("Warning - Social Security spousal benefits do not increase after FRA,\n\tresetting benefits start to spouse claim year.\n\tPlease correct %s's age in the configuration file to '%d'.\n", name, disperseage)
+					str := fmt.Sprintf("Warning - Social Security spousal benefits do not increase after FRA,\n\tresetting benefits start to spouse claim year.\n\tPlease correct %s's age in the configuration file to '%d'.", name, disperseage)
+					warnList.AppendWarning(str)
 				}
 			}
 			//fraamount := ssi[0].fraamount / 2 // spousal benefit is 1/2 spouses at FRA

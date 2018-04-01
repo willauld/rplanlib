@@ -459,7 +459,7 @@ func TestNewModelSpecs(t *testing.T) {
 		t.Skip("TestNewModelSpecs(): skipping unless set '-v -short'")
 	}
 	for i, elem := range tests {
-		ip, err := NewInputParams(elem.ip)
+		ip, err := NewInputParams(elem.ip, nil)
 		if err != nil {
 			fmt.Printf("TestNewModelSpecs: %s\n", err)
 			continue
@@ -597,7 +597,7 @@ func TestBuildModel(t *testing.T) {
 			continue
 		}
 		ti := NewTaxInfo(status)
-		ip, err := NewInputParams(elem.ip)
+		ip, err := NewInputParams(elem.ip, nil)
 		if err != nil {
 			fmt.Printf("TestNewModelSpecs: %s\n", err)
 			continue
@@ -963,7 +963,7 @@ func TestPrintModelMatrix(t *testing.T) {
 		},
 	}
 	for i, elem := range tests {
-		ip, err := NewInputParams(elem.ip)
+		ip, err := NewInputParams(elem.ip, nil)
 		if err != nil {
 			fmt.Printf("TestNewModelSpecs: %s\n", err)
 			continue
@@ -1156,7 +1156,7 @@ func TestPrintConstraint(t *testing.T) {
 		},
 	}
 	for i, elem := range tests {
-		ip, err := NewInputParams(elem.ip)
+		ip, err := NewInputParams(elem.ip, nil)
 		if err != nil {
 			fmt.Printf("TestNewModelSpecs: %s\n", err)
 			continue
@@ -1323,7 +1323,7 @@ func TestPrintModelRow(t *testing.T) {
 		},
 	}
 	for i, elem := range tests {
-		ip, err := NewInputParams(elem.ip)
+		ip, err := NewInputParams(elem.ip, nil)
 		if err != nil {
 			fmt.Printf("TestNewModelSpecs: %s\n", err)
 			continue

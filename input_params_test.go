@@ -217,6 +217,7 @@ func TestNewInputParams(t *testing.T) {
 		endPlan      int
 		numyr        int
 		accmap       map[Acctype]int
+		warnstr      string
 	}{
 		{ // case 0
 			ip: map[string]string{
@@ -371,7 +372,7 @@ func TestNewInputParams(t *testing.T) {
 			numyr:        33,
 			accmap:       map[Acctype]int{IRA: 2, Roth: 1, Aftertax: 0},
 		},
-		{ // case 2 // switch retirees
+		{ // case 3 // switch retirees
 			ip: map[string]string{
 				"setName":                    "activeParams",
 				"filingStatus":               "single",
@@ -422,7 +423,7 @@ func TestNewInputParams(t *testing.T) {
 			numyr:        21,
 			accmap:       map[Acctype]int{IRA: 1, Roth: 1, Aftertax: 0},
 		},
-		{ // case 3 // test definedContributionPlan
+		{ // case 4 // test definedContributionPlan
 			ip: map[string]string{
 				"setName":                          "activeParams",
 				"filingStatus":                     "single",
@@ -477,12 +478,132 @@ func TestNewInputParams(t *testing.T) {
 			numyr:        21,
 			accmap:       map[Acctype]int{IRA: 1, Roth: 1, Aftertax: 0},
 		},
+		{ // case 5
+			ip: map[string]string{
+				"setName":                    "activeParams",
+				"filingStatus":               "joint",
+				"key1":                       "retiree1",
+				"key2":                       "retiree2",
+				"eT_Age1":                    "65",
+				"eT_Age2":                    "63",
+				"eT_RetireAge1":              "66",
+				"eT_RetireAge2":              "66",
+				"eT_PlanThroughAge1":         "100",
+				"eT_PlanThroughAge2":         "100",
+				"eT_PIA1":                    "30", // 30k
+				"eT_PIA2":                    "0",  // spousal like -1
+				"eT_SS_Start1":               "70",
+				"eT_SS_Start2":               "66",
+				"eT_TDRA1":                   "200", // 200k
+				"eT_TDRA2":                   "100", // 100k
+				"eT_TDRA_Rate1":              "",
+				"eT_TDRA_Rate2":              "",
+				"eT_TDRA_Contrib1":           "",
+				"eT_TDRA_Contrib2":           "",
+				"eT_TDRA_ContribStartAge1":   "",
+				"eT_TDRA_ContribStartAge2":   "",
+				"eT_TDRA_ContribEndAge1":     "",
+				"eT_TDRA_ContribEndAge2":     "",
+				"eT_Roth1":                   "",
+				"eT_Roth2":                   "",
+				"eT_Roth_Rate1":              "",
+				"eT_Roth_Rate2":              "",
+				"eT_Roth_Contrib1":           "",
+				"eT_Roth_Contrib2":           "",
+				"eT_Roth_ContribStartAge1":   "",
+				"eT_Roth_ContribStartAge2":   "",
+				"eT_Roth_ContribEndAge1":     "",
+				"eT_Roth_ContribEndAge2":     "",
+				"eT_Aftatax":                 "50", // 50k
+				"eT_Aftatax_Rate":            "7.25",
+				"eT_Aftatax_Contrib":         "",
+				"eT_Aftatax_ContribStartAge": "",
+				"eT_Aftatax_ContribEndAge":   "",
+				"dollarsInThousands":         "true",
+			},
+			dplanStart1:  0,
+			dplanEnd1:    0,
+			prePlanYears: 1,
+			startPlan:    66,
+			endPlan:      103,
+			numyr:        37,
+			accmap:       map[Acctype]int{IRA: 2, Roth: 0, Aftertax: 1},
+		},
+		{ // case 6
+			ip: map[string]string{
+				"setName":                    "activeParams",
+				"filingStatus":               "joint",
+				"key1":                       "retiree1",
+				"key2":                       "retiree2",
+				"eT_Age1":                    "65",
+				"eT_Age2":                    "63",
+				"eT_RetireAge1":              "66",
+				"eT_RetireAge2":              "66",
+				"eT_PlanThroughAge1":         "100",
+				"eT_PlanThroughAge2":         "100",
+				"eT_PIA1":                    "30", // 30k
+				"eT_PIA2":                    "",
+				"eT_SS_Start1":               "70",
+				"eT_SS_Start2":               "",
+				"eT_TDRA1":                   "200", // 200k
+				"eT_TDRA2":                   "100", // 100k
+				"eT_TDRA_Rate1":              "",
+				"eT_TDRA_Rate2":              "",
+				"eT_TDRA_Contrib1":           "",
+				"eT_TDRA_Contrib2":           "",
+				"eT_TDRA_ContribStartAge1":   "",
+				"eT_TDRA_ContribStartAge2":   "",
+				"eT_TDRA_ContribEndAge1":     "",
+				"eT_TDRA_ContribEndAge2":     "",
+				"eT_Roth1":                   "",
+				"eT_Roth2":                   "",
+				"eT_Roth_Rate1":              "",
+				"eT_Roth_Rate2":              "",
+				"eT_Roth_Contrib1":           "",
+				"eT_Roth_Contrib2":           "",
+				"eT_Roth_ContribStartAge1":   "",
+				"eT_Roth_ContribStartAge2":   "",
+				"eT_Roth_ContribEndAge1":     "",
+				"eT_Roth_ContribEndAge2":     "",
+				"eT_Aftatax":                 "50", // 50k
+				"eT_Aftatax_Rate":            "7.25",
+				"eT_Aftatax_Contrib":         "",
+				"eT_Aftatax_ContribStartAge": "",
+				"eT_Aftatax_ContribEndAge":   "",
+				"dollarsInThousands":         "true",
+			},
+			dplanStart1:  0,
+			dplanEnd1:    0,
+			prePlanYears: 1,
+			startPlan:    66,
+			endPlan:      103,
+			numyr:        37,
+			accmap:       map[Acctype]int{IRA: 2, Roth: 0, Aftertax: 1},
+			warnstr:      "Warning - Both retiree social security PIA (-1 or 0 for spousal benefits) and start age should be specified or you may be leaving money on the table",
+		},
 	}
 	for i, elem := range tests {
-		modelip, err := NewInputParams(elem.ip)
+		//fmt.Printf("----- Case %d -----\n", i)
+		msgList := NewWarnErrorList()
+		modelip, err := NewInputParams(elem.ip, msgList)
 		if err != nil {
 			fmt.Printf("TestNewInputParams case %d: %s\n", i, err)
 			continue
+		}
+		if elem.warnstr != "" && msgList.GetWarningCount() != 1 {
+			t.Errorf("TestNewInputParams case %d: %s\n", i, "WarningCount should be one")
+		}
+		if elem.warnstr != "" && elem.warnstr != msgList.GetWarning(0) {
+			t.Errorf("NewInputParams case %d: Failed - Expected Warning %q but found %q\n", i, elem.warnstr, msgList.GetWarning(0))
+		}
+		/*
+			for j := 0; j < msgList.GetWarningCount(); j++ {
+				fmt.Printf("%s\n", msgList.GetWarning(j))
+				// Should compare with expectaion TODO Fixme
+			}
+		*/
+		if msgList.GetErrorCount() != 0 {
+			fmt.Printf("TestNewInputParams case %d: %s\n", i, "ErrorCount should be zero")
 		}
 		if modelip.DefinedContributionPlanStart1 != elem.dplanStart1 {
 			t.Errorf("NewInputParams case %d: Failed - defined Contribution Plan start Expected %v but found %v\n", i, elem.dplanStart1, modelip.DefinedContributionPlanStart1)

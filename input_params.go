@@ -243,7 +243,7 @@ const InflateContribDefault = false
 
 // NewInputParams takes string inputs and converts them to model inputs
 // assigning default values where needed
-func NewInputParams(ip map[string]string) (*InputParams, error) {
+func NewInputParams(ip map[string]string, warnList *warnErrorList) (*InputParams, error) {
 
 	var err error
 
@@ -402,18 +402,15 @@ func NewInputParams(ip map[string]string) (*InputParams, error) {
 			}
 			needRetiree2 = true
 		}
+		if ip["eT_PIA2"] != "" || ip["eT_PIA1"] != "" {
+			if ip["eT_PIA2"] == "" || ip["eT_PIA1"] == "" {
+				// if any SS set both must be specified
+				str := fmt.Sprintf("Warning - Both retiree social security PIA (-1 or 0 for spousal benefits) and start age should be specified or you may be leaving money on the table")
+				warnList.AppendWarning(str)
+			}
+		}
 		rip.PIA2 = getIPIntValue(ip["eT_PIA2"]) * multiplier
 		rip.SSStart2 = getIPIntValue(ip["eT_SS_Start2"])
-		/* Really want this to be a warning - however, I don't know how
-		   Can't write directly to stdout for mobile case...
-			if rip.PIA2 != 0 || rip.PIA1 != 0 {
-				if rip.PIA2 == 0 || rip.PIA1 == 0 {
-				// if any SS set both must be specified
-					e := fmt.Errorf("NewInputParams: both retiree social security PIA and start age must be specified if either retiree is")
-					return nil, e
-				}
-			}
-		*/
 
 		if (ip["eT_TDRA_Contrib2"] != "" && getIPIntValue(ip["eT_TDRA_Contrib2"]) != 0) ||
 			ip["eT_TDRA_ContribStartAge2"] != "" ||
@@ -434,6 +431,7 @@ func NewInputParams(ip map[string]string) (*InputParams, error) {
 		rip.TDRAContribInflate2 = getIPBoolValue(ip["eT_TDRA_ContribInflate2"])
 		if rip.TDRA2 > 0 || rip.TDRAContrib2 > 0 {
 			rip.Accmap[IRA]++
+			needRetiree2 = true
 		}
 
 		if (ip["eT_Roth_Contrib2"] != "" && getIPIntValue(ip["eT_Roth_Contrib2"]) != 0) ||
@@ -455,6 +453,7 @@ func NewInputParams(ip map[string]string) (*InputParams, error) {
 		rip.RothContribInflate2 = getIPBoolValue(ip["eT_Roth_ContribInflate2"])
 		if rip.Roth2 > 0 || rip.RothContrib2 > 0 {
 			rip.Accmap[Roth]++
+			needRetiree2 = true
 		}
 		//rip.MyKey2 = ip["key2"]
 		if needRetiree2 || (ip["eT_Age2"] != "" ||
@@ -485,6 +484,7 @@ func NewInputParams(ip map[string]string) (*InputParams, error) {
 	rip.EndPlan = through1 + 1 + rip.Age1
 	rip.AgeDelta = 0
 	rip.Numyr = rip.EndPlan - rip.StartPlan
+	//fmt.Printf("NEED RETIREE2: %#v\n", needRetiree2)
 	if needRetiree2 {
 		rip.PrePlanYears = intMin(yearsToRetire1, yearsToRetire2)
 		rip.StartPlan = rip.PrePlanYears + rip.Age1

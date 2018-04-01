@@ -183,7 +183,7 @@ func TestActivitySummaryHeader(t *testing.T) {
 		},
 	}
 	for i, elem := range tests {
-		ip, err := NewInputParams(elem.sip)
+		ip, err := NewInputParams(elem.sip, nil)
 		if err != nil {
 			t.Errorf("TestActivitySummaryHeader case %d: %s", i, err)
 			continue
@@ -283,7 +283,7 @@ retiree1/retiree2
 	}
 	for i, elem := range tests {
 		//fmt.Printf("================ CASE %d ==================\n", i)
-		ip, err := NewInputParams(elem.sip)
+		ip, err := NewInputParams(elem.sip, nil)
 		if err != nil {
 			t.Errorf("TestActivitySummary case %d: %s", i, err)
 			continue
@@ -390,7 +390,7 @@ func TestPrintIncomeHeader(t *testing.T) {
 	}
 	for i, elem := range tests {
 		//fmt.Printf("=============== Case %d =================\n", i)
-		ip, err := NewInputParams(elem.sip)
+		ip, err := NewInputParams(elem.sip, nil)
 		if err != nil {
 			t.Errorf("TestPrintIncomeHeader case %d: %s", i, err)
 			continue
@@ -451,7 +451,7 @@ func TestGetIncomeAssetExpenseList(t *testing.T) {
 	}
 	for i, elem := range tests {
 		//fmt.Printf("=============== Case %d =================\n", i)
-		ip, err := NewInputParams(elem.sip)
+		ip, err := NewInputParams(elem.sip, nil)
 		if err != nil {
 			t.Errorf("TestGetIncomeAssetExpenseList case %d: %s", i, err)
 			continue
@@ -586,7 +586,7 @@ retir SSincome:         Income:  AssetSale:
 	}
 	for i, elem := range tests {
 		//fmt.Printf("=============== Case %d =================\n", i)
-		ip, err := NewInputParams(elem.sip)
+		ip, err := NewInputParams(elem.sip, nil)
 		if err != nil {
 			t.Errorf("TestTestPrintIncomeExpenseDetails case %d: %s", i, err)
 			continue
@@ -707,7 +707,7 @@ func TestPrintAccHeader(t *testing.T) {
 	}
 	for i, elem := range tests {
 		//fmt.Printf("=============== Case %d =================\n", i)
-		ip, err := NewInputParams(elem.sip)
+		ip, err := NewInputParams(elem.sip, nil)
 		if err != nil {
 			t.Errorf("TestTestPrintIncomeExpenseDetails case %d:  %s", i, err)
 			continue
@@ -826,7 +826,7 @@ retiree1
 	}
 	for i, elem := range tests {
 		//fmt.Printf("=============== Case %d =================\n", i)
-		ip, err := NewInputParams(elem.sip)
+		ip, err := NewInputParams(elem.sip, nil)
 		if err != nil {
 			fmt.Printf("TestPrintAccountTrans: %s\n", err)
 		}
@@ -887,7 +887,7 @@ func TestPrintHeaderTax(t *testing.T) {
 	}
 	for i, elem := range tests {
 		//fmt.Printf("=============== Case %d =================\n", i)
-		ip, err := NewInputParams(elem.sip)
+		ip, err := NewInputParams(elem.sip, nil)
 		if err != nil {
 			fmt.Printf("TestPrintHeaderTax: %s\n", err)
 		}
@@ -992,7 +992,7 @@ retiree1
 	}
 	for i, elem := range tests {
 		//fmt.Printf("=============== Case %d =================\n", i)
-		ip, err := NewInputParams(elem.sip)
+		ip, err := NewInputParams(elem.sip, nil)
 		if err != nil {
 			fmt.Printf("TestPrintTax: %s\n", err)
 		}
@@ -1055,7 +1055,7 @@ retiree1/retiree2
 	}
 	for i, elem := range tests {
 		//fmt.Printf("=============== Case %d =================\n", i)
-		ip, err := NewInputParams(elem.sip)
+		ip, err := NewInputParams(elem.sip, nil)
 		if err != nil {
 			fmt.Printf("TestHeaderTaxBrackets: %s\n", err)
 		}
@@ -1165,7 +1165,7 @@ retiree1
 	}
 	for i, elem := range tests {
 		//fmt.Printf("=============== Case %d =================\n", i)
-		ip, err := NewInputParams(elem.sip)
+		ip, err := NewInputParams(elem.sip, nil)
 		if err != nil {
 			fmt.Printf("TestPrintTaxBrackets: %s\n", err)
 		}
@@ -1227,7 +1227,7 @@ retiree1/retiree2
 	}
 	for i, elem := range tests {
 		//fmt.Printf("=============== Case %d =================\n", i)
-		ip, err := NewInputParams(elem.sip)
+		ip, err := NewInputParams(elem.sip, nil)
 		if err != nil {
 			fmt.Printf("TestPrintHeaderCapGainsBrackets: %s\n", err)
 		}
@@ -1337,7 +1337,7 @@ retiree1
 	}
 	for i, elem := range tests {
 		//fmt.Printf("=============== Case %d =================\n", i)
-		ip, err := NewInputParams(elem.sip)
+		ip, err := NewInputParams(elem.sip, nil)
 		if err != nil {
 			fmt.Printf("TestPrintCapGainsBrackets: case %d: %s\n", i, err)
 		}
@@ -1409,7 +1409,7 @@ func TestDepositAmount(t *testing.T) {
 		},
 	}
 	for i, elem := range tests {
-		ip, err := NewInputParams(sipSingle)
+		ip, err := NewInputParams(sipSingle, nil)
 		if err != nil {
 			t.Errorf("TestDepositAmount: Case %d: %s\n", i, err)
 		}
@@ -1465,7 +1465,7 @@ func TestOrdinaryTaxable(t *testing.T) {
 	}
 	for i, elem := range tests {
 		//fmt.Printf("======== CASE %d ========\n", i)
-		ip, err := NewInputParams(elem.sip)
+		ip, err := NewInputParams(elem.sip, nil)
 		if err != nil {
 			t.Errorf("TestOrdinaryTaxable: Case %d: %s\n", i, err)
 			continue
@@ -1557,7 +1557,7 @@ Total spendable (after tax money): $490_153`,
 	}
 	for i, elem := range tests {
 		//fmt.Printf("======== CASE %d ========\n", i)
-		ip, err := NewInputParams(elem.sip)
+		ip, err := NewInputParams(elem.sip, nil)
 		if err != nil {
 			t.Errorf("TestPrintBaseConfig case %d: %s", i, err)
 			continue
@@ -1955,11 +1955,11 @@ func TestResultsOutput(t *testing.T) {
 	}
 	if !(testing.Short() && testing.Verbose()) { //Skip unless set "-v -short"
 		/*
-			ip0, err := NewInputParams(tests[0].ip)
+			ip0, err := NewInputParams(tests[0].ip, nil)
 			if err != nil {
 				t.Errorf("TestResultsOutput PRE case %d: %s", 0, err)
 			}
-			ip1, err := NewInputParams(tests[1].ip)
+			ip1, err := NewInputParams(tests[1].ip, nil)
 			if err != nil {
 				t.Errorf("TestResultsOutput PRE case %d: %s", 1, err)
 			}
@@ -1979,7 +1979,7 @@ func TestResultsOutput(t *testing.T) {
 			continue
 		}
 		fmt.Printf("======== CASE %d ========\n", i)
-		ip, err := NewInputParams(elem.ip)
+		ip, err := NewInputParams(elem.ip, nil)
 		if err != nil {
 			t.Errorf("TestResultsOutput case %d: %s", i, err)
 			continue

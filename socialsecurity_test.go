@@ -382,7 +382,7 @@ func TestProcessSS(t *testing.T) {
 		*/
 		wel := NewWarnErrorList()
 
-		ip, err := NewInputParams(elem.ip)
+		ip, err := NewInputParams(elem.ip, nil)
 		if err != nil {
 			t.Errorf("TestProcessSS: %s\n", err)
 			continue

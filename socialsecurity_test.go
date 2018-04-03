@@ -171,7 +171,7 @@ func TestProcessSS(t *testing.T) {
 			},
 			warningmes: `Warning - Social Security spousal benefits do not increase after FRA,
 	resetting benefits start to FRA.
-	Please correct retiree2's SS age in the configuration file to '66'.`,
+	Please correct retiree2's SS age in the configuration to '66'.`,
 			expectnil: false,
 		},
 		{ // case 2
@@ -219,7 +219,7 @@ func TestProcessSS(t *testing.T) {
 			},
 			warningmes: `Warning - Social Security spousal benefit can only be claimed
 	after the spouse claims benefits.
-	Please correct retiree1's SS age in the configuration file to '72'.`,
+	Please correct retiree1's SS age in the configuration to '72'.`,
 			expectnil: false,
 		},
 		{ // Case 3 // case to match mobile.toml

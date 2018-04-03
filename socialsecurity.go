@@ -134,16 +134,16 @@ func processSS(ip *InputParams, warnList *warnErrorList) (SS, SS1, SS2 []float64
 			name := ssi[i].key
 			if firstdisperseyear > ssi[i].startSSAge-ssi[i].ageAtStart {
 				disperseage = firstdisperseyear + ssi[i].ageAtStart
-				str := fmt.Sprintf("Warning - Social Security spousal benefit can only be claimed\n\tafter the spouse claims benefits.\n\tPlease correct %s's SS age in the configuration file to '%d'.", name, disperseage)
+				str := fmt.Sprintf("Warning - Social Security spousal benefit can only be claimed\n\tafter the spouse claims benefits.\n\tPlease correct %s's SS age in the configuration to '%d'.", name, disperseage)
 				warnList.AppendWarning(str)
 			} else if ssi[i].startSSAge > ssi[i].fraage && firstdisperseyear != ssi[i].startSSAge-ssi[i].ageAtStart {
 				if firstdisperseyear <= ssi[i].fraage-ssi[i].ageAtStart {
 					disperseage = ssi[i].fraage
-					str := fmt.Sprintf("Warning - Social Security spousal benefits do not increase after FRA,\n\tresetting benefits start to FRA.\n\tPlease correct %s's SS age in the configuration file to '%d'.", name, ssi[i].fraage)
+					str := fmt.Sprintf("Warning - Social Security spousal benefits do not increase after FRA,\n\tresetting benefits start to FRA.\n\tPlease correct %s's SS age in the configuration to '%d'.", name, ssi[i].fraage)
 					warnList.AppendWarning(str)
 				} else {
 					disperseage = firstdisperseyear + ssi[i].ageAtStart
-					str := fmt.Sprintf("Warning - Social Security spousal benefits do not increase after FRA,\n\tresetting benefits start to spouse claim year.\n\tPlease correct %s's age in the configuration file to '%d'.", name, disperseage)
+					str := fmt.Sprintf("Warning - Social Security spousal benefits do not increase after FRA,\n\tresetting benefits start to spouse claim year.\n\tPlease correct %s's age in the configuration to '%d'.", name, disperseage)
 					warnList.AppendWarning(str)
 				}
 			}

@@ -381,6 +381,7 @@ func BinCheckModelFiles(f1, f2 string) {
 			}
 		}
 	} else {
+		// TODO Fixme - add to standard warning system?
 		fmt.Printf("modelio warning: x or x1 is not present\n")
 		fmt.Printf("x: %v\n", x)
 		fmt.Printf("x1: %v\n", x1)

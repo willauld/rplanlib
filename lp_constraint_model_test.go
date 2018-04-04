@@ -654,8 +654,8 @@ func TestAccountOwnerAge(t *testing.T) {
 					{
 						bal:           30,
 						basis:         0,
-						contributions: []float64{},
-						rRate:         1.06,
+						Contributions: []float64{},
+						RRate:         1.06,
 						acctype:       IRA,
 						mykey:         "retiree2",
 					},
@@ -684,8 +684,8 @@ func TestAccountOwnerAge(t *testing.T) {
 					{
 						bal:           30,
 						basis:         0,
-						contributions: []float64{},
-						rRate:         1.06,
+						Contributions: []float64{},
+						RRate:         1.06,
 						acctype:       IRA,
 						mykey:         "retiree2",
 					},
@@ -788,8 +788,8 @@ func TestCgTaxableFraction(t *testing.T) { /* TODO:FIXME:IMPLEMENTME */
 					{
 						bal:           30,
 						basis:         20,
-						contributions: []float64{},
-						rRate:         1.06,
+						Contributions: []float64{},
+						RRate:         1.06,
 						acctype:       IRA,
 						mykey:         "retiree2",
 					},
@@ -825,16 +825,16 @@ func TestCgTaxableFraction(t *testing.T) { /* TODO:FIXME:IMPLEMENTME */
 					{
 						bal:           30,
 						basis:         10,
-						contributions: []float64{},
-						rRate:         1.06,
+						Contributions: []float64{},
+						RRate:         1.06,
 						acctype:       IRA,
 						mykey:         "retiree2",
 					},
 					{
 						bal:           30,
 						basis:         10,
-						contributions: []float64{},
-						rRate:         1.06,
+						Contributions: []float64{},
+						RRate:         1.06,
 						acctype:       Aftertax,
 						mykey:         "retiree2",
 					},
@@ -855,7 +855,7 @@ func TestCgTaxableFraction(t *testing.T) { /* TODO:FIXME:IMPLEMENTME */
 		f := elem.ms.cgTaxableFraction(elem.year)
 		fprime := elem.expectf
 		if elem.expectf < 0 {
-			fprime = 1 - (elem.ms.Accounttable[0].basis / (elem.ms.Accounttable[0].bal * math.Pow(elem.ms.Accounttable[0].rRate, float64(elem.year+elem.ms.Ip.PrePlanYears))))
+			fprime = 1 - (elem.ms.Accounttable[0].basis / (elem.ms.Accounttable[0].bal * math.Pow(elem.ms.Accounttable[0].RRate, float64(elem.year+elem.ms.Ip.PrePlanYears))))
 		}
 		if f != fprime {
 			t.Errorf("cgTaxableFraction case %d: expected %f, found %f", i, fprime, f)

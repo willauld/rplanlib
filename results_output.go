@@ -359,22 +359,22 @@ func (ms ModelSpecs) PrintAccountTrans(xp *[]float64) {
 	}
 	for i := 0; i < ms.Ip.Accmap[IRA]; i++ {
 		str := fmt.Sprintf("&@%7.0f&@%7.0f&@%7.0f&@%7.0f",
-			ms.Accounttable[i].origbal/ms.OneK, 0.0,
-			ms.Accounttable[i].contrib/ms.OneK, 0.0) // IRAn
+			ms.Accounttable[i].Origbal/ms.OneK, 0.0,
+			ms.Accounttable[i].Contrib/ms.OneK, 0.0) // IRAn
 		ms.Ao.output(str)
 	}
 	for i := 0; i < ms.Ip.Accmap[Roth]; i++ {
 		index = ms.Ip.Accmap[IRA] + i
 		str := fmt.Sprintf("&@%7.0f&@%7.0f&@%7.0f",
-			ms.Accounttable[index].origbal/ms.OneK, 0.0,
-			ms.Accounttable[index].contrib/ms.OneK) // rothn
+			ms.Accounttable[index].Origbal/ms.OneK, 0.0,
+			ms.Accounttable[index].Contrib/ms.OneK) // rothn
 		ms.Ao.output(str)
 	}
 	index = ms.Ip.Accmap[IRA] + ms.Ip.Accmap[Roth]
 	if index == len(ms.Accounttable)-1 {
 		str := fmt.Sprintf("&@%7.0f&@%7.0f&@%7.0f",
-			ms.Accounttable[index].origbal/ms.OneK, 0.0,
-			ms.Accounttable[index].contrib/ms.OneK) // aftertax
+			ms.Accounttable[index].Origbal/ms.OneK, 0.0,
+			ms.Accounttable[index].Contrib/ms.OneK) // aftertax
 		ms.Ao.output(str)
 	}
 	ms.Ao.output("\n")

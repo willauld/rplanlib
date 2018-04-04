@@ -16,13 +16,13 @@ type retiree struct { // TODO limit the fields here maxContribution is bigest (o
 }
 type account struct {
 	bal       float64
-	origbal   float64
+	Origbal   float64
 	basis     float64
 	origbasis float64
 	//estateTax     float64
-	contributions []float64
-	contrib       float64
-	rRate         float64
+	Contributions []float64
+	Contrib       float64
+	RRate         float64
 	acctype       Acctype
 	mykey         string
 }
@@ -229,7 +229,7 @@ func (ms ModelSpecs) verifyTaxableIncomeCoversContrib() error {
 		//jointMaxContrib = maxContribution(year, None)
 		for _, acc := range ms.Accounttable {
 			if acc.acctype != Aftertax {
-				carray := acc.contributions
+				carray := acc.Contributions
 				if carray != nil && carray[year] > 0 {
 					contrib += carray[year]
 					ownerage := ms.accountOwnerAge(year, acc)
@@ -264,7 +264,7 @@ func (ms ModelSpecs) verifyTaxableIncomeCoversContrib() error {
 					//print(acc)
 					if acc.acctype != Aftertax {
 						if acc.mykey == v.mykey {
-							carray := acc.contributions
+							carray := acc.Contributions
 							if carray != nil {
 								contrib += AccessVector(carray, year)
 							}
@@ -342,9 +342,9 @@ func NewModelSpecs(vindx VectorVarIndex,
 	const maxPossibleAccounts = 5
 	if ip.TDRA1 > 0 || ip.TDRAContrib1 > 0 {
 		a := account{}
-		a.rRate = ip.RRate
+		a.RRate = ip.RRate
 		if ip.TDRARate1 != 0.0 {
-			a.rRate = ip.TDRARate1
+			a.RRate = ip.TDRARate1
 			panic("This shoud already have default value from NewInputSpecs")
 		}
 		infr := 1.0
@@ -353,23 +353,23 @@ func NewModelSpecs(vindx VectorVarIndex,
 		}
 		a.acctype = IRA
 		a.mykey = ip.MyKey1
-		a.origbal = float64(ip.TDRA1)
-		a.contrib = float64(ip.TDRAContrib1)
-		a.contributions, dbal, _, err = genContrib(ip.TDRAContrib1,
+		a.Origbal = float64(ip.TDRA1)
+		a.Contrib = float64(ip.TDRAContrib1)
+		a.Contributions, dbal, _, err = genContrib(ip.TDRAContrib1,
 			ms.convertAge(ip.TDRAContribStart1, a.mykey),
 			ms.convertAge(ip.TDRAContribEnd1, a.mykey),
-			ip.StartPlan, ip.EndPlan, infr, a.rRate, ip.Age1)
+			ip.StartPlan, ip.EndPlan, infr, a.RRate, ip.Age1)
 		if err != nil {
 			return nil, err
 		}
-		a.bal = a.origbal*math.Pow(a.rRate, float64(ip.PrePlanYears)) + dbal
+		a.bal = a.Origbal*math.Pow(a.RRate, float64(ip.PrePlanYears)) + dbal
 		ms.Accounttable = append(ms.Accounttable, a)
 	}
 	if ip.TDRA2 > 0 || ip.TDRAContrib2 > 0 {
 		a := account{}
-		a.rRate = ip.RRate
+		a.RRate = ip.RRate
 		if ip.TDRARate2 != 0 {
-			a.rRate = ip.TDRARate2
+			a.RRate = ip.TDRARate2
 		}
 		infr := 1.0
 		if ip.TDRAContribInflate2 == true {
@@ -377,23 +377,23 @@ func NewModelSpecs(vindx VectorVarIndex,
 		}
 		a.acctype = IRA
 		a.mykey = ip.MyKey2
-		a.origbal = float64(ip.TDRA2)
-		a.contrib = float64(ip.TDRAContrib2)
-		a.contributions, dbal, _, err = genContrib(ip.TDRAContrib2,
+		a.Origbal = float64(ip.TDRA2)
+		a.Contrib = float64(ip.TDRAContrib2)
+		a.Contributions, dbal, _, err = genContrib(ip.TDRAContrib2,
 			ms.convertAge(ip.TDRAContribStart2, a.mykey),
 			ms.convertAge(ip.TDRAContribEnd2, a.mykey),
-			ip.StartPlan, ip.EndPlan, infr, a.rRate, ip.Age1)
+			ip.StartPlan, ip.EndPlan, infr, a.RRate, ip.Age1)
 		if err != nil {
 			return nil, err
 		}
-		a.bal = a.origbal*math.Pow(a.rRate, float64(ip.PrePlanYears)) + dbal
+		a.bal = a.Origbal*math.Pow(a.RRate, float64(ip.PrePlanYears)) + dbal
 		ms.Accounttable = append(ms.Accounttable, a)
 	}
 	if ip.Roth1 > 0 || ip.RothContrib1 > 0 {
 		a := account{}
-		a.rRate = ip.RRate
+		a.RRate = ip.RRate
 		if ip.RothRate1 != 0 {
-			a.rRate = ip.RothRate1
+			a.RRate = ip.RothRate1
 		}
 		infr := 1.0
 		if ip.RothContribInflate1 == true {
@@ -401,24 +401,24 @@ func NewModelSpecs(vindx VectorVarIndex,
 		}
 		a.acctype = Roth
 		a.mykey = ip.MyKey1
-		a.origbal = float64(ip.Roth1)
-		a.contrib = float64(ip.RothContrib1)
-		a.contributions, dbal, _, err = genContrib(ip.RothContrib1,
+		a.Origbal = float64(ip.Roth1)
+		a.Contrib = float64(ip.RothContrib1)
+		a.Contributions, dbal, _, err = genContrib(ip.RothContrib1,
 			ms.convertAge(ip.RothContribStart1, a.mykey),
 			ms.convertAge(ip.RothContribEnd1, a.mykey),
-			ip.StartPlan, ip.EndPlan, infr, a.rRate, ip.Age1)
+			ip.StartPlan, ip.EndPlan, infr, a.RRate, ip.Age1)
 		if err != nil {
 			return nil, err
 		}
-		a.bal = a.origbal*math.Pow(a.rRate, float64(ip.PrePlanYears)) + dbal
+		a.bal = a.Origbal*math.Pow(a.RRate, float64(ip.PrePlanYears)) + dbal
 		//fmt.Printf("Roth acc: %#v\n", a)
 		ms.Accounttable = append(ms.Accounttable, a)
 	}
 	if ip.Roth2 > 0 || ip.RothContrib2 > 0 {
 		a := account{}
-		a.rRate = ip.RRate
+		a.RRate = ip.RRate
 		if ip.RothRate2 != 0 {
-			a.rRate = ip.RothRate2
+			a.RRate = ip.RothRate2
 		}
 		infr := 1.0
 		if ip.RothContribInflate2 == true {
@@ -426,24 +426,24 @@ func NewModelSpecs(vindx VectorVarIndex,
 		}
 		a.acctype = Roth
 		a.mykey = ip.MyKey2
-		a.origbal = float64(ip.Roth2)
-		a.contrib = float64(ip.RothContrib2)
-		a.contributions, dbal, _, err = genContrib(ip.RothContrib2,
+		a.Origbal = float64(ip.Roth2)
+		a.Contrib = float64(ip.RothContrib2)
+		a.Contributions, dbal, _, err = genContrib(ip.RothContrib2,
 			ms.convertAge(ip.RothContribStart2, a.mykey),
 			ms.convertAge(ip.RothContribEnd2, a.mykey),
-			ip.StartPlan, ip.EndPlan, infr, a.rRate, ip.Age1)
+			ip.StartPlan, ip.EndPlan, infr, a.RRate, ip.Age1)
 		if err != nil {
 			return nil, err
 		}
-		a.bal = a.origbal*math.Pow(a.rRate, float64(ip.PrePlanYears)) + dbal
+		a.bal = a.Origbal*math.Pow(a.RRate, float64(ip.PrePlanYears)) + dbal
 		ms.Accounttable = append(ms.Accounttable, a)
 	}
 	if ip.Aftatax > 0 || ip.AftataxContrib > 0 {
 		var dbasis float64
 		a := account{}
-		a.rRate = ms.Ip.RRate
+		a.RRate = ms.Ip.RRate
 		if ip.AftataxRate != 0 {
-			a.rRate = ip.AftataxRate
+			a.RRate = ip.AftataxRate
 		}
 		infr := 1.0
 		if ip.AftataxContribInflate == true {
@@ -451,17 +451,17 @@ func NewModelSpecs(vindx VectorVarIndex,
 		}
 		a.acctype = Aftertax
 		a.mykey = "" // need to make this definable for pc versions
-		a.origbal = float64(ip.Aftatax)
+		a.Origbal = float64(ip.Aftatax)
 		a.origbasis = float64(ip.AftataxBasis)
-		a.contrib = float64(ip.AftataxContrib)
-		a.contributions, dbal, dbasis, err = genContrib(ip.AftataxContrib,
+		a.Contrib = float64(ip.AftataxContrib)
+		a.Contributions, dbal, dbasis, err = genContrib(ip.AftataxContrib,
 			ms.convertAge(ip.AftataxContribStart, a.mykey),
 			ms.convertAge(ip.AftataxContribEnd, a.mykey),
-			ip.StartPlan, ip.EndPlan, infr, a.rRate, ip.Age1)
+			ip.StartPlan, ip.EndPlan, infr, a.RRate, ip.Age1)
 		if err != nil {
 			return nil, err
 		}
-		a.bal = a.origbal*math.Pow(a.rRate, float64(ip.PrePlanYears)) + dbal
+		a.bal = a.Origbal*math.Pow(a.RRate, float64(ip.PrePlanYears)) + dbal
 		a.basis = a.origbasis + dbasis
 		//fmt.Printf("aftertax accout: %#v\n", a)
 		ms.Accounttable = append(ms.Accounttable, a)
@@ -840,7 +840,7 @@ func (ms ModelSpecs) BuildModel() ([]float64, [][]float64, []float64, []ModelNot
 	notes = append(notes, ModelNote{len(A), "Constraints 8':"})
 	for year := 0; year < ms.Ip.Numyr; year++ {
 		for j := 0; j < len(ms.Accounttable); j++ {
-			v := ms.Accounttable[j].contributions
+			v := ms.Accounttable[j].Contributions
 			if v != nil {
 				if v[year] > 0 {
 					row := make([]float64, nvars)
@@ -877,7 +877,7 @@ func (ms ModelSpecs) BuildModel() ([]float64, [][]float64, []float64, []ModelNot
 	if !ms.AllowTdraRothraDeposits {
 		for year := 0; year < ms.Ip.Numyr; year++ {
 			for j := 0; j < len(ms.Accounttable); j++ {
-				v := ms.Accounttable[j].contributions
+				v := ms.Accounttable[j].Contributions
 				max := 0.0
 				if v != nil {
 					max = v[year]
@@ -1019,14 +1019,14 @@ func (ms ModelSpecs) BuildModel() ([]float64, [][]float64, []float64, []ModelNot
 			//j = len(ms.Accounttable)-1 // nl the last account, the investment account
 			row := make([]float64, nvars)
 			row[ms.Vindx.B(year+1, j)] = 1 // b[i,j] supports an extra year
-			row[ms.Vindx.B(year, j)] = -1 * ms.Accounttable[j].rRate
-			row[ms.Vindx.W(year, j)] = ms.Accounttable[j].rRate
-			row[ms.Vindx.D(year, j)] = -1 * ms.Accounttable[j].rRate
+			row[ms.Vindx.B(year, j)] = -1 * ms.Accounttable[j].RRate
+			row[ms.Vindx.W(year, j)] = ms.Accounttable[j].RRate
+			row[ms.Vindx.D(year, j)] = -1 * ms.Accounttable[j].RRate
 			A = append(A, row)
 			// In the event of a sell of an asset for the year
 			temp := 0.0
 			if ms.Accounttable[j].acctype == Aftertax {
-				temp = AccessVector(ms.AssetSale[0], year) * ms.Accounttable[j].rRate //TODO test
+				temp = AccessVector(ms.AssetSale[0], year) * ms.Accounttable[j].RRate //TODO test
 			}
 			b = append(b, temp)
 		}
@@ -1039,14 +1039,14 @@ func (ms ModelSpecs) BuildModel() ([]float64, [][]float64, []float64, []ModelNot
 		for j := 0; j < len(ms.Accounttable); j++ {
 			//j = len(ms.Accounttable)-1 // nl the last account, the investment account
 			row := make([]float64, nvars)
-			row[ms.Vindx.B(year, j)] = ms.Accounttable[j].rRate
-			row[ms.Vindx.W(year, j)] = -1 * ms.Accounttable[j].rRate
-			row[ms.Vindx.D(year, j)] = ms.Accounttable[j].rRate
+			row[ms.Vindx.B(year, j)] = ms.Accounttable[j].RRate
+			row[ms.Vindx.W(year, j)] = -1 * ms.Accounttable[j].RRate
+			row[ms.Vindx.D(year, j)] = ms.Accounttable[j].RRate
 			row[ms.Vindx.B(year+1, j)] = -1 ////// b[i,j] supports an extra year
 			A = append(A, row)
 			temp := 0.0
 			if ms.Accounttable[j].acctype == Aftertax {
-				temp = -1 * AccessVector(ms.AssetSale[0], year) * ms.Accounttable[j].rRate //TODO test
+				temp = -1 * AccessVector(ms.AssetSale[0], year) * ms.Accounttable[j].RRate //TODO test
 			}
 			b = append(b, temp)
 		}
@@ -1138,7 +1138,7 @@ func (ms ModelSpecs) cgTaxableFraction(year int) float64 {
 					// the additional contributions up until
 					// startPlan so no need to inflate for ms.Ip.PrePlanYears
 					//
-					f = 1 - (v.basis / (v.bal * math.Pow(v.rRate, float64(year))))
+					f = 1 - (v.basis / (v.bal * math.Pow(v.RRate, float64(year))))
 				}
 				break // should be the last entry anyway but...
 			}

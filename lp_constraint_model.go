@@ -54,7 +54,6 @@ type ModelSpecs struct {
 	Taxed        []float64
 	CgAssetTaxed []float64
 
-	Verbose bool
 	Errfile *os.File
 	Logfile *os.File
 
@@ -286,7 +285,6 @@ func (ms ModelSpecs) verifyTaxableIncomeCoversContrib() error {
 func NewModelSpecs(vindx VectorVarIndex,
 	ti Taxinfo,
 	ip InputParams,
-	verbose bool,
 	allowDeposits bool,
 	RoundToOneK bool,
 	errfile *os.File,
@@ -302,7 +300,6 @@ func NewModelSpecs(vindx VectorVarIndex,
 		Ti:    ti,
 		Ao:    NewAppOutput(csvfile, tablefile),
 		AllowTdraRothraDeposits: allowDeposits,
-		Verbose:                 verbose,
 		Errfile:                 errfile,
 		Logfile:                 logfile,
 		//csvfile:                 csvfile,
@@ -1077,11 +1074,6 @@ func (ms ModelSpecs) BuildModel() ([]float64, [][]float64, []float64, []ModelNot
 	// Constrant for (17') is default for sycpy so no code is needed
 	//
 	notes = append(notes, ModelNote{len(A), "Constraints 17':"})
-	if ms.Verbose {
-		fmt.Fprintf(ms.Logfile, "Num vars: %d\n", len(c))
-		fmt.Fprintf(ms.Logfile, "Num contraints: %d\n", len(b))
-		fmt.Fprintf(ms.Logfile, "\n")
-	}
 
 	return c, A, b, notes
 }

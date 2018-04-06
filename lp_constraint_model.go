@@ -211,7 +211,7 @@ func buildVector(yearly, startAge, endAge, vecStartAge, vecEndAge int, rate floa
 	return vec, nil
 }
 
-func (ms ModelSpecs) verifyTaxableIncomeCoversContrib() error {
+func (ms ModelSpecs) verifyTaxableIncomeCoversContrib(mList *WarnErrorList) error {
 	//   and contrib is less than max
 	// TODO: before return check the following:
 	// - No TDRA contributions after reaching age 70
@@ -234,7 +234,9 @@ func (ms ModelSpecs) verifyTaxableIncomeCoversContrib() error {
 					ownerage := ms.accountOwnerAge(year, acc)
 					if ownerage >= 70 {
 						if acc.acctype == IRA {
-							e := fmt.Errorf("Error - IRS does not allow contributions to TDRA accounts after age 70.\n\tPlease correct the contributions at age %d,\n\tfrom the PRIMARY age line, for account type %s and owner %s", ms.Ip.StartPlan+year, acc.acctype, acc.mykey)
+							str := fmt.Sprintf("Error - IRS does not allow contributions to TDRA accounts after age 70.\n\tPlease correct the contributions at age %d,\n\tfrom the PRIMARY age line, for account type %s and owner %s", ms.Ip.StartPlan+year, acc.acctype, acc.mykey)
+							mList.AppendError(str)
+							e := fmt.Errorf(str)
 							return e
 						}
 					}
@@ -243,11 +245,15 @@ func (ms ModelSpecs) verifyTaxableIncomeCoversContrib() error {
 		}
 		//print("Contrib amount: ", contrib)
 		if AccessVector(ms.Taxed, year) < contrib {
-			e := fmt.Errorf("Error - IRS requires contributions to retirement accounts\n\tbe less than your ordinary taxable income.\n\tHowever, contributions of $%.0f at age %d,\n\tfrom the PRIMARY age line, exceeds the taxable\n\tincome of $%.0f", contrib, ms.Ip.StartPlan+year, AccessVector(ms.Taxed, year))
+			str := fmt.Sprintf("Error - IRS requires contributions to retirement accounts\n\tbe less than your ordinary taxable income.\n\tHowever, contributions of $%.0f at age %d,\n\tfrom the PRIMARY age line, exceeds the taxable\n\tincome of $%.0f", contrib, ms.Ip.StartPlan+year, AccessVector(ms.Taxed, year))
+			mList.AppendError(str)
+			e := fmt.Errorf(str)
 			return e
 		}
 		if jointMaxContrib < contrib {
-			e := fmt.Errorf("Error - IRS requires contributions to retirement accounts\n\tbe less than a define maximum.\n\tHowever, contributions of $%.0f at age %d,\n\tfrom the PRIMARY age line, exceeds your maximum amount\n\tof $%.0f", contrib, ms.Ip.StartPlan+year, jointMaxContrib)
+			str := fmt.Sprintf("Error - IRS requires contributions to retirement accounts\n\tbe less than a define maximum.\n\tHowever, contributions of $%.0f at age %d,\n\tfrom the PRIMARY age line, exceeds your maximum amount\n\tof $%.0f", contrib, ms.Ip.StartPlan+year, jointMaxContrib)
+			mList.AppendError(str)
+			e := fmt.Errorf(str)
 			return e
 		}
 		//print("TYPE: ", self.retirement_type)
@@ -272,7 +278,9 @@ func (ms ModelSpecs) verifyTaxableIncomeCoversContrib() error {
 				}
 				//print("Contrib amount: ", contrib)
 				if MaxContrib < contrib {
-					e := fmt.Errorf("Error - IRS requires contributions to retirement accounts be less than\n\ta define maximum.\n\tHowever, contributions of $%.0f at age %d, of the account owner's\n\tage line, exceeds the maximum personal amount of $%.0f for %s", contrib, personalstartage+year, MaxContrib, v.mykey)
+					str := fmt.Sprintf("Error - IRS requires contributions to retirement accounts be less than\n\ta define maximum.\n\tHowever, contributions of $%.0f at age %d, of the account owner's\n\tage line, exceeds the maximum personal amount of $%.0f for %s", contrib, personalstartage+year, MaxContrib, v.mykey)
+					mList.AppendError(str)
+					e := fmt.Errorf(str)
 					return e
 				}
 			}
@@ -291,7 +299,7 @@ func NewModelSpecs(vindx VectorVarIndex,
 	logfile *os.File,
 	csvfile *os.File,
 	tablefile *os.File,
-	wel *warnErrorList) (*ModelSpecs, error) {
+	wel *WarnErrorList) (*ModelSpecs, error) {
 
 	//fmt.Printf("InputParams: %#v\n", ip)
 	ms := ModelSpecs{
@@ -634,7 +642,7 @@ func NewModelSpecs(vindx VectorVarIndex,
 		ms.cgAssetTaxed = cgtaxed
 	*/
 
-	err = ms.verifyTaxableIncomeCoversContrib()
+	err = ms.verifyTaxableIncomeCoversContrib(wel)
 	if err != nil {
 		return nil, err
 	}

@@ -60,7 +60,7 @@ type ssI struct {
 	bucket     []float64
 }
 
-func processSS(ip *InputParams, warnList *warnErrorList) (SS, SS1, SS2 []float64, tags []string) {
+func processSS(ip *InputParams, warnList *WarnErrorList) (SS, SS1, SS2 []float64, tags []string) {
 
 	//fmt.Printf("PIA1: %d, PIA2: %d\n", ip.PIA1, ip.PIA2)
 	ssi := make([]ssI, 2)

@@ -243,7 +243,7 @@ const InflateContribDefault = false
 
 // NewInputParams takes string inputs and converts them to model inputs
 // assigning default values where needed
-func NewInputParams(ip map[string]string, warnList *warnErrorList) (*InputParams, error) {
+func NewInputParams(ip map[string]string, warnList *WarnErrorList) (*InputParams, error) {
 
 	var err error
 

@@ -201,9 +201,17 @@ func getIPBoolValue(str string) bool {
 	if str == "" {
 		return false
 	}
-	b, e := strconv.ParseBool(strings.ToLower(str))
+	l := strings.ToLower(strings.TrimSpace(str))
+	b, e := strconv.ParseBool(l)
 	if e != nil {
+		if l == "yes" {
+			return true
+		}
+		if l == "no" {
+			return false
+		}
 		//fmt.Printf("GetIPFloatValue(): %s\n", e)
+		//TODO FIXME get ride of panic for production
 		panic(e)
 	}
 	return b

@@ -820,7 +820,7 @@ func (ms ModelSpecs) PrintBaseConfig(xp *[]float64) { // input is res.x
 	ms.Ao.output(str)
 	ms.Ao.output("\n")
 	if ms.Ip.Min == 0 && ms.Ip.Max == 0 {
-		ms.Ao.output("No desired minium or maximum amount specified\n")
+		ms.Ao.output("No desired minimum or maximum amount specified\n")
 	} else if ms.Ip.Min == 0 {
 		// max specified
 		ms.Ao.output(fmt.Sprintf("Maximum desired: $%s\n", RenderFloat("#_###.", float64(ms.Ip.Max))))

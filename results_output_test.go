@@ -1519,7 +1519,7 @@ func TestPrintBaseConfig(t *testing.T) {
 Optimized for Spending with Single status
 	starting at age 65 with an estate of $379_660 liquid and $0 illiquid
 
-No desired minium or maximum amount specified
+No desired minimum or maximum amount specified
 
 After tax yearly income: $37_164 adjusting for inflation
 	and final estate at age 76 with $0 liquid and $0 illiquid
@@ -1539,7 +1539,7 @@ Total spendable (after tax money): $463_934`,
 Optimized for Spending with Joint status
 	starting at age 65 with an estate of $379_660 liquid and $0 illiquid
 
-No desired minium or maximum amount specified
+No desired minimum or maximum amount specified
 
 After tax yearly income: $39_264 adjusting for inflation
 	and final estate at age 76 with $0 liquid and $0 illiquid

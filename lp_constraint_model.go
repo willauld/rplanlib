@@ -481,10 +481,6 @@ func NewModelSpecs(vindx VectorVarIndex,
 	for _, a := range ms.Accounttable {
 		ms.LiquidAssetPlanStart += a.bal
 	}
-	if fourPercentRule {
-		// override any setting of [max.income]
-		ms.Ip.Max = int(0.04 * ms.LiquidAssetPlanStart)
-	}
 
 	ms.SS = make([][]float64, 0)
 	SS, SS1, SS2, tags := processSS(&ip, wel)
@@ -651,6 +647,11 @@ func NewModelSpecs(vindx VectorVarIndex,
 		}
 		ms.cgAssetTaxed = cgtaxed
 	*/
+	if fourPercentRule {
+		// override any setting of [max.income]
+		ms.Ip.Max =
+			int(0.04 * (ms.LiquidAssetPlanStart + ms.IlliquidAssetPlanStart))
+	}
 
 	err = ms.verifyTaxableIncomeCoversContrib(wel)
 	if err != nil {

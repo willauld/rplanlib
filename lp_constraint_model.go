@@ -37,6 +37,7 @@ type ModelSpecs struct {
 	AllowTdraRothraDeposits bool
 
 	// The following was through 'S'
+	LiquidAssetPlanStart   float64
 	IlliquidAssetPlanStart float64
 	IlliquidAssetPlanEnd   float64
 	Accounttable           []account
@@ -295,6 +296,7 @@ func NewModelSpecs(vindx VectorVarIndex,
 	ip InputParams,
 	allowDeposits bool,
 	RoundToOneK bool,
+	fourPercentRule bool,
 	errfile *os.File,
 	logfile *os.File,
 	csvfile *os.File,
@@ -474,6 +476,14 @@ func NewModelSpecs(vindx VectorVarIndex,
 	if len(ms.Accounttable) != ms.Ip.Numacc {
 		e := fmt.Errorf("NewModelSpecs: len(accounttable): %d not equal to numacc: %d", len(ms.Accounttable), ms.Ip.Numacc)
 		return nil, e
+	}
+	ms.LiquidAssetPlanStart = 0.0
+	for _, a := range ms.Accounttable {
+		ms.LiquidAssetPlanStart += a.bal
+	}
+	if fourPercentRule {
+		// override any setting of [max.income]
+		ms.Ip.Max = int(0.04 * ms.LiquidAssetPlanStart)
 	}
 
 	ms.SS = make([][]float64, 0)

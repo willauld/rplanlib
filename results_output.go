@@ -816,6 +816,7 @@ func (ms ModelSpecs) PrintBaseConfig(xp *[]float64) { // input is res.x
 	totwithd, tincome, tTaxable, tincometax, tcgtax, tearlytax, tspendable, tbeginbal, tendbal := ms.getResultTotals(xp)
 	ms.Ao.output("\n")
 	ms.Ao.output("======\n")
+	// Probably should switch from using tbeginbal to ms.LiquidAssetPlanStart
 	str := fmt.Sprintf("Optimized for %s with %s status\n\tstarting at age %d with an estate of $%s liquid and $%s illiquid\n", ms.Ip.Maximize, ms.Ip.FilingStatus /*retirement_type?*/, ms.Ip.StartPlan, RenderFloat("#_###.", tbeginbal), RenderFloat("#_###.", ms.IlliquidAssetPlanStart))
 	ms.Ao.output(str)
 	ms.Ao.output("\n")

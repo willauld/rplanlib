@@ -649,8 +649,10 @@ func NewModelSpecs(vindx VectorVarIndex,
 	*/
 	if fourPercentRule {
 		// override any setting of [max.income]
+		// William Bengen the origniator of the 4% rule now says
+		// its more like 4.5
 		ms.Ip.Max =
-			int(0.04 * (ms.LiquidAssetPlanStart + ms.IlliquidAssetPlanStart))
+			int(0.045 * (ms.LiquidAssetPlanStart + ms.IlliquidAssetPlanStart))
 	}
 
 	err = ms.verifyTaxableIncomeCoversContrib(wel)

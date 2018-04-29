@@ -66,6 +66,81 @@ var singlecapitalgains2017 = &[][]float64{
 	{418400, -3, 0.20},
 }
 
+var marriedjointstded2017 = 12700 + 2*4050 //std dedction + 2 prsonal exemptions
+var marriedseparatestded2017 = 9350 + 4050 //std dedction + 1 prsonal exemptions
+var singlestded2017 = 6350 + 4050          //std dedction + 1 personal exmptions
+
+var jointprimeresidence2017 = 500000
+var singleprimresidence2017 = 250000
+
+// 2018 table (predict it moves with inflation?)
+// married joint, married separate, single
+// Table Columns:
+// [braket $ start,
+//  bracket size,
+//  marginal rate,
+//  total tax from all lower brackets ]
+//### TODO check if this field is used, delete if not! NOW TESTING
+var marriedjointtax2018 = &[][]float64{
+	{0, 19050, 0.10},
+	{19050, 58350, 0.12},
+	{77400, 77200, 0.22},
+	{165000, 150000, 0.24},
+	{315000, 85000, 0.32},
+	{400000, 200000, 0.35},
+	{600000, -2, 0.37},
+}
+
+var marriedseparatetax2018 = &[][]float64{
+	{0, 9525, 0.10},
+	{9525, 29175, 0.12},
+	{38700, 43800, 0.22},
+	{82500, 75000, 0.24},
+	{157500, 42500, 0.32},
+	{200000, 100000, 0.35},
+	{300000, -2, 0.37},
+}
+
+var singletax2018 = &[][]float64{
+	{0, 9525, 0.10},
+	{9525, 29175, 0.12},
+	{38700, 43800, 0.22},
+	{82500, 75000, 0.24},
+	{157500, 42500, 0.32},
+	{200000, 300000, 0.35},
+	{500000, -2, 0.37},
+}
+
+// Table Columns:
+// [braket $ start,
+//  bracket size,
+//  marginal rate ]
+var marriedjointcapitalgains2018 = &[][]float64{
+	{0, 77200, 0.0},
+	{77200, 401800, 0.15},
+	{479000, -3, 0.20},
+}
+
+// ### MISSING 2018 DATA
+var marriedseparatecapitalgains2018 = &[][]float64{
+	{0, 38600, 0.0},
+	{38600, 200900, 0.15},
+	{239500, -3, 0.20},
+}
+
+var singlecapitalgains2018 = &[][]float64{
+	{0, 38600, 0.0},
+	{38600, 387200, 0.15},
+	{425800, -3, 0.20},
+}
+
+var marriedjointstded2018 = 24000    //std dedction + no personal exemptions
+var marriedseparatestded2018 = 12000 //std dedction + no personal exemptions
+var singlestded2018 = 12000          //std dedction + no personal exemptions
+
+var jointprimeresidence2018 = 500000
+var singleprimresidence2018 = 250000
+
 // Required Minimal Distributions from IRA starting with age 70
 // https://www.irs.gov/publications/p590b#en_US_2016_publink1000231258
 // Using appendix B table III in all cases.
@@ -79,13 +154,6 @@ var marriedjointRMD = &[]float64{
 
 var marriedseparateRMD = marriedjointRMD
 var singleRMD = marriedjointRMD
-
-var marriedjointstded2017 = 12700 + 2*4050 //std dedction + 2 prsonal exemptions
-var marriedseparatestded2017 = 9350 + 4050 //std dedction + 1 prsonal exemptions
-var singlestded2017 = 6350 + 4050          //std dedction + 1 personal exmptions
-
-var jointprimeresidence2017 = 500000
-var singleprimresidence2017 = 250000
 
 // Taxinfo contains the centeral tax information
 type Taxinfo struct {
@@ -106,7 +174,7 @@ type Taxinfo struct {
 // TODO: Should I merge NewTaxInfo() and set_retirement_staus() I'm thinking I should!!!
 
 //NewTaxInfo creates the applicable tax structure
-func NewTaxInfo(status TaxStatus) Taxinfo {
+func NewTaxInfo(status TaxStatus, taxYear int) Taxinfo {
 	sstaxable := 0.85
 	ssnontaxable := 1 - sstaxable
 	ti := Taxinfo{
@@ -125,24 +193,46 @@ func NewTaxInfo(status TaxStatus) Taxinfo {
 		SStaxable:    sstaxable, // maximum portion of SS that is taxable
 		SSnotTaxable: ssnontaxable,
 	}
-	if status == Single {
-		ti.Taxtable = singletax2017
-		ti.Capgainstable = singlecapitalgains2017
-		ti.Stded = float64(singlestded2017)
-		ti.RMD = singleRMD
-		ti.Primeresidence = float64(singleprimresidence2017)
-	} else if status == Mseparate {
-		ti.Taxtable = marriedseparatetax2017
-		ti.Capgainstable = marriedseparatecapitalgains2017
-		ti.Stded = float64(marriedseparatestded2017)
-		ti.RMD = marriedseparateRMD
-		ti.Primeresidence = float64(singleprimresidence2017)
-	} else { // status == Joint:
-		ti.Taxtable = marriedjointtax2017
-		ti.Capgainstable = marriedjointcapitalgains2017
-		ti.Stded = float64(marriedjointstded2017)
-		ti.RMD = marriedjointRMD
-		ti.Primeresidence = float64(jointprimeresidence2017)
+	if taxYear == 2018 {
+		if status == Single {
+			ti.Taxtable = singletax2018
+			ti.Capgainstable = singlecapitalgains2018
+			ti.Stded = float64(singlestded2018)
+			ti.RMD = singleRMD
+			ti.Primeresidence = float64(singleprimresidence2018)
+		} else if status == Mseparate {
+			ti.Taxtable = marriedseparatetax2018
+			ti.Capgainstable = marriedseparatecapitalgains2018
+			ti.Stded = float64(marriedseparatestded2018)
+			ti.RMD = marriedseparateRMD
+			ti.Primeresidence = float64(singleprimresidence2018)
+		} else { // status == Joint:
+			ti.Taxtable = marriedjointtax2018
+			ti.Capgainstable = marriedjointcapitalgains2018
+			ti.Stded = float64(marriedjointstded2018)
+			ti.RMD = marriedjointRMD
+			ti.Primeresidence = float64(jointprimeresidence2018)
+		}
+	} else { // taxYear == 2017
+		if status == Single {
+			ti.Taxtable = singletax2017
+			ti.Capgainstable = singlecapitalgains2017
+			ti.Stded = float64(singlestded2017)
+			ti.RMD = singleRMD
+			ti.Primeresidence = float64(singleprimresidence2017)
+		} else if status == Mseparate {
+			ti.Taxtable = marriedseparatetax2017
+			ti.Capgainstable = marriedseparatecapitalgains2017
+			ti.Stded = float64(marriedseparatestded2017)
+			ti.RMD = marriedseparateRMD
+			ti.Primeresidence = float64(singleprimresidence2017)
+		} else { // status == Joint:
+			ti.Taxtable = marriedjointtax2017
+			ti.Capgainstable = marriedjointcapitalgains2017
+			ti.Stded = float64(marriedjointstded2017)
+			ti.RMD = marriedjointRMD
+			ti.Primeresidence = float64(jointprimeresidence2017)
+		}
 	}
 	//print('taxtable:\n', self.taxtable, '\n')
 	//print('capgainstable:\n', self.capgainstable, '\n')

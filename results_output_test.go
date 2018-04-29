@@ -189,7 +189,7 @@ func TestActivitySummaryHeader(t *testing.T) {
 			continue
 		}
 		//fmt.Printf("InputParams: %#v\n", ip)
-		ti := NewTaxInfo(ip.FilingStatus)
+		ti := NewTaxInfo(ip.FilingStatus, 2017)
 		taxbins := len(*ti.Taxtable)
 		cgbins := len(*ti.Capgainstable)
 		vindx, err := NewVectorVarIndex(ip.Numyr, taxbins,
@@ -289,7 +289,7 @@ retiree1/retiree2
 			continue
 		}
 		//fmt.Printf("InputParams: %#v\n", ip)
-		ti := NewTaxInfo(ip.FilingStatus)
+		ti := NewTaxInfo(ip.FilingStatus, 2017)
 		taxbins := len(*ti.Taxtable)
 		cgbins := len(*ti.Capgainstable)
 		vindx, err := NewVectorVarIndex(ip.Numyr, taxbins,
@@ -830,7 +830,7 @@ retiree1
 		if err != nil {
 			fmt.Printf("TestPrintAccountTrans: %s\n", err)
 		}
-		ti := NewTaxInfo(ip.FilingStatus)
+		ti := NewTaxInfo(ip.FilingStatus, 2017)
 		taxbins := len(*ti.Taxtable)
 		cgbins := len(*ti.Capgainstable)
 		vindx, err := NewVectorVarIndex(ip.Numyr, taxbins,
@@ -997,7 +997,7 @@ retiree1
 		if err != nil {
 			fmt.Printf("TestPrintTax: %s\n", err)
 		}
-		ti := NewTaxInfo(ip.FilingStatus)
+		ti := NewTaxInfo(ip.FilingStatus, 2017)
 		taxbins := len(*ti.Taxtable)
 		cgbins := len(*ti.Capgainstable)
 		vindx, err := NewVectorVarIndex(ip.Numyr, taxbins,
@@ -1061,7 +1061,7 @@ retiree1/retiree2
 		if err != nil {
 			fmt.Printf("TestHeaderTaxBrackets: %s\n", err)
 		}
-		ti := NewTaxInfo(ip.FilingStatus)
+		ti := NewTaxInfo(ip.FilingStatus, 2017)
 		csvfile := (*os.File)(nil)
 		tablefile := os.Stdout
 		ms := ModelSpecs{
@@ -1171,7 +1171,7 @@ retiree1
 		if err != nil {
 			fmt.Printf("TestPrintTaxBrackets: %s\n", err)
 		}
-		ti := NewTaxInfo(ip.FilingStatus)
+		ti := NewTaxInfo(ip.FilingStatus, 2017)
 		taxbins := len(*ti.Taxtable)
 		cgbins := len(*ti.Capgainstable)
 		vindx, err := NewVectorVarIndex(ip.Numyr, taxbins,
@@ -1234,7 +1234,7 @@ retiree1/retiree2
 		if err != nil {
 			fmt.Printf("TestPrintHeaderCapGainsBrackets: %s\n", err)
 		}
-		ti := NewTaxInfo(ip.FilingStatus)
+		ti := NewTaxInfo(ip.FilingStatus, 2017)
 		csvfile := (*os.File)(nil)
 		tablefile := os.Stdout
 		ms := ModelSpecs{
@@ -1344,7 +1344,7 @@ retiree1
 		if err != nil {
 			fmt.Printf("TestPrintCapGainsBrackets: case %d: %s\n", i, err)
 		}
-		ti := NewTaxInfo(ip.FilingStatus)
+		ti := NewTaxInfo(ip.FilingStatus, 2017)
 		taxbins := len(*ti.Taxtable)
 		cgbins := len(*ti.Capgainstable)
 		vindx, err := NewVectorVarIndex(ip.Numyr, taxbins,
@@ -1417,7 +1417,7 @@ func TestDepositAmount(t *testing.T) {
 		if err != nil {
 			t.Errorf("TestDepositAmount: Case %d: %s\n", i, err)
 		}
-		ti := NewTaxInfo(ip.FilingStatus)
+		ti := NewTaxInfo(ip.FilingStatus, 2017)
 		taxbins := len(*ti.Taxtable)
 		cgbins := len(*ti.Capgainstable)
 		vindx, err := NewVectorVarIndex(ip.Numyr, taxbins, cgbins, ip.Accmap, os.Stdout)
@@ -1475,7 +1475,7 @@ func TestOrdinaryTaxable(t *testing.T) {
 			continue
 		}
 		//fmt.Printf("InputParams: %#v\n", ip)
-		ti := NewTaxInfo(ip.FilingStatus)
+		ti := NewTaxInfo(ip.FilingStatus, 2017)
 		taxbins := len(*ti.Taxtable)
 		cgbins := len(*ti.Capgainstable)
 		vindx, err := NewVectorVarIndex(ip.Numyr, taxbins,
@@ -1567,7 +1567,7 @@ Total spendable (after tax money): $490_153`,
 			continue
 		}
 		//fmt.Printf("InputParams: %#v\n", ip)
-		ti := NewTaxInfo(ip.FilingStatus)
+		ti := NewTaxInfo(ip.FilingStatus, 2017)
 		taxbins := len(*ti.Taxtable)
 		cgbins := len(*ti.Capgainstable)
 		vindx, err := NewVectorVarIndex(ip.Numyr, taxbins,
@@ -1990,7 +1990,7 @@ func TestResultsOutput(t *testing.T) {
 			continue
 		}
 		//fmt.Printf("InputParams: %#v\n", ip)
-		ti := NewTaxInfo(ip.FilingStatus)
+		ti := NewTaxInfo(ip.FilingStatus, 2017)
 		taxbins := len(*ti.Taxtable)
 		cgbins := len(*ti.Capgainstable)
 		vindx, err := NewVectorVarIndex(ip.Numyr, taxbins,

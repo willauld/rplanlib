@@ -39,7 +39,7 @@ func TestTaxinfo(t *testing.T) {
 			fmt.Printf("TestNewModelSpecs: %s\n", err)
 			continue
 		}
-		ti := NewTaxInfo(status)
+		ti := NewTaxInfo(status, 2017)
 		brackets := len(*ti.Taxtable)
 		if brackets != elem.brackets {
 			t.Errorf("Taxinfo case %d: Failed - Expected %d brackes but found %d\n", i, elem.brackets, brackets)
@@ -105,7 +105,7 @@ func TestMaxContribution(t *testing.T) {
 			fmt.Printf("TestNewModelSpecs: %s\n", err)
 			continue
 		}
-		ti := NewTaxInfo(status)
+		ti := NewTaxInfo(status, 2017)
 		retireekey := ""
 		if elem.retireeindx > 0 {
 			retireekey = retirees[elem.retireeindx].mykey
@@ -172,7 +172,7 @@ func TestApplyEarlyPenalty(t *testing.T) {
 			fmt.Printf("TestNewModelSpecs: %s\n", err)
 			continue
 		}
-		ti := NewTaxInfo(status)
+		ti := NewTaxInfo(status, 2017)
 		response := ti.applyEarlyPenalty(elem.year, elem.retireer)
 		if response != elem.response {
 			t.Errorf("applyEarlyPenalty case %d: Failed - Expected %v but found %v\n", i, elem.response, response)
@@ -240,7 +240,7 @@ func TestRmdNeeded(t *testing.T) {
 			fmt.Printf("TestNewModelSpecs: %s\n", err)
 			continue
 		}
-		ti := NewTaxInfo(status)
+		ti := NewTaxInfo(status, 2017)
 		response := ti.rmdNeeded(elem.year, elem.retireer)
 		if response != elem.response {
 			t.Errorf("rmdNeeded case %d: Failed - Expected %v but found %v\n", i, elem.response, response)

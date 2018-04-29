@@ -464,7 +464,7 @@ func TestNewModelSpecs(t *testing.T) {
 			fmt.Printf("TestNewModelSpecs: %s\n", err)
 			continue
 		}
-		ti := NewTaxInfo(ip.FilingStatus)
+		ti := NewTaxInfo(ip.FilingStatus, 2017)
 		taxbins := len(*ti.Taxtable)
 		cgbins := len(*ti.Capgainstable)
 		vindx, err := NewVectorVarIndex(ip.Numyr, taxbins, cgbins, ip.Accmap, os.Stdout)
@@ -597,7 +597,7 @@ func TestBuildModel(t *testing.T) {
 			fmt.Printf("TestNewModelSpecs: %s\n", err)
 			continue
 		}
-		ti := NewTaxInfo(status)
+		ti := NewTaxInfo(status, 2017)
 		ip, err := NewInputParams(elem.ip, nil)
 		if err != nil {
 			fmt.Printf("TestNewModelSpecs: %s\n", err)
@@ -970,7 +970,7 @@ func TestPrintModelMatrix(t *testing.T) {
 			fmt.Printf("TestNewModelSpecs: %s\n", err)
 			continue
 		}
-		ti := NewTaxInfo(ip.FilingStatus)
+		ti := NewTaxInfo(ip.FilingStatus, 2017)
 		taxbins := len(*ti.Taxtable)
 		cgbins := len(*ti.Capgainstable)
 		vindx, err := NewVectorVarIndex(ip.Numyr, taxbins, cgbins, ip.Accmap, os.Stdout)
@@ -1163,7 +1163,7 @@ func TestPrintConstraint(t *testing.T) {
 			fmt.Printf("TestNewModelSpecs: %s\n", err)
 			continue
 		}
-		ti := NewTaxInfo(ip.FilingStatus)
+		ti := NewTaxInfo(ip.FilingStatus, 2017)
 		taxbins := len(*ti.Taxtable)
 		cgbins := len(*ti.Capgainstable)
 		vindx, err := NewVectorVarIndex(ip.Numyr, taxbins, cgbins, ip.Accmap, os.Stdout)
@@ -1330,7 +1330,7 @@ func TestPrintModelRow(t *testing.T) {
 			fmt.Printf("TestNewModelSpecs: %s\n", err)
 			continue
 		}
-		ti := NewTaxInfo(ip.FilingStatus)
+		ti := NewTaxInfo(ip.FilingStatus, 2017)
 		taxbins := len(*ti.Taxtable)
 		cgbins := len(*ti.Capgainstable)
 		vindx, err := NewVectorVarIndex(ip.Numyr, taxbins, cgbins, ip.Accmap, os.Stdout)

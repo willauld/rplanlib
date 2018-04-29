@@ -477,6 +477,54 @@ func (ms ModelSpecs) PrintAccountTrans(xp *[]float64) {
 	ms.printAccHeader()
 }
 
+func (ms ModelSpecs) printAccWithdHeader() {
+	if ms.Ip.MyKey2 != "" && ms.Ip.FilingStatus == Joint {
+		ms.Ao.output(fmt.Sprintf("%s/%s\n", ms.Ip.MyKey1, ms.Ip.MyKey2))
+		ms.Ao.output("    age ")
+	} else {
+		if ms.Ip.MyKey1 != "nokey" {
+			ms.Ao.output(fmt.Sprintf("%s\n", ms.Ip.MyKey1))
+		}
+		ms.Ao.output(" age ")
+	}
+	str := fmt.Sprintf("&@%7s&@%7s&@%8s&@%8s", "fACC", "Real", "%%Liq", "%%All")
+	ms.Ao.output(str)
+	ms.Ao.output("\n")
+}
+
+func (ms ModelSpecs) PrintAccountWithdrawals(xp *[]float64) {
+
+	ms.Ao.output("\nAccount Withdrawals Summary:\n\n")
+	ms.printAccWithdHeader()
+	//
+	// Print plan withdrawals for each year
+	// TODO clean up the if/else below to follow the above forloop pattern
+	//
+	for year := 0; year < ms.Ip.Numyr; year++ {
+		adjInf := math.Pow(ms.Ip.IRate, float64(year))
+		if ms.Ip.MyKey2 != "" && ms.Ip.FilingStatus == Joint {
+			ms.Ao.output(fmt.Sprintf("%3d/%3d:", year+ms.Ip.StartPlan, year+ms.Ip.StartPlan-ms.Ip.AgeDelta))
+		} else {
+			ms.Ao.output(fmt.Sprintf(" %3d:", year+ms.Ip.StartPlan))
+		}
+		totWithdrawals := 0.0
+		for j := 0; j < ms.Ip.Numacc; j++ {
+			totWithdrawals += (*xp)[ms.Vindx.W(year, j)]
+		}
+		realWithdrawals := totWithdrawals / adjInf
+		realPercentOfOrigLiquidBal := 100 * realWithdrawals / ms.LiquidAssetPlanStart
+		realPercentOfOrigAllAssets := 100 * realWithdrawals / (ms.LiquidAssetPlanStart + ms.IlliquidAssetPlanStart)
+
+		str := fmt.Sprintf("&@%7.0f&@%7.0f&@%7.2f&@%7.2f",
+			totWithdrawals, realWithdrawals,
+			realPercentOfOrigLiquidBal, realPercentOfOrigAllAssets)
+		ms.Ao.output(str)
+		ms.Ao.output("\n")
+	}
+	ms.Ao.output("\n")
+	ms.printAccWithdHeader()
+}
+
 func (ms ModelSpecs) printHeaderTax() {
 	if ms.Ip.MyKey2 != "" && ms.Ip.FilingStatus == Joint {
 		ms.Ao.output(fmt.Sprintf("%s/%s\n", ms.Ip.MyKey1, ms.Ip.MyKey2))

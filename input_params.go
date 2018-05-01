@@ -336,6 +336,10 @@ func NewInputParams(ip map[string]string, warnList *WarnErrorList) (*InputParams
 	rip.DefinedContributionPlanStart1 = getIPIntValue(ip["eT_DefinedContributionPlanStart1"])
 	rip.DefinedContributionPlanEnd1 = getIPIntValue(ip["eT_DefinedContributionPlanEnd1"])
 
+	if rip.DefinedContributionPlanStart1 > rip.DefinedContributionPlanEnd1 {
+		// An error TODO FIXME
+	}
+
 	if ip["eT_PIA1"] != "" || ip["eT_SS_Start1"] != "" {
 		if ip["eT_PIA1"] == "" || ip["eT_SS_Start1"] == "" {
 			e := fmt.Errorf("NewInputParams: retiree '%s' social security PIA and start age both must be specified", rip.MyKey1)
@@ -402,6 +406,10 @@ func NewInputParams(ip map[string]string, warnList *WarnErrorList) (*InputParams
 		}
 		rip.DefinedContributionPlanStart2 = getIPIntValue(ip["eT_DefinedContributionPlanStart2"])
 		rip.DefinedContributionPlanEnd2 = getIPIntValue(ip["eT_DefinedContributionPlanEnd2"])
+
+		if rip.DefinedContributionPlanStart2 > rip.DefinedContributionPlanEnd2 {
+			// An error TODO FIXME
+		}
 
 		if ip["eT_PIA2"] != "" || ip["eT_SS_Start2"] != "" {
 			if ip["eT_PIA2"] == "" || ip["eT_SS_Start2"] == "" {
@@ -622,6 +630,19 @@ func NewInputParams(ip map[string]string, warnList *WarnErrorList) (*InputParams
 			}
 			rip.Assets = append(rip.Assets, ap)
 		}
+	}
+	//
+	// some more tests for consistancy
+	//
+	if rip.DefinedContributionPlanEnd2 >= rip.RetireAge2 {
+		str := fmt.Sprintf("Warning - Normally a define contribution plan ends (your's: %d) with employment prior to retirement begining (your's: %d), do you want to change your input?",
+			rip.DefinedContributionPlanEnd2, rip.RetireAge2)
+		warnList.AppendWarning(str)
+	}
+	if rip.DefinedContributionPlanEnd1 >= rip.RetireAge1 {
+		str := fmt.Sprintf("Warning - Normally a define contribution plan ends (your's: %d) with employment prior to retirement begining (your's: %d), do you want to change your input?",
+			rip.DefinedContributionPlanEnd1, rip.RetireAge1)
+		warnList.AppendWarning(str)
 	}
 
 	//fmt.Printf("\n&&&&\n%v\n&&&&\n", rip)

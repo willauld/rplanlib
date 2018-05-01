@@ -342,7 +342,8 @@ func NewModelSpecs(vindx VectorVarIndex,
 		retirees = append(retirees, r2)
 	}
 	ms.Retirees = retirees
-	//fmt.Fprintf(ms.logfile, "NewModelSpec: numacc: %d, accmap: %v\n", ms.ip.numacc, ms.ip.accmap)
+	//fmt.Fprintf(ms.Logfile, "Retirees: %#v\n", retirees)
+	//fmt.Fprintf(ms.Logfile, "NewModelSpec: numacc: %d, accmap: %v\n", ms.ip.numacc, ms.ip.accmap)
 
 	var err error
 	var dbal float64

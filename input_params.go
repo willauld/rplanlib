@@ -464,9 +464,10 @@ func NewInputParams(ip map[string]string, warnList *WarnErrorList) (*InputParams
 			needRetiree2 = true
 		}
 		//rip.MyKey2 = ip["key2"]
-		if needRetiree2 || (ip["eT_Age2"] != "" ||
-			ip["eT_RetireAge2"] != "" ||
-			ip["eT_PlanThroughAge2"] != "") {
+		if needRetiree2 ||
+			(ip["eT_Age2"] != "" ||
+				ip["eT_RetireAge2"] != "" ||
+				ip["eT_PlanThroughAge2"] != "") {
 			if ip["eT_Age2"] == "" ||
 				ip["eT_RetireAge2"] == "" ||
 				ip["eT_PlanThroughAge2"] == "" {
@@ -476,6 +477,7 @@ func NewInputParams(ip map[string]string, warnList *WarnErrorList) (*InputParams
 				e := fmt.Errorf("NewInputParams: retiree '%s' age, retirement age and plan through age must all be specified", rip.MyKey2)
 				return nil, e
 			}
+			needRetiree2 = true
 		}
 		rip.Age2 = getIPIntValue(ip["eT_Age2"])
 		rip.RetireAge2 = getIPIntValue(ip["eT_RetireAge2"])

@@ -1160,6 +1160,108 @@ func (ms ModelSpecs) cgTaxableFraction(year int) float64 {
 	return f
 }
 
+// PrecheckConsistancy is, I think, checked elsewhere; delete?
+func (ms ModelSpecs) PrecheckConsistancy() bool {
+	fmt.Printf("\nDoing Pre-check:")
+	// check that there is income for all contibutions
+	//    #tcontribs = 0
+	for year := 0; year < ms.Ip.Numyr; year++ {
+		t := 0.0
+		for j := 0; j < len(ms.Accounttable); j++ {
+			v := ms.Accounttable[j]
+			if v.acctype != Aftertax {
+				if v.Contributions != nil && len(v.Contributions) > 0 {
+					t += v.Contributions[year]
+				}
+			}
+		}
+		if t > AccessVector(ms.Taxed, year) { // was S.income[year]
+			fmt.Printf("year: %d, total contributions of (%.0f) to all Retirement accounts exceeds other earned (i.e., taxable) income (%.0f)",
+				year, t, AccessVector(ms.Taxed, year))
+			// was S.income[year]
+			fmt.Printf("Please change the contributions in the toml file to be less than non-SS income.")
+			os.Exit(1) //TODO FIXME no exit allowed pass the error back!!!
+		}
+	}
+	return true
+}
+
+/*
+def consistancy_check(res, years, taxbins, cgbins, accounts, accmap, vindx):
+    # check to see if the ordinary tax brackets are filled in properly
+    print()
+    print()
+    print("Consistancy Checking:")
+    print()
+
+    result = vvar.my_check_index_sequence(years, taxbins, cgbins, accounts, accmap, vindx)
+
+    for year in range(S.numyr):
+        s = 0
+        fz = False
+        fnf = False
+        i_mul = S.i_rate ** (S.preplanyears+year)
+        for k in range(len(taxinfo.taxtable)):
+            cut, size, rate, base = taxinfo.taxtable[k]
+            size *= i_mul
+            s += res.x[vindx.x(year,k)]
+            if fnf and res.x[vindx.x(year,k)] > 0:
+                print("Inproper packed brackets in year %d, bracket %d not empty while previous bracket not full." % (year, k))
+            if res.x[vindx.x(year,k)]+1 < size:
+                fnf = True
+            if fz and res.x[vindx.x(year,k)] > 0:
+                print("Inproperly packed tax brackets in year %d bracket %d" % (year, k))
+            if res.x[vindx.x(year,k)] == 0.0:
+                fz = True
+        if S.accmap['aftertax'] > 0:
+            scg = 0
+            fz = False
+            fnf = False
+            for l in range(len(taxinfo.capgainstable)):
+                cut, size, rate = taxinfo.capgainstable[l]
+                size *= i_mul
+                bamount = res.x[vindx.y(year,l)]
+                scg += bamount
+                for k in range(len(taxinfo.taxtable)-1):
+                    if taxinfo.taxtable[k][0] >= taxinfo.capgainstable[l][0] and taxinfo.taxtable[k][0] < taxinfo.capgainstable[l+1][0]:
+                        bamount += res.x[vindx.x(year,k)]
+                if fnf and bamount > 0:
+                    print("Inproper packed CG brackets in year %d, bracket %d not empty while previous bracket not full." % (year, l))
+                if bamount+1 < size:
+                    fnf = True
+                if fz and bamount > 0:
+                    print("Inproperly packed GC tax brackets in year %d bracket %d" % (year, l))
+                if bamount == 0.0:
+                    fz = True
+        TaxableOrdinary = OrdinaryTaxable(year)
+        if (TaxableOrdinary + 0.1 < s) or (TaxableOrdinary - 0.1 > s):
+            print("Error: Expected (age:%d) Taxable Ordinary income %6.2f doesn't match bracket sum %6.2f" %
+                (year + S.startage, TaxableOrdinary,s))
+
+        for j in range(len(S.accounttable)):
+            a = res.x[vindx.b(year+1,j)] - (res.x[vindx.b(year,j)] - res.x[vindx.w(year,j)] + deposit_amount(S, res, year, j))*S.accounttable[j]['rate']
+            if a > 1:
+                v = S.accounttable[j]
+                print("account[%d], type %s, index %d, mykey %s" % (j, v['acctype'], v['index'], v['mykey']))
+                print("account[%d] year to year balance NOT OK years %d to %d" % (j, year, year+1))
+                print("difference is", a)
+
+        T,spendable,tax,rate,cg_tax,earlytax,rothearly = IncomeSummary(year)
+        if spendable + 0.1 < res.x[vindx.s(year)]  or spendable -0.1 > res.x[vindx.s(year)]:
+            print("Calc Spendable %6.2f should equal s(year:%d) %6.2f"% (spendable, year, res.x[vindx.s(year)]))
+            for j in range(len(S.accounttable)):
+                print("+w[%d,%d]: %6.0f" % (year, j, res.x[vindx.w(year,j)]))
+                print("-D[%d,%d]: %6.0f" % (year, j, deposit_amount(S, res, year, j)))
+            print("+o[%d]: %6.0f +SS[%d]: %6.0f -tax: %6.0f -cg_tax: %6.0f" % (year, S.income[year] ,year, S.SS[year] , tax ,cg_tax))
+
+        bt = 0
+        for k in range(len(taxinfo.taxtable)):
+            bt += res.x[vindx.x(year,k)] * taxinfo.taxtable[k][2]
+        if tax + 0.1 < bt  or tax -0.1 > bt:
+            print("Calc tax %6.2f should equal brackettax(bt)[]: %6.2f" % (tax, bt))
+    print()
+*/
+
 // TODO: FIXME: Create UNIT tests: last two parameters need s vector (s is output from simplex run)
 
 // PrintModelMatrix prints to object function (cx) and constraint matrix (Ax<=b)

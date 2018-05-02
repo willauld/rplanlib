@@ -154,7 +154,7 @@ func TestGetIPFloatValue(t *testing.T) {
 				}
 			}()
 			// This function may cause a panic
-			val := getIPFloatValue(elem.str)
+			val := getIPFloatValue(elem.str, 0.0)
 			if val != elem.expect {
 				t.Errorf("GetIPFloatValue() case %d: Failed - Expected %f but found %f\n", i, elem.expect, val)
 			}

@@ -184,9 +184,9 @@ func getIPIntValue(str string) int {
 	return n
 }
 
-func getIPFloatValue(str string) float64 {
+func getIPFloatValue(str string, notSetVal float64) float64 {
 	if str == "" {
-		return 0
+		return notSetVal
 	}
 	n, e := strconv.ParseFloat(str, 64)
 	if e != nil {
@@ -274,13 +274,12 @@ func NewInputParams(ip map[string]string, warnList *WarnErrorList) (*InputParams
 	}
 	rip.MyKey2 = ip["key2"]
 
-	rip.RRatePercent = getIPFloatValue(ip["eT_rRatePercent"]) // TODO add to mobile
-	if rip.RRatePercent <= 0 {
+	rip.RRatePercent = getIPFloatValue(ip["eT_rRatePercent"], -1.0)
+	if rip.RRatePercent < 0 { // Changing so user can assign 0
 		rip.RRatePercent = ReturnRatePercent
-		const InflactionRatePercent = 2.5
 	}
-	rip.IRatePercent = getIPFloatValue(ip["eT_iRatePercent"]) // TODO add to mobile
-	if rip.IRatePercent <= 0 {
+	rip.IRatePercent = getIPFloatValue(ip["eT_iRatePercent"], -1.0)
+	if rip.IRatePercent < 0 { // Changing so user can assign 0
 		rip.IRatePercent = InflactionRatePercent
 	}
 	rip.RRate = 1 + rip.RRatePercent/100.0
@@ -361,13 +360,18 @@ func NewInputParams(ip map[string]string, warnList *WarnErrorList) (*InputParams
 		}
 	}
 	rip.TDRA1 = getIPIntValue(ip["eT_TDRA1"]) * multiplier
-	rip.TDRARate1 = getIPFloatValue(ip["eT_TDRA_Rate1"])
+	rip.TDRARate1 = getIPFloatValue(ip["eT_TDRA_Rate1"], -1.0)
 	rip.TDRAContrib1 = getIPIntValue(ip["eT_TDRA_Contrib1"]) * multiplier
 	rip.TDRAContribStart1 = getIPIntValue(ip["eT_TDRA_ContribStartAge1"])
 	rip.TDRAContribEnd1 = getIPIntValue(ip["eT_TDRA_ContribEndAge1"])
 	rip.TDRAContribInflate1 = getIPBoolValue(ip["eT_TDRA_ContribInflate1"])
 	if rip.TDRA1 > 0 || rip.TDRAContrib1 > 0 {
 		rip.Accmap[IRA]++
+	}
+	if rip.TDRARate1 < 0 {
+		rip.TDRARate1 = rip.RRate // TODO FIXME this is a percent not adj factor
+	} else {
+		rip.TDRARate1 = 1 + (rip.TDRARate1 / 100.0)
 	}
 
 	if (ip["eT_Roth_Contrib1"] != "" && getIPIntValue(ip["eT_Roth_Contrib1"]) != 0) ||
@@ -381,13 +385,18 @@ func NewInputParams(ip map[string]string, warnList *WarnErrorList) (*InputParams
 		}
 	}
 	rip.Roth1 = getIPIntValue(ip["eT_Roth1"]) * multiplier
-	rip.RothRate1 = getIPFloatValue(ip["eT_Roth_Rate1"])
+	rip.RothRate1 = getIPFloatValue(ip["eT_Roth_Rate1"], -1.0)
 	rip.RothContrib1 = getIPIntValue(ip["eT_Roth_Contrib1"]) * multiplier
 	rip.RothContribStart1 = getIPIntValue(ip["eT_Roth_ContribStartAge1"])
 	rip.RothContribEnd1 = getIPIntValue(ip["eT_Roth_ContribEndAge1"])
 	rip.RothContribInflate1 = getIPBoolValue(ip["eT_Roth_ContribInflate1"])
 	if rip.Roth1 > 0 || rip.RothContrib1 > 0 {
 		rip.Accmap[Roth]++
+	}
+	if rip.RothRate1 < 0 {
+		rip.RothRate1 = rip.RRate
+	} else {
+		rip.RothRate1 = 1 + (rip.RothRate1 / 100.0)
 	}
 
 	var through2 int
@@ -440,7 +449,7 @@ func NewInputParams(ip map[string]string, warnList *WarnErrorList) (*InputParams
 			needRetiree2 = true
 		}
 		rip.TDRA2 = getIPIntValue(ip["eT_TDRA2"]) * multiplier
-		rip.TDRARate2 = getIPFloatValue(ip["eT_TDRA_Rate2"])
+		rip.TDRARate2 = getIPFloatValue(ip["eT_TDRA_Rate2"], -1.0)
 		rip.TDRAContrib2 = getIPIntValue(ip["eT_TDRA_Contrib2"]) * multiplier
 		rip.TDRAContribStart2 = getIPIntValue(ip["eT_TDRA_ContribStartAge2"])
 		rip.TDRAContribEnd2 = getIPIntValue(ip["eT_TDRA_ContribEndAge2"])
@@ -448,6 +457,11 @@ func NewInputParams(ip map[string]string, warnList *WarnErrorList) (*InputParams
 		if rip.TDRA2 > 0 || rip.TDRAContrib2 > 0 {
 			rip.Accmap[IRA]++
 			needRetiree2 = true
+		}
+		if rip.TDRARate2 < 0 {
+			rip.TDRARate2 = rip.RRate
+		} else {
+			rip.TDRARate2 = 1 + (rip.TDRARate2 / 100.0)
 		}
 
 		if (ip["eT_Roth_Contrib2"] != "" && getIPIntValue(ip["eT_Roth_Contrib2"]) != 0) ||
@@ -462,7 +476,7 @@ func NewInputParams(ip map[string]string, warnList *WarnErrorList) (*InputParams
 			needRetiree2 = true
 		}
 		rip.Roth2 = getIPIntValue(ip["eT_Roth2"]) * multiplier
-		rip.RothRate2 = getIPFloatValue(ip["eT_Roth_Rate2"])
+		rip.RothRate2 = getIPFloatValue(ip["eT_Roth_Rate2"], -1.0)
 		rip.RothContrib2 = getIPIntValue(ip["eT_Roth_Contrib2"]) * multiplier
 		rip.RothContribStart2 = getIPIntValue(ip["eT_Roth_ContribStartAge2"])
 		rip.RothContribEnd2 = getIPIntValue(ip["eT_Roth_ContribEndAge2"])
@@ -470,6 +484,11 @@ func NewInputParams(ip map[string]string, warnList *WarnErrorList) (*InputParams
 		if rip.Roth2 > 0 || rip.RothContrib2 > 0 {
 			rip.Accmap[Roth]++
 			needRetiree2 = true
+		}
+		if rip.RothRate2 < 0 {
+			rip.RothRate2 = rip.RRate
+		} else {
+			rip.RothRate2 = 1 + (rip.RothRate2 / 100.0)
 		}
 		//rip.MyKey2 = ip["key2"]
 		if needRetiree2 ||
@@ -523,13 +542,18 @@ func NewInputParams(ip map[string]string, warnList *WarnErrorList) (*InputParams
 	}
 	rip.Aftatax = getIPIntValue(ip["eT_Aftatax"]) * multiplier
 	rip.AftataxBasis = getIPIntValue(ip["eT_Aftatax_Basis"]) * multiplier
-	rip.AftataxRate = getIPFloatValue(ip["eT_Aftatax_Rate"])
+	rip.AftataxRate = getIPFloatValue(ip["eT_Aftatax_Rate"], -1.0)
 	rip.AftataxContrib = getIPIntValue(ip["eT_Aftatax_Contrib"]) * multiplier
 	rip.AftataxContribStart = getIPIntValue(ip["eT_Aftatax_ContribStartAge"])
 	rip.AftataxContribEnd = getIPIntValue(ip["eT_Aftatax_ContribEndAge"])
 	rip.AftataxContribInflate = getIPBoolValue(ip["eT_Aftatax_ContribInflate"])
 	if rip.Aftatax > 0 || rip.AftataxContrib > 0 {
 		rip.Accmap[Aftertax]++
+	}
+	if rip.AftataxRate < 0 {
+		rip.AftataxRate = rip.RRate
+	} else {
+		rip.AftataxRate = 1 + (rip.AftataxRate / 100.0)
 	}
 
 	rip.Numacc = 0
@@ -621,11 +645,14 @@ func NewInputParams(ip map[string]string, warnList *WarnErrorList) (*InputParams
 				CostAndImprovements: getIPIntValue(ip[fmt.Sprintf("eT_AssetCostAndImprovements%d", i)]) * multiplier,
 				OwedAtAgeToSell:     getIPIntValue(ip[fmt.Sprintf("eT_AssetOwedAtAgeToSell%d", i)]) * multiplier,
 				PrimaryResidence:    getIPBoolValue(ip[fmt.Sprintf("eT_AssetPrimaryResidence%d", i)]),
-				AssetRRatePercent:   getIPFloatValue(ip[fmt.Sprintf("eT_AssetRRatePercent%d", i)]),
-				BrokeragePercent:    getIPFloatValue(ip[fmt.Sprintf("eT_AssetBrokeragePercent%d", i)]),
+				AssetRRatePercent:   getIPFloatValue(ip[fmt.Sprintf("eT_AssetRRatePercent%d", i)], -1.0),
+				BrokeragePercent:    getIPFloatValue(ip[fmt.Sprintf("eT_AssetBrokeragePercent%d", i)], -1.0),
+			}
+			if ap.AssetRRatePercent < 0 {
+				ap.AssetRRatePercent = rip.RRatePercent
 			}
 			ap.AssetRRate = 1 + ap.AssetRRatePercent/100.0
-			if ap.BrokeragePercent == 0 {
+			if ap.BrokeragePercent < 0 {
 				ap.BrokeragePercent = BrokeragePercentDefault
 			}
 			rip.Assets = append(rip.Assets, ap)

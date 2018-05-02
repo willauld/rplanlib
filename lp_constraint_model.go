@@ -350,11 +350,8 @@ func NewModelSpecs(vindx VectorVarIndex,
 	const maxPossibleAccounts = 5
 	if ip.TDRA1 > 0 || ip.TDRAContrib1 > 0 {
 		a := account{}
-		a.RRate = ip.RRate
-		if ip.TDRARate1 != 0.0 {
-			a.RRate = ip.TDRARate1
-			panic("This shoud already have default value from NewInputSpecs")
-		}
+		//fmt.Printf("TDRARate1: %v, RRate: %v\n", ip.TDRARate1, ip.RRate)
+		a.RRate = ip.TDRARate1
 		infr := 1.0
 		if ip.TDRAContribInflate1 == true {
 			infr = ip.IRate
@@ -375,10 +372,7 @@ func NewModelSpecs(vindx VectorVarIndex,
 	}
 	if ip.TDRA2 > 0 || ip.TDRAContrib2 > 0 {
 		a := account{}
-		a.RRate = ip.RRate
-		if ip.TDRARate2 != 0 {
-			a.RRate = ip.TDRARate2
-		}
+		a.RRate = ip.TDRARate2
 		infr := 1.0
 		if ip.TDRAContribInflate2 == true {
 			infr = ip.IRate
@@ -399,10 +393,7 @@ func NewModelSpecs(vindx VectorVarIndex,
 	}
 	if ip.Roth1 > 0 || ip.RothContrib1 > 0 {
 		a := account{}
-		a.RRate = ip.RRate
-		if ip.RothRate1 != 0 {
-			a.RRate = ip.RothRate1
-		}
+		a.RRate = ip.RothRate1
 		infr := 1.0
 		if ip.RothContribInflate1 == true {
 			infr = ip.IRate
@@ -424,10 +415,7 @@ func NewModelSpecs(vindx VectorVarIndex,
 	}
 	if ip.Roth2 > 0 || ip.RothContrib2 > 0 {
 		a := account{}
-		a.RRate = ip.RRate
-		if ip.RothRate2 != 0 {
-			a.RRate = ip.RothRate2
-		}
+		a.RRate = ip.RothRate2
 		infr := 1.0
 		if ip.RothContribInflate2 == true {
 			infr = ip.IRate
@@ -449,10 +437,7 @@ func NewModelSpecs(vindx VectorVarIndex,
 	if ip.Aftatax > 0 || ip.AftataxContrib > 0 {
 		var dbasis float64
 		a := account{}
-		a.RRate = ms.Ip.RRate
-		if ip.AftataxRate != 0 {
-			a.RRate = ip.AftataxRate
-		}
+		a.RRate = ip.AftataxRate
 		infr := 1.0
 		if ip.AftataxContribInflate == true {
 			infr = ip.IRate

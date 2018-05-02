@@ -1005,7 +1005,9 @@ func (ms ModelSpecs) BuildModel() ([]float64, [][]float64, []float64, []ModelNot
 				row := make([]float64, nvars)
 				row[ms.Vindx.Y(year, l)] = 1
 				for k := 0; k < len(*ms.Ti.Taxtable)-1; k++ {
-					if (*ms.Ti.Taxtable)[k][0] >= (*ms.Ti.Capgainstable)[l][0] && (*ms.Ti.Taxtable)[k][0] < (*ms.Ti.Capgainstable)[l+1][0] {
+					if (*ms.Ti.Taxtable)[k][0] >= (*ms.Ti.Capgainstable)[l][0] 
+						&& 
+					  (*ms.Ti.Taxtable)[k][0] < (*ms.Ti.Capgainstable)[l+1][0] {
 						row[ms.Vindx.X(year, k)] = 1
 					}
 				}

@@ -121,7 +121,6 @@ var marriedjointcapitalgains2018 = &[][]float64{
 	{479000, -3, 0.20},
 }
 
-// ### MISSING 2018 DATA
 var marriedseparatecapitalgains2018 = &[][]float64{
 	{0, 38600, 0.0},
 	{38600, 200900, 0.15},

@@ -153,7 +153,7 @@ func (ms ModelSpecs) PrintActivitySummary(xp *[]float64) {
 		rmdref := 0.0
 		for j := 0; j < intMin(2, len(ms.Accounttable)); j++ { // at most the first two accounts are type IRA w/ RMD requirement
 			if ms.Accounttable[j].acctype == IRA {
-				rmd := ms.Ti.rmdNeeded(year, ms.matchRetiree(ms.Accounttable[j].mykey))
+				rmd := ms.Ti.rmdNeeded(year, ms.matchRetiree(ms.Accounttable[j].mykey, year, true))
 				if rmd > 0 {
 					rmdref += (*xp)[ms.Vindx.B(year, j)] / rmd
 				}
@@ -387,7 +387,7 @@ func (ms ModelSpecs) PrintAccountTrans(xp *[]float64) {
 		rmdref := make([]float64, 2)
 		for j := 0; j < intMin(2, len(ms.Accounttable)); j++ { // only first two accounts are type IRA w/ RMD
 			if ms.Accounttable[j].acctype == IRA {
-				rmd := ms.Ti.rmdNeeded(year, ms.matchRetiree(ms.Accounttable[j].mykey))
+				rmd := ms.Ti.rmdNeeded(year, ms.matchRetiree(ms.Accounttable[j].mykey, year, true))
 				if rmd > 0 {
 					rmdref[j] = (*xp)[ms.Vindx.B(year, j)] / rmd
 				}
@@ -793,7 +793,7 @@ func (ms ModelSpecs) IncomeSummary(year int, xp *[]float64) (T, spendable, tax, 
 	rothearly = false
 	for j, acc := range ms.Accounttable {
 		if acc.acctype != Aftertax {
-			if ms.Ti.applyEarlyPenalty(year, ms.matchRetiree(acc.mykey)) {
+			if ms.Ti.applyEarlyPenalty(year, ms.matchRetiree(acc.mykey, year, true)) {
 				earlytax += (*xp)[ms.Vindx.W(year, j)] * ms.Ti.Penalty
 				if (*xp)[ms.Vindx.W(year, j)] > 0 && acc.acctype == Roth {
 					rothearly = true

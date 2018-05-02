@@ -6,7 +6,7 @@ import (
 	"os"
 )
 
-type retiree struct { // TODO limit the fields here maxContribution is bigest (only) user
+type retiree struct {
 	age                             int
 	ageAtStart                      int
 	throughAge                      int
@@ -725,7 +725,7 @@ func (ms ModelSpecs) BuildModel() ([]float64, [][]float64, []float64, []ModelNot
 		for j := 0; j < len(ms.Accounttable); j++ {
 			p := 1.0
 			if ms.Accounttable[j].acctype != Aftertax {
-				if ms.Ti.applyEarlyPenalty(year, ms.matchRetiree(ms.Accounttable[j].mykey)) { // TODO: should applyEarlyPenalty() return the penalty amount, spimplifying things?
+				if ms.Ti.applyEarlyPenalty(year, ms.matchRetiree(ms.Accounttable[j].mykey, year, true)) { // TODO: should applyEarlyPenalty() return the penalty amount, spimplifying things?
 					p = 1 - ms.Ti.Penalty
 				}
 			}
@@ -904,7 +904,7 @@ func (ms ModelSpecs) BuildModel() ([]float64, [][]float64, []float64, []ModelNot
 			// at most the first two accounts are type IRA
 			// w/ RMD requirement
 			if ms.Accounttable[j].acctype == IRA {
-				rmd := ms.Ti.rmdNeeded(year, ms.matchRetiree(ms.Accounttable[j].mykey))
+				rmd := ms.Ti.rmdNeeded(year, ms.matchRetiree(ms.Accounttable[j].mykey, year, true))
 				if rmd > 0 {
 					row := make([]float64, nvars)
 					row[ms.Vindx.B(year, j)] = 1 / rmd
@@ -1090,7 +1090,7 @@ func (ms ModelSpecs) BuildModel() ([]float64, [][]float64, []float64, []ModelNot
 func (ms ModelSpecs) accountOwnerAge(year int, acc account) int {
 	age := 0
 	retireekey := acc.mykey
-	v := ms.matchRetiree(retireekey)
+	v := ms.matchRetiree(retireekey, year, true)
 	if v != nil {
 		age = v.ageAtStart + year
 	}
@@ -1098,13 +1098,28 @@ func (ms ModelSpecs) accountOwnerAge(year int, acc account) int {
 }
 
 // matchRetiree searches retirees by key returning nil if not found
-func (ms ModelSpecs) matchRetiree(retireekey string) *retiree {
+func (ms ModelSpecs) matchRetiree(retireekey string, year int, livingOnly bool) *retiree {
+	// Assumes only one retiree could be dead else passed end plan
+	var ov *retiree
+	ov = nil
 	for _, v := range ms.Retirees {
 		if v.mykey == retireekey {
-			return &v
+			if v.throughAge-v.ageAtStart+1 > year {
+				//fmt.Printf("matchRetire: looking for %s in year %d and returning %s\n", retireekey, year, v.mykey)
+				return &v
+			}
+		} else {
+			ov = &v
 		}
 	}
-	return nil
+	/*
+		if ov != nil {
+			fmt.Printf("matchRetire: looking for %s in year %d and returning %s\n", retireekey, year, ov.mykey)
+		} else {
+			fmt.Printf("matchRetire: looking for %s in year %d and returning nil\n", retireekey, year)
+		}
+	*/
+	return ov
 }
 
 // TODO unit test me :-)

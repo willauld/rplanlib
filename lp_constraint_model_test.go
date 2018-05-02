@@ -754,7 +754,7 @@ func TestMatchRetiree(t *testing.T) {
 		},
 	}
 	for i, elem := range tests {
-		r := elem.ms.matchRetiree(elem.key)
+		r := elem.ms.matchRetiree(elem.key, 0, false)
 		if r.mykey != elem.key {
 			t.Errorf("MatchRetiree case %d: key does not match, expected %s, found %s", i, elem.key, r.mykey)
 		}

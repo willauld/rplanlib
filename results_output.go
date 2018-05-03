@@ -663,6 +663,63 @@ func (ms ModelSpecs) PrintTaxBrackets(xp *[]float64) {
 	ms.printHeaderTaxBrackets()
 }
 
+func (ms ModelSpecs) printHeaderShadowTaxBrackets() {
+	if ms.Ip.MyKey2 != "" && ms.Ip.FilingStatus == Joint {
+		ms.Ao.output(fmt.Sprintf("%s/%s\n", ms.Ip.MyKey1, ms.Ip.MyKey2))
+		ms.Ao.output("    age ")
+	} else {
+		if ms.Ip.MyKey1 != "nokey" {
+			ms.Ao.output(fmt.Sprintf("%s\n", ms.Ip.MyKey1))
+		}
+		ms.Ao.output(" age ")
+	}
+	str := fmt.Sprintf("&@%7s&@%7s&@%7s&@%7s&@%7s&@%7s&@%7s",
+		"fIRA", "tIRA", "TxbleO", "TxbleSS", "deduct",
+		"T_inc", "fedtax")
+	ms.Ao.output(str)
+	for l := 0; l < len(*ms.Ti.Capgainstable); l++ {
+		ms.Ao.output(fmt.Sprintf("&@brckt%d", l))
+	}
+	ms.Ao.output("&@brkTot\n")
+}
+
+func (ms ModelSpecs) PrintShadowTaxBrackets(xp *[]float64) {
+	ms.Ao.output("\nOverall Shadow Tax Bracket Summary:\n")
+	ms.printHeaderShadowTaxBrackets()
+	for year := 0; year < ms.Ip.Numyr; year++ {
+		age := year + ms.Ip.StartPlan
+		iMul := math.Pow(ms.Ip.IRate, float64(ms.Ip.PrePlanYears+year))
+		//T, spendable, tax, rate, cgtax, earlytax, rothearly := ms.IncomeSummary(year, xp)
+		T, _, tax, _, _, _, _ := ms.IncomeSummary(year, xp)
+		//ttax := tax + cgtax
+		if ms.Ip.MyKey2 != "" && ms.Ip.FilingStatus == Joint {
+			ms.Ao.output(fmt.Sprintf("%3d/%3d:", age, age-ms.Ip.AgeDelta))
+		} else {
+			ms.Ao.output(fmt.Sprintf(" %3d:", age))
+		}
+		withdrawal := map[Acctype]float64{IRA: 0, Roth: 0, Aftertax: 0}
+		deposit := map[Acctype]float64{IRA: 0, Roth: 0, Aftertax: 0}
+		for j := 0; j < len(ms.Accounttable); j++ {
+			withdrawal[ms.Accounttable[j].acctype] += (*xp)[ms.Vindx.W(year, j)]
+			deposit[ms.Accounttable[j].acctype] += ms.depositAmount(xp, year, j)
+		}
+		str := fmt.Sprintf("&@%7.0f&@%7.0f&@%7.0f&@%7.0f&@%7.0f&@%7.0f&@%7.0f",
+			withdrawal[IRA]/ms.OneK,
+			deposit[IRA]/ms.OneK,
+			AccessVector(ms.Taxed, year)/ms.OneK,
+			ms.Ti.SStaxable*AccessVector(ms.SS[0], year)/ms.OneK,
+			ms.Ti.Stded*iMul/ms.OneK, T/ms.OneK, tax/ms.OneK)
+		ms.Ao.output(str)
+		bt := 0.0
+		for l := 0; l < len(*ms.Ti.Capgainstable); l++ {
+			ms.Ao.output(fmt.Sprintf("&@%6.0f", (*xp)[ms.Vindx.Sy(year, l)]))
+			bt += (*xp)[ms.Vindx.Sy(year, l)]
+		}
+		ms.Ao.output(fmt.Sprintf("&@%6.0f\n", bt))
+	}
+	ms.printHeaderShadowTaxBrackets()
+}
+
 func (ms ModelSpecs) printHeaderCapgainsBrackets() {
 	spaces := 36
 	if ms.Ip.MyKey2 != "" && ms.Ip.FilingStatus == Joint {

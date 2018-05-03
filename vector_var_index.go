@@ -28,6 +28,17 @@ func checkIndexSequence(years, taxbins, cgbins int, accmap map[Acctype]int, vari
 	if accmap[Aftertax] > 0 {
 		for i := 0; i < years; i++ {
 			for l := 0; l < cgbins; l++ {
+				if varindex.Sy(i, l) != ky {
+					passOk = false
+					fmt.Fprintf(errfile,
+						"varindex.y(%d,%d) is %d not %d as it should be",
+						i, l, varindex.Sy(i, l), ky)
+				}
+				ky++
+			}
+		}
+		for i := 0; i < years; i++ {
+			for l := 0; l < cgbins; l++ {
 				if varindex.Y(i, l) != ky {
 					passOk = false
 					fmt.Fprintf(errfile, "varindex.y(%d,%d) is %d not %d as it should be",
@@ -98,12 +109,14 @@ type VectorVarIndex struct {
 	Accmap   map[Acctype]int
 	Accname  []string
 	Xcount   int
+	Sycount  int
 	Ycount   int
 	Wcount   int
 	Bcount   int
 	Scount   int
 	Dcount   int
 	Vsize    int
+	Systart  int
 	Ystart   int
 	Wstart   int
 	Bstart   int
@@ -151,16 +164,19 @@ func NewVectorVarIndex(iyears, itaxbins, icgbins int,
 	}
 	//fmt.Printf("iaccounts: %d, iaccmap: %v\n", iaccounts, iaccmap)
 	ycount := 0
+	sycount := 0
 	if iaccmap[Aftertax] > 0 { // no cgbins if no aftertax account
 		ycount = iyears * icgbins
+		sycount = iyears * icgbins
 	}
 	xcount := iyears * itaxbins
 	wcount := iyears * iaccounts
 	bcount := (iyears + 1) * iaccounts
 	dcount := iyears * iaccounts
 	scount := iyears
-	vsize := xcount + ycount + wcount + bcount + scount + dcount
-	ystart := xcount
+	vsize := xcount + 2*ycount + wcount + bcount + scount + dcount
+	systart := xcount
+	ystart := systart + sycount
 	wstart := ystart + ycount
 	bstart := wstart + wcount
 	sstart := bstart + bcount
@@ -174,6 +190,7 @@ func NewVectorVarIndex(iyears, itaxbins, icgbins int,
 		Accmap:   iaccmap,
 		Accname:  accname,
 		Xcount:   xcount,
+		Sycount:  sycount,
 		Ycount:   ycount,
 		Wcount:   wcount,
 		// final balances in years+1,
@@ -183,11 +200,12 @@ func NewVectorVarIndex(iyears, itaxbins, icgbins int,
 		Vsize:  vsize,
 
 		//xstart = 0
-		Ystart: ystart,
-		Wstart: wstart,
-		Bstart: bstart,
-		Sstart: sstart,
-		Dstart: dstart,
+		Systart: systart,
+		Ystart:  ystart,
+		Wstart:  wstart,
+		Bstart:  bstart,
+		Sstart:  sstart,
+		Dstart:  dstart,
 
 		errfile: errfile,
 	}, nil
@@ -200,11 +218,25 @@ func (v VectorVarIndex) X(i, k int) int {
 	return i*v.Taxbins + k
 }
 
+// Sy (i,l) returns the variable index in a variable vector
+func (v VectorVarIndex) Sy(i, l int) int {
+	//assert v.Accmap["aftertax"] > 0
+	//assert i >= 0 and i < v.Years
+	//assert l >= 0 and l < v.Cgbins
+	if v.Sycount == 0 {
+		panic("Sycount is zero so you can't index to it")
+	}
+	return v.Systart + i*v.Cgbins + l
+}
+
 // Y (i,l) returns the variable index in a variable vector
 func (v VectorVarIndex) Y(i, l int) int {
 	//assert v.Accmap["aftertax"] > 0
 	//assert i >= 0 and i < v.Years
 	//assert l >= 0 and l < v.Cgbins
+	if v.Ycount == 0 {
+		panic("Ycount is zero so you can't index to it")
+	}
 	return v.Ystart + i*v.Cgbins + l
 }
 
@@ -246,30 +278,35 @@ func (v VectorVarIndex) Varstr(indx int) string {
 		a = indx / v.Taxbins
 		b = indx % v.Taxbins
 		return fmt.Sprintf("x[%d,%d]", a, b)
-	} else if indx < v.Xcount+v.Ycount {
+	} else if indx < v.Xcount+v.Sycount {
 		c = indx - v.Xcount
 		a = c / v.Cgbins
 		b = c % v.Cgbins
+		return fmt.Sprintf("Sy[%d,%d]", a, b)
+	} else if indx < v.Xcount+v.Sycount+v.Ycount {
+		c = indx - v.Xcount + v.Sycount
+		a = c / v.Cgbins
+		b = c % v.Cgbins
 		return fmt.Sprintf("y[%d,%d]", a, b)
-	} else if indx < v.Xcount+v.Ycount+v.Wcount {
-		c = indx - (v.Xcount + v.Ycount)
+	} else if indx < v.Xcount+v.Sycount+v.Ycount+v.Wcount {
+		c = indx - (v.Xcount + v.Sycount + v.Ycount)
 		a = c / v.Accounts
 		b = c % v.Accounts
 		name = v.Accname[b]
 		return fmt.Sprintf("w[%d,%d=%s]", a, b, name)
-	} else if indx < v.Xcount+v.Ycount+v.Wcount+v.Bcount {
-		c = indx - (v.Xcount + v.Ycount + v.Wcount)
+	} else if indx < v.Xcount+v.Sycount+v.Ycount+v.Wcount+v.Bcount {
+		c = indx - (v.Xcount + v.Sycount + v.Ycount + v.Wcount)
 		a = c / v.Accounts
 		b = c % v.Accounts
 		name = v.Accname[b]
 		return fmt.Sprintf("b[%d,%d=%s]", a, b, name)
-	} else if indx < v.Xcount+v.Ycount+v.Wcount+v.Bcount+v.Scount {
-		c = indx - (v.Xcount + v.Ycount + v.Wcount + v.Bcount)
+	} else if indx < v.Xcount+v.Sycount+v.Ycount+v.Wcount+v.Bcount+v.Scount {
+		c = indx - (v.Xcount + v.Sycount + v.Ycount + v.Wcount + v.Bcount)
 		//a = c / v.Years
 		//b = c % v.Years
 		return fmt.Sprintf("s[%d]", c) // add actual values for i,j
-	} else if indx < v.Xcount+v.Ycount+v.Wcount+v.Bcount+v.Scount+v.Dcount {
-		c = indx - (v.Xcount + v.Ycount + v.Wcount + v.Bcount + v.Scount)
+	} else if indx < v.Xcount+v.Sycount+v.Ycount+v.Wcount+v.Bcount+v.Scount+v.Dcount {
+		c = indx - (v.Xcount + v.Sycount + v.Ycount + v.Wcount + v.Bcount + v.Scount)
 		a = c / v.Accounts
 		b = c % v.Accounts
 		name = v.Accname[b]

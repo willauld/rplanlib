@@ -692,6 +692,19 @@ func (ms ModelSpecs) BuildModel() ([]float64, [][]float64, []float64, []ModelNot
 		}
 	}
 	//
+	// Add objective function shadow cap gains bracket forcing function
+	//
+	if ms.Ip.Accmap[Aftertax] > 0 {
+		for year := 0; year < ms.Ip.Numyr; year++ {
+			for k := 0; k < len(*ms.Ti.Capgainstable); k++ {
+				// Multiplies the impact of higher brackets opposite to
+				// optimization. The intent here is to pressure higher
+				// brackets more and pack the lower brackets
+				c[ms.Vindx.Sy(year, k)] = float64(k + 1)
+			}
+		}
+	}
+	//
 	// Adder objective function (R1') when PlusEstate is added
 	//
 	//fmt.Printf("ms.Ip.Maximize: %#v\n", ms.Ip.Maximize)
@@ -937,6 +950,28 @@ func (ms ModelSpecs) BuildModel() ([]float64, [][]float64, []float64, []ModelNot
 		b = append(b, ms.Ti.Stded*adjInf-AccessVector(ms.Taxed, year)-ms.Ti.SStaxable*AccessVector(ms.SS[0], year))
 	}
 	//
+	// Add constraints for (11.5E')
+	//
+	notes = append(notes, ModelNote{len(A), "Constraints 11.5E':"})
+	if ms.Ip.Accmap[Aftertax] > 0 {
+		for year := 0; year < ms.Ip.Numyr; year++ {
+			adjInf := math.Pow(ms.Ip.IRate, float64(ms.Ip.PrePlanYears+year))
+			row := make([]float64, nvars)
+			for j := 0; j < intMin(2, len(ms.Accounttable)); j++ {
+				// IRA can only be in the first two accounts
+				if ms.Accounttable[j].acctype == IRA {
+					row[ms.Vindx.W(year, j)] = 1  // Account 0 is TDRA
+					row[ms.Vindx.D(year, j)] = -1 // Account 0 is TDRA
+				}
+			}
+			for l := 0; l < len(*ms.Ti.Capgainstable); l++ {
+				row[ms.Vindx.Sy(year, l)] = -1
+			}
+			A = append(A, row)
+			b = append(b, ms.Ti.Stded*adjInf-AccessVector(ms.Taxed, year)-ms.Ti.SStaxable*AccessVector(ms.SS[0], year))
+		}
+	}
+	//
 	// Add constraints for (12')
 	//
 	notes = append(notes, ModelNote{len(A), "Constraints 12':"})
@@ -946,6 +981,20 @@ func (ms ModelSpecs) BuildModel() ([]float64, [][]float64, []float64, []ModelNot
 			row[ms.Vindx.X(year, k)] = 1
 			A = append(A, row)
 			b = append(b, ((*ms.Ti.Taxtable)[k][1])*math.Pow(ms.Ip.IRate, float64(ms.Ip.PrePlanYears+year))) // inflation adjusted
+		}
+	}
+	//
+	// Add constraints for (12.5E')
+	//
+	notes = append(notes, ModelNote{len(A), "Constraints 12.5E':"})
+	if ms.Ip.Accmap[Aftertax] > 0 {
+		for year := 0; year < ms.Ip.Numyr; year++ {
+			for l := 0; l < len(*ms.Ti.Capgainstable)-1; l++ {
+				row := make([]float64, nvars)
+				row[ms.Vindx.Sy(year, l)] = 1
+				A = append(A, row)
+				b = append(b, ((*ms.Ti.Capgainstable)[l][1])*math.Pow(ms.Ip.IRate, float64(ms.Ip.PrePlanYears+year))) // inflation adjusted
+			}
 		}
 	}
 	//
@@ -994,8 +1043,32 @@ func (ms ModelSpecs) BuildModel() ([]float64, [][]float64, []float64, []ModelNot
 			b = append(b, -1*cgt)
 		}
 	}
+	/*
+		//
+		// Add constraints for (14')
+		//
+		notes = append(notes, ModelNote{len(A), "Constraints 14':"})
+		if ms.Ip.Accmap[Aftertax] > 0 {
+			for year := 0; year < ms.Ip.Numyr; year++ {
+				adjInf := math.Pow(ms.Ip.IRate, float64(ms.Ip.PrePlanYears+year))
+				for l := 0; l < len(*ms.Ti.Capgainstable)-1; l++ {
+					row := make([]float64, nvars)
+					row[ms.Vindx.Y(year, l)] = 1
+					for k := 0; k < len(*ms.Ti.Taxtable)-1; k++ {
+						if (*ms.Ti.Taxtable)[k][0] >= (*ms.Ti.Capgainstable)[l][0]
+							&&
+						  (*ms.Ti.Taxtable)[k][0] < (*ms.Ti.Capgainstable)[l+1][0] {
+							row[ms.Vindx.X(year, k)] = 1
+						}
+					}
+					A = append(A, row)
+					b = append(b, (*ms.Ti.Capgainstable)[l][1]*adjInf) // mcg[i,l] inflation adjusted
+				}
+			}
+		}
+	*/
 	//
-	// Add constraints for (14')
+	// Add constraints for (14Er')
 	//
 	notes = append(notes, ModelNote{len(A), "Constraints 14':"})
 	if ms.Ip.Accmap[Aftertax] > 0 {
@@ -1004,13 +1077,7 @@ func (ms ModelSpecs) BuildModel() ([]float64, [][]float64, []float64, []ModelNot
 			for l := 0; l < len(*ms.Ti.Capgainstable)-1; l++ {
 				row := make([]float64, nvars)
 				row[ms.Vindx.Y(year, l)] = 1
-				for k := 0; k < len(*ms.Ti.Taxtable)-1; k++ {
-					if (*ms.Ti.Taxtable)[k][0] >= (*ms.Ti.Capgainstable)[l][0] 
-						&& 
-					  (*ms.Ti.Taxtable)[k][0] < (*ms.Ti.Capgainstable)[l+1][0] {
-						row[ms.Vindx.X(year, k)] = 1
-					}
-				}
+				row[ms.Vindx.Sy(year, l)] = 1
 				A = append(A, row)
 				b = append(b, (*ms.Ti.Capgainstable)[l][1]*adjInf) // mcg[i,l] inflation adjusted
 			}
@@ -1365,6 +1432,13 @@ func (ms ModelSpecs) printModelRow(row []float64, suppressNewline bool) {
 		}
 	}
 	if ms.Ip.Accmap[Aftertax] > 0 {
+		for i := 0; i < ms.Ip.Numyr; i++ { // sy[]
+			for l := 0; l < len(*ms.Ti.Capgainstable); l++ {
+				if row[ms.Vindx.Sy(i, l)] != 0 {
+					fmt.Fprintf(ms.Logfile, "sy[%d,%d]=%6.3f, ", i, l, row[ms.Vindx.Sy(i, l)])
+				}
+			}
+		}
 		for i := 0; i < ms.Ip.Numyr; i++ { // y[]
 			for l := 0; l < len(*ms.Ti.Capgainstable); l++ {
 				if row[ms.Vindx.Y(i, l)] != 0 {

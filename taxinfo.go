@@ -181,7 +181,7 @@ func NewTaxInfo(status TaxStatus, taxYear int) Taxinfo {
 		AccountEstateTax: map[Acctype]float64{
 			IRA:      0.85,
 			Roth:     1.0,
-			Aftertax: 0.9,
+			Aftertax: 1.0,
 		},
 
 		// 401(k), 403(b) and TSP currently have the same limits

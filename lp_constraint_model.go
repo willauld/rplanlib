@@ -1014,7 +1014,7 @@ func (ms ModelSpecs) BuildModel() ([]float64, [][]float64, []float64, []ModelNot
 			if cgt <= 0 { // i.e., no sale
 				j := len(ms.Accounttable) - 1 // last Acc is investment / stocks
 				row[ms.Vindx.W(year, j)] = -1 * f
-				row[ms.Vindx.D(year, j)] = f
+				//row[ms.Vindx.D(year, j)] = f // TODO FIXME I think this should not be set ## commented out 5/3/2018
 			}
 			A = append(A, row)
 			b = append(b, cgt)
@@ -1034,7 +1034,7 @@ func (ms ModelSpecs) BuildModel() ([]float64, [][]float64, []float64, []ModelNot
 			if cgt <= 0 { // i.e., no sale
 				j := len(ms.Accounttable) - 1 // last Acc is investment / stocks
 				row[ms.Vindx.W(year, j)] = f
-				row[ms.Vindx.D(year, j)] = -f
+				//row[ms.Vindx.D(year, j)] = -f // TODO FIXME same as 13a'
 			}
 			for l := 0; l < len(*ms.Ti.Capgainstable); l++ {
 				row[ms.Vindx.Y(year, l)] = -1
@@ -1099,7 +1099,8 @@ func (ms ModelSpecs) BuildModel() ([]float64, [][]float64, []float64, []ModelNot
 			// In the event of a sell of an asset for the year
 			temp := 0.0
 			if ms.Accounttable[j].acctype == Aftertax {
-				temp = AccessVector(ms.AssetSale[0], year) * ms.Accounttable[j].RRate //TODO test
+				temp = AccessVector(ms.AssetSale[0], year) *
+					ms.Accounttable[j].RRate //TODO test
 			}
 			b = append(b, temp)
 		}
@@ -1119,7 +1120,8 @@ func (ms ModelSpecs) BuildModel() ([]float64, [][]float64, []float64, []ModelNot
 			A = append(A, row)
 			temp := 0.0
 			if ms.Accounttable[j].acctype == Aftertax {
-				temp = -1 * AccessVector(ms.AssetSale[0], year) * ms.Accounttable[j].RRate //TODO test
+				temp = -1 * AccessVector(ms.AssetSale[0], year) *
+					ms.Accounttable[j].RRate //TODO test
 			}
 			b = append(b, temp)
 		}

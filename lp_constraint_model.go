@@ -717,12 +717,7 @@ func (ms ModelSpecs) BuildModel() ([]float64, [][]float64, []float64, []ModelNot
 		notes = append(notes, ModelNote{-1, "Objective function R1':"})
 	} else {
 		//fmt.Fprintf(ms.Logfile, "\nConstructing Spending Model:\n")
-
-		startamount := 0.0
-		for j := 0; j < len(ms.Accounttable); j++ {
-			startamount += ms.Accounttable[j].bal
-		}
-		balancer := 1.0 / (startamount)
+		balancer := 0.001
 		for j := 0; j < len(ms.Accounttable); j++ {
 			estateTax := ms.Ti.AccountEstateTax[ms.Accounttable[j].acctype]
 			c[ms.Vindx.B(ms.Ip.Numyr, j)] = -1 * balancer * estateTax // balance and discount rate

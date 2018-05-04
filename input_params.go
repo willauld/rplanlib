@@ -662,13 +662,13 @@ func NewInputParams(ip map[string]string, warnList *WarnErrorList) (*InputParams
 	// some more tests for consistancy
 	//
 	if rip.DefinedContributionPlanEnd2 >= rip.RetireAge2 {
-		str := fmt.Sprintf("Warning - Normally a define contribution plan ends (your's: %d) with employment prior to retirement begining (your's: %d), do you want to change your input?",
-			rip.DefinedContributionPlanEnd2, rip.RetireAge2)
+		str := fmt.Sprintf("Warning - Normally a define contribution plan ends with employment prior to retirement begining; %s's defined contribution plan ends at age %d while retirement begins at age %d",
+			rip.MyKey2, rip.DefinedContributionPlanEnd2, rip.RetireAge2)
 		warnList.AppendWarning(str)
 	}
 	if rip.DefinedContributionPlanEnd1 >= rip.RetireAge1 {
-		str := fmt.Sprintf("Warning - Normally a define contribution plan ends (your's: %d) with employment prior to retirement begining (your's: %d), do you want to change your input?",
-			rip.DefinedContributionPlanEnd1, rip.RetireAge1)
+		str := fmt.Sprintf("Warning - Normally a define contribution plan ends with employment prior to retirement begining; %s's defined contribution plan ends at age %d while retirement begins at age %d",
+			rip.MyKey1, rip.DefinedContributionPlanEnd1, rip.RetireAge1)
 		warnList.AppendWarning(str)
 	}
 

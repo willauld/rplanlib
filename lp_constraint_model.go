@@ -1253,81 +1253,137 @@ func (ms ModelSpecs) PrecheckConsistancy() bool {
 	return true
 }
 
-/*
-def consistancy_check(res, years, taxbins, cgbins, accounts, accmap, vindx):
-    # check to see if the ordinary tax brackets are filled in properly
-    print()
-    print()
-    print("Consistancy Checking:")
-    print()
+func (ms ModelSpecs) consistancyCheck(X *[]float64) {
+	// check to see if the ordinary tax brackets are filled in properly
+	fmt.Printf("\n\nConsistancy Checking:\n\n")
 
-    result = vvar.my_check_index_sequence(years, taxbins, cgbins, accounts, accmap, vindx)
+	for year := 0; year < ms.Ip.Numyr; year++ {
+		//
+		// First the ordinary income brackets
+		//
+		s := 0.0     // Sum for all bracket contents
+		fz := false  // Fount Zero for bracket contents
+		fnf := false // Found Not Full bracket contents
+		iMul := math.Pow(ms.Ip.IRate, float64(ms.Ip.PrePlanYears+year))
+		for k := 0; k < len(*ms.Ti.Taxtable); k++ {
+			size := (*ms.Ti.Taxtable)[k][1]
+			size *= iMul
+			s += (*X)[ms.Vindx.X(year, k)]
+			if fnf && (*X)[ms.Vindx.X(year, k)] > 0 {
+				// TODO FIXME ERROR? WARN? Should not just print to stdout
+				fmt.Printf("Improperly packed brackets in year %d, bracket %d not empty while previous bracket not full", year, k)
+			}
+			if (*X)[ms.Vindx.X(year, k)]+1 < size {
+				fnf = true
+			}
+			if fz && (*X)[ms.Vindx.X(year, k)] > 0 {
+				// TODO FIXME ERROR? WARN? Should not just print to stdout
+				fmt.Printf("Inproperly packed tax brackets in year %d bracket %d", year, k)
+			}
+			if (*X)[ms.Vindx.X(year, k)] == 0.0 {
+				fz = true
+			}
+		}
+		//
+		// Second the capital gains brackets if there is an after tax account
+		//
+		if ms.Ip.Accmap[Aftertax] > 0 {
+			// first the Shadow brackets that bridge between ordinary and cg
+			sg := 0.0    // Sum for all shadow bracket contents
+			fz := false  // Fount Zero for shadow bracket contents
+			fnf := false // Found Not Full shadow bracket contents
+			for l := 0; l < len(*ms.Ti.Capgainstable); l++ {
+				size := (*ms.Ti.Capgainstable)[l][1]
+				size *= iMul
+				sg += (*X)[ms.Vindx.Sy(year, l)]
+				if fnf && (*X)[ms.Vindx.Sy(year, l)] > 0 {
+					// TODO FIXME ERROR? WARN? Should not just print to stdout
+					fmt.Printf("Improperly packed brackets in year %d, bracket %d not empty while previous bracket not full", year, l)
+				}
+				if (*X)[ms.Vindx.Sy(year, l)]+1 < size {
+					fnf = true
+				}
+				if fz && (*X)[ms.Vindx.Sy(year, l)] > 0 {
+					// TODO FIXME ERROR? WARN? Should not just print to stdout
+					fmt.Printf("Inproperly packed tax brackets in year %d bracket %d", year, l)
+				}
+				if (*X)[ms.Vindx.Sy(year, l)] == 0.0 {
+					fz = true
+				}
+			}
+			if int(sg) != int(s) {
+				fmt.Printf("Each year sum of shadow brackets %d should equal the sum of ordinary income brackets %d but they do not\n", int(sg), int(s))
+			}
 
-    for year in range(S.numyr):
-        s = 0
-        fz = False
-        fnf = False
-        i_mul = S.i_rate ** (S.preplanyears+year)
-        for k in range(len(taxinfo.taxtable)):
-            cut, size, rate, base = taxinfo.taxtable[k]
-            size *= i_mul
-            s += res.x[vindx.x(year,k)]
-            if fnf and res.x[vindx.x(year,k)] > 0:
-                print("Inproper packed brackets in year %d, bracket %d not empty while previous bracket not full." % (year, k))
-            if res.x[vindx.x(year,k)]+1 < size:
-                fnf = True
-            if fz and res.x[vindx.x(year,k)] > 0:
-                print("Inproperly packed tax brackets in year %d bracket %d" % (year, k))
-            if res.x[vindx.x(year,k)] == 0.0:
-                fz = True
-        if S.accmap['aftertax'] > 0:
-            scg = 0
-            fz = False
-            fnf = False
-            for l in range(len(taxinfo.capgainstable)):
-                cut, size, rate = taxinfo.capgainstable[l]
-                size *= i_mul
-                bamount = res.x[vindx.y(year,l)]
-                scg += bamount
-                for k in range(len(taxinfo.taxtable)-1):
-                    if taxinfo.taxtable[k][0] >= taxinfo.capgainstable[l][0] and taxinfo.taxtable[k][0] < taxinfo.capgainstable[l+1][0]:
-                        bamount += res.x[vindx.x(year,k)]
-                if fnf and bamount > 0:
-                    print("Inproper packed CG brackets in year %d, bracket %d not empty while previous bracket not full." % (year, l))
-                if bamount+1 < size:
-                    fnf = True
-                if fz and bamount > 0:
-                    print("Inproperly packed GC tax brackets in year %d bracket %d" % (year, l))
-                if bamount == 0.0:
-                    fz = True
-        TaxableOrdinary = OrdinaryTaxable(year)
-        if (TaxableOrdinary + 0.1 < s) or (TaxableOrdinary - 0.1 > s):
-            print("Error: Expected (age:%d) Taxable Ordinary income %6.2f doesn't match bracket sum %6.2f" %
-                (year + S.startage, TaxableOrdinary,s))
+			// second the capital gains brackets
+			scg := 0.0  // Sum for all CG bracket content
+			fz = false  // Found Zero bracket content
+			fnf = false // Found Not Full bracket content
+			for l := 0; l < len(*ms.Ti.Capgainstable); l++ {
+				size := (*ms.Ti.Capgainstable)[l][1]
+				size *= iMul
+				bamount := (*X)[ms.Vindx.Y(year, l)] // TODO FIXME and Sy as well
+				scg += bamount
+				for k := 0; k < len(*ms.Ti.Taxtable)-1; k++ {
+					if (*ms.Ti.Taxtable)[k][0] >= (*ms.Ti.Capgainstable)[l][0] && (*ms.Ti.Taxtable)[k][0] < (*ms.Ti.Capgainstable)[l+1][0] {
+						bamount += (*X)[ms.Vindx.X(year, k)]
+					}
+				}
+				if fnf && bamount > 0 {
+					// TODO FIXME ERROR? WARN? Should not just print to stdout
+					fmt.Printf("Inproper packed CG brackets in year %d, bracket %d not empty while previous bracket not full", year, l)
+				}
+				if bamount+1 < size {
+					fnf = true
+				}
+				if fz && bamount > 0 {
+					// TODO FIXME ERROR? WARN? Should not just print to stdout
+					fmt.Printf("Inproperly packed GC tax brackets in year %d bracket %d", year, l)
+				}
+				if bamount == 0.0 {
+					fz = true
+				}
+			}
+		}
+		TaxableOrdinary := ms.ordinaryTaxable(year, X)
+		if (TaxableOrdinary+0.1 < s) || (TaxableOrdinary-0.1 > s) {
+			// TODO FIXME ERROR? WARN? Should not just print to stdout
+			fmt.Printf("Error: Expected (age:%d) Taxable Ordinary income %6.2f doesn't match bracket sum %6.2f",
+				year+ms.Ip.StartPlan, TaxableOrdinary, s)
+		}
+		for j := 0; j < len(ms.Accounttable); j++ {
+			a := (*X)[ms.Vindx.B(year+1, j)] - ((*X)[ms.Vindx.B(year, j)]-(*X)[ms.Vindx.W(year, j)]+ms.depositAmount(X, year, j))*ms.Accounttable[j].RRate
+			if a > 1 {
+				v := ms.Accounttable[j]
+				// TODO FIXME ERROR? WARN? Should not just print to stdout
+				fmt.Printf("account[%d], type %s, mykey %s", j, v.acctype.String(), v.mykey)
+				fmt.Printf("account[%d] year to year balance NOT OK years %d to %d", j, year, year+1)
+				fmt.Printf("difference is %v", a)
+			}
+		}
 
-        for j in range(len(S.accounttable)):
-            a = res.x[vindx.b(year+1,j)] - (res.x[vindx.b(year,j)] - res.x[vindx.w(year,j)] + deposit_amount(S, res, year, j))*S.accounttable[j]['rate']
-            if a > 1:
-                v = S.accounttable[j]
-                print("account[%d], type %s, index %d, mykey %s" % (j, v['acctype'], v['index'], v['mykey']))
-                print("account[%d] year to year balance NOT OK years %d to %d" % (j, year, year+1))
-                print("difference is", a)
+		_, spendable, tax, _, cgTax, _, _ := ms.IncomeSummary(year, X)
+		if spendable+0.1 < (*X)[ms.Vindx.S(year)] || spendable-0.1 > (*X)[ms.Vindx.S(year)] {
+			// TODO FIXME ERROR? WARN? Should not just print to stdout
+			fmt.Printf("Calc Spendable %6.2f should equal s(year:%d) %6.2f", spendable, year, (*X)[ms.Vindx.S(year)])
+			for j := 0; j < len(ms.Accounttable); j++ {
+				fmt.Printf("+w[%d,%d]: %6.0f", year, j, (*X)[ms.Vindx.W(year, j)])
+				fmt.Printf("-D[%d,%d]: %6.0f", year, j, ms.depositAmount(X, year, j))
+			}
+			fmt.Printf("+o[%d]: %6.0f +SS[%d]: %6.0f -tax: %6.0f -cg_tax: %6.0f", year, AccessVector(ms.Income[0], year), year, AccessVector(ms.SS[0], year), tax, cgTax)
+		}
 
-        T,spendable,tax,rate,cg_tax,earlytax,rothearly = IncomeSummary(year)
-        if spendable + 0.1 < res.x[vindx.s(year)]  or spendable -0.1 > res.x[vindx.s(year)]:
-            print("Calc Spendable %6.2f should equal s(year:%d) %6.2f"% (spendable, year, res.x[vindx.s(year)]))
-            for j in range(len(S.accounttable)):
-                print("+w[%d,%d]: %6.0f" % (year, j, res.x[vindx.w(year,j)]))
-                print("-D[%d,%d]: %6.0f" % (year, j, deposit_amount(S, res, year, j)))
-            print("+o[%d]: %6.0f +SS[%d]: %6.0f -tax: %6.0f -cg_tax: %6.0f" % (year, S.income[year] ,year, S.SS[year] , tax ,cg_tax))
-
-        bt = 0
-        for k in range(len(taxinfo.taxtable)):
-            bt += res.x[vindx.x(year,k)] * taxinfo.taxtable[k][2]
-        if tax + 0.1 < bt  or tax -0.1 > bt:
-            print("Calc tax %6.2f should equal brackettax(bt)[]: %6.2f" % (tax, bt))
-    print()
-*/
+		bt := 0.0
+		for k := 0; k < len(*ms.Ti.Taxtable); k++ {
+			bt += (*X)[ms.Vindx.X(year, k)] * (*ms.Ti.Taxtable)[k][2]
+		}
+		if tax+0.1 < bt || tax-0.1 > bt {
+			// TODO FIXME ERROR? WARN? Should not just print to stdout
+			fmt.Printf("Calc tax %6.2f should equal brackettax(bt)[]: %6.2f", tax, bt)
+		}
+	}
+	fmt.Printf("\n")
+}
 
 // TODO: FIXME: Create UNIT tests: last two parameters need s vector (s is output from simplex run)
 

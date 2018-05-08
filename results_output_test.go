@@ -160,7 +160,6 @@ func TestPreCheckConsistancy(t *testing.T) {
 	fmt.Printf("TestPreCheckConsistancy() Not Yet Implemented\n")
 }
 
-//def consistancy_check(res, years, taxbins, cgbins, accounts, accmap, vindx):
 func TestCheckConsistancy(t *testing.T) {
 	fmt.Printf("TestCheckConsistancy() Not Yet Implemented\n")
 }
@@ -1977,7 +1976,7 @@ func TestResultsOutput(t *testing.T) {
 					fmt.Printf("\nNo match at: '%s', found\n\tm0: '%#v'\n\t m1: '%#v'\n\n", k, v, m1[k])
 				}
 			}*/
-		t.Skip("TestResultsOutput(): skipping unless set '-v -short'")
+		t.Skip("TestResultsOutput() (full runs): skipping unless set '-v -short'")
 	}
 	for i, elem := range tests {
 		if i != 1 {
@@ -2053,6 +2052,8 @@ func TestResultsOutput(t *testing.T) {
 		fmt.Printf("Called LPSimplex() for m:%d x n:%d model\n", len(a), len(a[0]))
 
 		if res.Success {
+			ms.consistancyCheck(&res.X)
+
 			ms.PrintActivitySummary(&res.X)
 			ms.PrintIncomeExpenseDetails()
 			ms.PrintAccountTrans(&res.X)

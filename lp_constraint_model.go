@@ -1385,10 +1385,124 @@ func (ms ModelSpecs) consistancyCheck(X *[]float64) {
 	fmt.Printf("\n")
 }
 
+type OptInfo struct {
+	dup    int // index of dupped constraint (-1 init, -2 dup or zero)
+	active int // index as active constraint
+}
+
+// OptimizeLPModel create a new model by eliminating redundent
+// and zero constraint
+func (ms ModelSpecs) OptimizeLPModel(A *[][]float64, b *[]float64) (oA *[][]float64, ob *[]float64, info *[]OptInfo) {
+	type constraintInfo struct {
+		fnz int // first non-zero entry
+		lnz int // last non-zero entry
+		nnz int // number of non-zero entries
+	}
+	numZero := 0
+	numVars := len((*A)[0])
+	numConstraints := len(*b)
+	constraints := make([]constraintInfo, numConstraints)
+	oinfo := make([]OptInfo, numConstraints)
+	for i, constraint := range *A {
+		first := -1
+		last := -1
+		count := 0
+		for m := 0; m < numVars; m++ {
+			if constraint[m] != 0.0 {
+				count++
+				if first == -1 || m < first {
+					first = m
+				}
+				if last == -1 || m > last {
+					last = m
+				}
+			}
+		}
+		constraints[i].fnz = first
+		constraints[i].lnz = last
+		constraints[i].nnz = count
+		oinfo[i].dup = -1
+		oinfo[i].active = -1
+		if count == 0 {
+			oinfo[i].active = -2
+			numZero++
+		}
+	}
+	fmt.Printf("numZero: %d \n", numZero)
+	activeIndx := 0
+	for i, constraint := range *A {
+		if oinfo[i].active == -3 {
+			// Special Case for min constraint
+			oinfo[i].active = activeIndx // Special min constrain
+			activeIndx++
+		} else if oinfo[i].active == -1 {
+			needMinB := false
+			minB := 0.0
+			minj := 0
+			for j := i + 1; j < numConstraints; j++ {
+				//fmt.Printf("i: %d, j: %d\n", i, j)
+				sub := (*A)[j]
+				if constraints[i].fnz == constraints[j].fnz &&
+					constraints[i].lnz == constraints[j].lnz &&
+					constraints[i].nnz == constraints[j].nnz {
+					haveDup := true
+					for m := constraints[j].fnz; m <= constraints[j].lnz; m++ {
+						if constraint[m] != sub[m] {
+							haveDup = false
+						}
+					}
+					if haveDup {
+						if (*b)[i] <= (*b)[j] { // same or a stronger constraint
+							// must be dup
+							oinfo[j].dup = i
+							oinfo[j].active = -2
+						} else { // weaker constrain, use stronger
+							if !needMinB {
+								needMinB = true
+								minB = (*b)[j]
+								minj = j
+							} else if minB > (*b)[j] {
+								minB = (*b)[j]
+								minj = j
+							}
+						}
+					}
+				}
+			}
+			oinfo[i].active = activeIndx
+			activeIndx++
+			if needMinB {
+				oinfo[i].dup = minj
+				oinfo[i].active = -2
+				oinfo[minj].active = -3 // Special min constrain to be reset later in scan
+				oinfo[minj].dup = i
+				activeIndx--
+			}
+		}
+	}
+	// activeIndx should now hold the count of non-zero no dup constraints
+	// no change to C so leave it alone
+	tmpb := make([]float64, activeIndx)
+	tmpA := make([][]float64, activeIndx)
+	ob = &tmpb
+	oA = &tmpA
+	for i := 0; i < numConstraints; i++ {
+		newIndex := oinfo[i].active
+		if newIndex >= 0 {
+			(*oA)[newIndex] = (*A)[i]
+			(*ob)[newIndex] = (*b)[i]
+		}
+	}
+	fmt.Printf("Number of constraints: %d\n", numConstraints)
+	fmt.Printf("Optimized number of constraints: %d\n", activeIndx)
+	info = &oinfo
+	return oA, ob, info
+}
+
 // TODO: FIXME: Create UNIT tests: last two parameters need s vector (s is output from simplex run)
 
 // PrintModelMatrix prints to object function (cx) and constraint matrix (Ax<=b)
-func (ms ModelSpecs) PrintModelMatrix(c []float64, A [][]float64, b []float64, notes []ModelNote, s []float64, nonBindingOnly bool) {
+func (ms ModelSpecs) PrintModelMatrix(c []float64, A [][]float64, b []float64, notes []ModelNote, s []float64, nonBindingOnly bool, optinfo *[]OptInfo) {
 	note := ""
 	notesIndex := 0
 	nextModelIndex := len(A) + 1 // beyond the end of A
@@ -1431,6 +1545,30 @@ func (ms ModelSpecs) PrintModelMatrix(c []float64, A [][]float64, b []float64, n
 				fmt.Fprintf(ms.Logfile, "  ")
 			} else {
 				fmt.Fprintf(ms.Logfile, "B ")
+			}
+			//
+			// This code does not play well with above code.
+			// The above includes info from the model run (s)
+			// which would be for the post optimized model but in
+			// a this world the we are anotatine the pre-optimized model
+			// so if we go this way we need to find a way to reconcile
+			// this two into one mode of operation.
+			//
+			if optinfo == nil {
+				//fmt.Fprintf(ms.Logfile, "   ")
+				fmt.Fprintf(ms.Logfile, "??       ")
+			} else if (*optinfo)[constraint].active > -1 && (*optinfo)[constraint].dup > -1 {
+				fmt.Fprintf(ms.Logfile, "A%3dD%3d ", (*optinfo)[constraint].active, (*optinfo)[constraint].dup)
+			} else if (*optinfo)[constraint].active > -1 && (*optinfo)[constraint].dup < 0 {
+				fmt.Fprintf(ms.Logfile, "A%3d %3d ", (*optinfo)[constraint].active, (*optinfo)[constraint].dup)
+			} else if (*optinfo)[constraint].active < 0 && (*optinfo)[constraint].dup > -1 {
+				//fmt.Fprintf(ms.Logfile, "ID ")
+				fmt.Fprintf(ms.Logfile, " %3dD%3d ", (*optinfo)[constraint].active, (*optinfo)[constraint].dup)
+			} else if (*optinfo)[constraint].active < 0 && (*optinfo)[constraint].dup < 0 {
+				//fmt.Fprintf(ms.Logfile, "Z  ")
+				fmt.Fprintf(ms.Logfile, " %3d %3d ", (*optinfo)[constraint].active, (*optinfo)[constraint].dup)
+			} else {
+				fmt.Fprintf(ms.Logfile, "??       ")
 			}
 			fmt.Fprintf(ms.Logfile, "%3d: ", constraint)
 			ms.printConstraint(A[constraint], b[constraint])

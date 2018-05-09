@@ -2020,7 +2020,12 @@ func TestResultsOutput(t *testing.T) {
 		//fmt.Printf("ModelSpecs: %#v\n", ms)
 
 		c, a, b, notes := ms.BuildModel()
-		ms.PrintModelMatrix(c, a, b, notes, nil, false)
+
+		Optstart := time.Now()
+		aprime, bprime, oinfo := ms.OptimizeLPModel(&a, &b)
+		Optelapsed := time.Since(Optstart)
+
+		ms.PrintModelMatrix(c, a, b, notes, nil, false, oinfo)
 
 		tol := 1.0e-7
 
@@ -2035,6 +2040,9 @@ func TestResultsOutput(t *testing.T) {
 		res := lpsimplex.LPSimplex(c, a, b, nil, nil, nil, callback, disp, maxiter, tol, bland)
 		elapsed := time.Since(start)
 
+		Ostart := time.Now()
+		res = lpsimplex.LPSimplex(c, *aprime, *bprime, nil, nil, nil, callback, disp, maxiter, tol, bland)
+		Oelapsed := time.Since(Ostart)
 		/*
 			err = BinDumpModel(c, a, b, res.X, "./RPlanModelgo.datX")
 			if err != nil {
@@ -2048,6 +2056,8 @@ func TestResultsOutput(t *testing.T) {
 		str := fmt.Sprintf("Message: %v\n", res.Message)
 		fmt.Printf(str)
 		str = fmt.Sprintf("Time: LPSimplex() took %s\n", elapsed)
+		fmt.Printf(str)
+		str = fmt.Sprintf("Time: Opt took %s, LPSimplex() took %s\n", Optelapsed, Oelapsed)
 		fmt.Printf(str)
 		fmt.Printf("Called LPSimplex() for m:%d x n:%d model\n", len(a), len(a[0]))
 
@@ -2163,7 +2173,7 @@ func GenStockOutput(t *testing.T) {
 		//fmt.Printf("ModelSpecs: %#v\n", ms)
 
 		c, a, b, notes := ms.BuildModel()
-		ms.PrintModelMatrix(c, a, b, notes, nil, false)
+		ms.PrintModelMatrix(c, a, b, notes, nil, false, nil)
 
 		tol := 1.0e-7
 

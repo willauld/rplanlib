@@ -622,7 +622,7 @@ func TestBuildModel(t *testing.T) {
 		}
 		/**/
 		c, A, b, notes := ms.BuildModel()
-		ms.PrintModelMatrix(c, A, b, notes, nil, false)
+		ms.PrintModelMatrix(c, A, b, notes, nil, false, nil)
 		/**/
 		if ms.Ip.IRate != elem.iRate {
 			t.Errorf("BuildModel case %d: iRate expected %f, found %f", i, elem.iRate, ms.Ip.IRate)
@@ -1072,7 +1072,7 @@ func TestPrintModelMatrix(t *testing.T) {
 		fmt.Fprintf(ms.Logfile, "b[0]: %v\n", b[0])
 		fmt.Fprintf(ms.Logfile, "Row1: %v\n", row1)
 		fmt.Fprintf(ms.Logfile, "b[1]: %v\n", b[1])
-		ms.PrintModelMatrix(c, A, b, nil, nil, false) // TODO add cases with varying parameters 4 and 5
+		ms.PrintModelMatrix(c, A, b, nil, nil, false, nil) // TODO add cases with varying parameters 4 and 5
 
 		str := ms.RestoreModelSpecsLog(mychan, oldout, w)
 		strn := stripWhitespace(str)

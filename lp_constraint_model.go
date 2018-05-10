@@ -1555,8 +1555,9 @@ func (ms ModelSpecs) PrintModelMatrix(c []float64, A [][]float64, b []float64, n
 			// this two into one mode of operation.
 			//
 			if optinfo == nil {
+				// do NOTHING
 				//fmt.Fprintf(ms.Logfile, "   ")
-				fmt.Fprintf(ms.Logfile, "??       ")
+				//fmt.Fprintf(ms.Logfile, "??       ")
 			} else if (*optinfo)[constraint].active > -1 && (*optinfo)[constraint].dup > -1 {
 				fmt.Fprintf(ms.Logfile, "A%3dD%3d ", (*optinfo)[constraint].active, (*optinfo)[constraint].dup)
 			} else if (*optinfo)[constraint].active > -1 && (*optinfo)[constraint].dup < 0 {

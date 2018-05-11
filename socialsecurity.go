@@ -49,6 +49,27 @@ func adjPIA(PIA float64, fra int, startAge int) float64 {
 	return PIA * (math.Pow(1.08, float64(startAge-fra)))
 }
 
+// invAdjPIA returns an inverse adjusted PIA amount a retiree would have
+// recieve based on actual payments, starting age, fra and current age
+func invAdjPIA(amount float64, fra int, startAge int, curAge int, irate float64) float64 {
+	if startAge > 70 {
+		startAge = 70
+	}
+	if startAge < 62 {
+		startAge = 62
+	}
+	// first remove the inflation
+	receivingYears := curAge - startAge
+	amountWOInf := amount / math.Pow(irate, float64(receivingYears))
+
+	// Next remove and adjustment to the original PIA amount
+	if startAge < fra {
+		return amountWOInf * (math.Pow(1.067, float64(fra-startAge)))
+	}
+	//  start >= fra must be
+	return amountWOInf / (math.Pow(1.08, float64(startAge-fra)))
+}
+
 type ssI struct {
 	fraamount  int
 	fraage     int
@@ -126,6 +147,11 @@ func processSS(ip *InputParams, warnList *WarnErrorList) (SS, SS1, SS2 []float64
 		if ssi[i].fraamount > 0 { // TODO check if this needs to be able to equal zero ; FIXME maybe explicitly check for zero and return nils
 			// alter amount for start age vs fra (minus if before fra and + is after)
 			amount = adjPIA(float64(ssi[i].fraamount), ssi[i].fraage, disperseage)
+			if ssi[i].ageAtStart > disperseage {
+				// here, Social Security has already begun so amount should
+				// already be actual amount recieved, no adjustment required
+				amount = float64(ssi[i].fraamount)
+			}
 		} else {
 			if i != 1 {
 				e := fmt.Errorf("Error: Assert i == 1 failed (1212121)")
@@ -147,14 +173,25 @@ func processSS(ip *InputParams, warnList *WarnErrorList) (SS, SS1, SS2 []float64
 					warnList.AppendWarning(str)
 				}
 			}
-			//fraamount := ssi[0].fraamount / 2 // spousal benefit is 1/2 spouses at FRA
-			// alter amount for start age vs fra (minus if before fra)
-			amount = adjPIA(float64(ssi[0].fraamount)/2, ssi[i].fraage, intMin(disperseage, ssi[i].fraage))
+			//fraamount := ssi[0].fraamount / 2 // spousal benefit is
+			// 1/2 spouses at spouses FRA
+			// alter amount for start age before receiver's fra (no increase
+			// after fra for spousal benefit)
+			benPIA := float64(ssi[0].fraamount)
+			//fmt.Printf("benPIA1: %v\n", benPIA)
+			if ssi[0].currAge > ssi[0].startSSAge {
+				// Need to find original PIA from current amount received
+				benPIA = invAdjPIA(benPIA, ssi[0].fraage,
+					ssi[0].startSSAge, ssi[0].currAge, ip.IRate)
+				//fmt.Printf("benPIA2: %v\n", benPIA)
+			}
+			amount = adjPIA(benPIA/2.0, ssi[i].fraage, intMin(disperseage, ssi[i].fraage))
+			//fmt.Printf("amount: %v\n", amount)
 		}
 		ssi[i].bucket = make([]float64, ip.Numyr) // = [0] * self.numyr
 		endage := ip.Numyr + ssi[i].ageAtStart
 		//fmt.Printf("section: %d, disperseage: %d\n", i, disperseage)
-		for age := disperseage; age < endage; age++ {
+		for age := intMax(disperseage, ssi[i].ageAtStart); age < endage; age++ {
 			year := age - ssi[i].ageAtStart //self.startage
 			//fmt.Printf("year: %d, age: %d, ageAtStart: %d, name: %s\n", year, age, ssi[i].ageAtStart, ssi[i].key)
 			if year < 0 {

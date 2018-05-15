@@ -1,11 +1,20 @@
-package rplanlib
 
-type Version struct {
-	Version   string
-	BuildTime string
-}
+    package rplanlib
 
-var version = Version{
-	Version:   "0.3-g-rc2",
-	BuildTime: "",
-}
+var (
+    // See createLibRelease.ps1 for variable definition / values
+    vermajor      string
+    verminor      string
+    verpatch      string
+    verstr        string
+)
+
+var version = struct {
+    major         string
+    minor         string
+    patch         string
+    str           string
+} {"0", 
+    "3", "16",
+    "alpha" }
+

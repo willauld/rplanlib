@@ -37,14 +37,12 @@ var (
     verstr        string
 )
 
-var version = struct {
-    major         string
-    minor         string
-    patch         string
-    str           string
-} {""$vermajor"", 
-    ""$verminor"", ""$verpatch"",
-    ""$verstr"" }
+var Version = struct {
+    Major         string
+    Minor         string
+    Patch         string
+    Str           string
+} {""$vermajor"", ""$verminor"", ""$verpatch"", ""$verstr"" }
 "
 #Write-Output "version file will be: $rplanlibversionFile"
 
@@ -65,6 +63,9 @@ if ($tagRepo) {
     # to delete tags if needed:
     #git tag --delete $tagStr
     #git push --delete origin $tagStr
+}
+else {
+    Write-Output "No changes made to repo, Need to use -tagrepo for changes"
 }
 
 $libgitver = git describe --always

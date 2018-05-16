@@ -1123,7 +1123,7 @@ func (ms ModelSpecs) BuildModel() ([]float64, [][]float64, []float64, []ModelNot
 	}
 	//
 	// Constraint for (16a')
-	//   Set the begining b[1,j] balances
+	//   Set the beginning b[1,j] balances
 	//
 	notes = append(notes, ModelNote{len(A), "Constraints 16a':"})
 	for j := 0; j < len(ms.Accounttable); j++ {
@@ -1134,7 +1134,7 @@ func (ms ModelSpecs) BuildModel() ([]float64, [][]float64, []float64, []ModelNot
 	}
 	//
 	// Constraint for (16b')
-	//   Set the begining b[1,j] balances
+	//   Set the beginning b[1,j] balances
 	//
 	notes = append(notes, ModelNote{len(A), "Constraints 16b':"})
 	for j := 0; j < len(ms.Accounttable); j++ {

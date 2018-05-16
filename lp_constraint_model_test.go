@@ -174,7 +174,7 @@ func TestBuildVector(t *testing.T) {
 		baseAge     int
 		errstr      string
 	}{
-		{ // case 0 // over begining of vec
+		{ // case 0 // over beginning of vec
 			yearly:      1,
 			startAge:    45,
 			endAge:      66,

@@ -9,12 +9,10 @@ var (
     verstr        string
 )
 
-var version = struct {
-    major         string
-    minor         string
-    patch         string
-    str           string
-} {"0", 
-    "4", "17",
-    "alpha" }
+var Version = struct {
+    Major         string
+    Minor         string
+    Patch         string
+    Str           string
+} {"0", "4", "20", "alpha" }
 

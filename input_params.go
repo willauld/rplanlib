@@ -663,14 +663,18 @@ func NewInputParams(ip map[string]string, warnList *WarnErrorList) (*InputParams
 	//
 	if rip.DefinedContributionPlanEnd2 >= rip.RetireAge2 &&
 		rip.DefinedContributionPlanEnd2 > 0 {
-		str := fmt.Sprintf("Warning - Normally a defined contribution plan ends with employment prior to retirement beginning; %s's defined contribution plan ends at age %d while retirement begins at age %d",
-			rip.MyKey2, rip.DefinedContributionPlanEnd2, rip.RetireAge2)
+		overlap := rip.DefinedContributionPlanEnd2 - rip.RetireAge2 + 1
+		str := fmt.Sprintf("Warning - Normally a defined contribution plan ends with employment prior to retirement beginning; %s's defined contribution plan ends at age %d while retirement begins at age %d, an overlap of %d year(s)",
+			rip.MyKey2, rip.DefinedContributionPlanEnd2,
+			rip.RetireAge2, overlap)
 		warnList.AppendWarning(str)
 	}
 	if rip.DefinedContributionPlanEnd1 >= rip.RetireAge1 &&
 		rip.DefinedContributionPlanEnd1 > 0 {
-		str := fmt.Sprintf("Warning - Normally a defineid contribution plan ends with employment prior to retirement beginning; %s's defined contribution plan ends at age %d while retirement begins at age %d",
-			rip.MyKey1, rip.DefinedContributionPlanEnd1, rip.RetireAge1)
+		overlap := rip.DefinedContributionPlanEnd1 - rip.RetireAge1 + 1
+		str := fmt.Sprintf("Warning - Normally a defineid contribution plan ends with employment prior to retirement beginning; %s's defined contribution plan ends at age %d while retirement begins at age %d, an overlap of %d year(s)",
+			rip.MyKey1, rip.DefinedContributionPlanEnd1,
+			rip.RetireAge1, overlap)
 		warnList.AppendWarning(str)
 	}
 

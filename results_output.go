@@ -234,6 +234,27 @@ func (ms ModelSpecs) PrintIncomeExpenseDetails() {
 	ms.printIncomeHeader(headerlist, countlist, incomeCat, fieldwidth)
 }
 
+// Print out the active input parameters (string string map)
+func (ms ModelSpecs) PrintInputParamsStrMap(m map[string]string) {
+	ms.Ao.output("InputParamsStrMap:\n")
+	for i, v := range InputStrDefs {
+		if m[v] != "" {
+			ms.Ao.output(fmt.Sprintf("%3d&@'%32s'&@'%s'\n", i, v, m[v]))
+		}
+	}
+	for j := 1; j < MaxStreams+1; j++ {
+		for i, v := range InputStreamStrDefs {
+			lineno := i + len(InputStrDefs) +
+				(j-1)*len(InputStreamStrDefs)
+			k := fmt.Sprintf("%s%d", v, j)
+			if m[k] != "" {
+				ms.Ao.output(fmt.Sprintf("%3d&@'%32s'&@'%s'\n", lineno, k, m[k]))
+			}
+		}
+	}
+	ms.Ao.output("\n")
+}
+
 func (ms ModelSpecs) printAccHeader() {
 	if ms.Ip.FilingStatus == Joint && ms.Ip.MyKey2 != "" {
 		ms.Ao.output(fmt.Sprintf("%s/%s\n", ms.Ip.MyKey1, ms.Ip.MyKey2))

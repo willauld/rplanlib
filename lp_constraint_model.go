@@ -1001,14 +1001,9 @@ func (ms ModelSpecs) BuildModel() ([]float64, [][]float64, []float64, []ModelNot
 			for l := 0; l < len(*ms.Ti.Capgainstable); l++ {
 				row[ms.Vindx.Y(year, l)] = 1
 			}
-			// Awful Hack! If year of asset sale, assume w(i,j)-D(i,j) is
-			// negative so taxable from this is zero
 			cgt := AccessVector(ms.CgAssetTaxed, year)
-			//if cgt <= 0 { // i.e., no sale ## commented out 5/21/2018
 			j := len(ms.Accounttable) - 1 // last Acc is investment / stocks
 			row[ms.Vindx.W(year, j)] = -1 * f
-			//row[ms.Vindx.D(year, j)] = f // TODO FIXME I think this should not be set ## commented out 5/3/2018
-			//}
 			A = append(A, row)
 			b = append(b, cgt)
 		}
@@ -1021,14 +1016,9 @@ func (ms ModelSpecs) BuildModel() ([]float64, [][]float64, []float64, []ModelNot
 		for year := 0; year < ms.Ip.Numyr; year++ {
 			f := ms.cgTaxableFraction(year)
 			row := make([]float64, nvars)
-			////// Awful Hack! If year of asset sale, assume w(i,j)-D(i,j) is
-			////// negative so taxable from this is zero
 			cgt := AccessVector(ms.CgAssetTaxed, year)
-			//if cgt <= 0 { // i.e., no sale
 			j := len(ms.Accounttable) - 1 // last Acc is investment / stocks
 			row[ms.Vindx.W(year, j)] = f
-			//row[ms.Vindx.D(year, j)] = -f // TODO FIXME same as 13a'
-			//}
 			for l := 0; l < len(*ms.Ti.Capgainstable); l++ {
 				row[ms.Vindx.Y(year, l)] = -1
 			}

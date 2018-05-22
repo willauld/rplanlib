@@ -709,40 +709,31 @@ func (ms ModelSpecs) PrintCapGainsBrackets(xp *[]float64) {
 		//iMul := math.Pow(ms.Ip.IRate, float64(ms.Ip.PrePlanYears+year))
 		f := 1.0
 		atw := 0.0
-		//atd := 0.0
 		att := 0.0
 		tas := 0.0
 		if ms.Ip.Accmap[Aftertax] > 0 {
 			f = ms.cgTaxableFraction(year)
 			j := len(ms.Accounttable) - 1    // Aftertax / investment account always the last entry when present
-			atw = (*xp)[ms.Vindx.W(year, j)] // / ms.OneK    // Aftertax / investment account
-			//atd = ms.depositAmount(xp, year, j) // / ms.OneK // Aftertax / investment account
+			atw = (*xp)[ms.Vindx.W(year, j)] // Aftertax / investment account
 			//
-			// OK, this next bit can be confusing. In the line above atd
-			// includes both the D(i,j) and net amount from sell of assets
-			// like homes or real estate. But the sale of these illiquid assets
-			// does not use the aftertax account basis. They have been handled
-			// separately in S.cg_asset_taxed. Given this we only ad to
-			// cg_taxable the withdrawals /*over deposits(remove this)*/, as is normal, plus
-			// the taxable amounts from asset sales.
-			att = (f * ((*xp)[ms.Vindx.W(year, j)] /*- (*xp)[ms.Vindx.D(year, j)]*/)) + AccessVector(ms.CgAssetTaxed, year) // /ms.OneK // non-basis fraction / cg taxable $ ## removing deposits 5/21/18
-			tas = AccessVector(ms.CgAssetTaxed, year)                                                                       // /ms.OneK // non-basis fraction / cg taxable $ ## removing deposits 5/21/18
-			//if atd > atw {
-			//	att = AccessVector(ms.CgAssetTaxed, year) // / ms.OneK // non-basis fraction / cg taxable $
-			//}
+			// OK, this next bit can be confusing.
+			// The sale of illiquid assets do not use the aftertax account
+			// basis. They have been handled separately in ms.CgAssetTaxed.
+			// Given this we only add to cg_taxable the withdrawals, as is
+			// normal, plus the taxable amounts from asset sales.
+			//
+			att = (f * (*xp)[ms.Vindx.W(year, j)]) +
+				AccessVector(ms.CgAssetTaxed, year) // non-basis fraction + cg taxable $
 		}
 		//T, spendable, tax, rate, cgtax, earlytax, rothearly := ms.IncomeSummary(year, xp)
 		T, _, _, _, cgtax, _, _ := ms.IncomeSummary(year, xp)
-		//ttax := tax + cgtax
 		if ms.Ip.MyKey2 != "" && ms.Ip.FilingStatus == Joint {
 			ms.Ao.output(fmt.Sprintf("%3d/%3d:", age, age-ms.Ip.AgeDelta))
 		} else {
 			ms.Ao.output(fmt.Sprintf(" %3d:", age))
 		}
 		str := fmt.Sprintf("&@%7.0f&@%7.0f&@%7.0f&@%7.0f&@%7.0f&@%7.0f",
-			atw, tas, // Aftertax / investment account
-			f*100, att, // non-basis fraction / cg taxable $
-			T /*/ms.OneK*/, cgtax /*/ms.OneK*/)
+			atw, tas, f*100, att, T, cgtax)
 		ms.Ao.output(str)
 		bt := 0.0
 		bttax := 0.0

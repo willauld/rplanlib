@@ -1218,13 +1218,13 @@ func TestPrintHeaderCapGainsBrackets(t *testing.T) {
 			sip: sipSingle,
 			expect: `Marginal Rate(%):      0     15     20
 retiree1
- age  fAftaTx tAftaTx  cgTax% cgTaxbl   T_inc   cgTax brckt0 brckt1 brckt2 brkTot`,
+ age  fAftaTx TblASle  cgTax% cgTaxbl   T_inc   cgTax brckt0 brckt1 brckt2 brkTot`,
 		},
 		{ // Case 1
 			sip: sipJoint,
 			expect: `Marginal Rate(%):      0     15     20
 retiree1/retiree2
-    age  fAftaTx tAftaTx  cgTax% cgTaxbl   T_inc   cgTax brckt0 brckt1 brckt2 brkTot`,
+    age  fAftaTx TblASle  cgTax% cgTaxbl   T_inc   cgTax brckt0 brckt1 brckt2 brkTot`,
 		},
 	}
 	for i, elem := range tests {
@@ -1276,7 +1276,7 @@ func TestPrintCapGainsBrackets(t *testing.T) {
 			expect: `Overall Capital Gains Bracket Summary:
                                     Marginal Rate(%):      0     15     20
 retiree1
- age  fAftaTx tAftaTx  cgTax% cgTaxbl   T_inc   cgTax brckt0 brckt1 brckt2 brkTot
+ age  fAftaTx TblASle  cgTax% cgTaxbl   T_inc   cgTax brckt0 brckt1 brckt2 brkTot
   65:       0       0     100       0   26949       0      0      0      0      0
   66:       0       0     100       0   27622       0      0      0      0      0
   67:       0       0     100       0   28313       0      0      0      0      0
@@ -1290,7 +1290,7 @@ retiree1
   75:       0       0     100       0   34497       0      0      0      0      0
                                     Marginal Rate(%):      0     15     20
 retiree1
- age  fAftaTx tAftaTx  cgTax% cgTaxbl   T_inc   cgTax brckt0 brckt1 brckt2 brkTot`,
+ age  fAftaTx TblASle  cgTax% cgTaxbl   T_inc   cgTax brckt0 brckt1 brckt2 brkTot`,
 		},
 		{ // Case 1
 			sip: sipJoint,
@@ -1298,7 +1298,7 @@ retiree1
 			expect: `Overall Capital Gains Bracket Summary:
                                        Marginal Rate(%):      0     15     20
 retiree1/retiree2
-    age  fAftaTx tAftaTx  cgTax% cgTaxbl   T_inc   cgTax brckt0 brckt1 brckt2 brkTot
+    age  fAftaTx TblASle  cgTax% cgTaxbl   T_inc   cgTax brckt0 brckt1 brckt2 brkTot
  65/ 65:       0       0     100       0   13303       0      0      0      0      0
  66/ 66:       0       0     100       0   13636       0      0      0      0      0
  67/ 67:       0       0     100       0   13977       0      0      0      0      0
@@ -1312,7 +1312,7 @@ retiree1/retiree2
  75/ 75:       0       0     100       0   17029       0      0      0      0      0
                                        Marginal Rate(%):      0     15     20
 retiree1/retiree2
-    age  fAftaTx tAftaTx  cgTax% cgTaxbl   T_inc   cgTax brckt0 brckt1 brckt2 brkTot`,
+    age  fAftaTx TblASle  cgTax% cgTaxbl   T_inc   cgTax brckt0 brckt1 brckt2 brkTot`,
 		},
 		{ // Case 2
 			sip: sipSingle3Acc,
@@ -1320,7 +1320,7 @@ retiree1/retiree2
 			expect: `Overall Capital Gains Bracket Summary:
                                     Marginal Rate(%):      0     15     20
 retiree1
- age  fAftaTx tAftaTx  cgTax% cgTaxbl   T_inc   cgTax brckt0 brckt1 brckt2 brkTot
+ age  fAftaTx TblASle  cgTax% cgTaxbl   T_inc   cgTax brckt0 brckt1 brckt2 brkTot
   65:       0       0     100       0   41276       0      0      0      0      0
   66:       0       0     100       0   42308       0      0      0      0      0
   67:       0       0     100       0   43366       0      0      0      0      0
@@ -1334,7 +1334,7 @@ retiree1
   75:       0       0     100       0   15662       0      0      0      0      0
                                     Marginal Rate(%):      0     15     20
 retiree1
- age  fAftaTx tAftaTx  cgTax% cgTaxbl   T_inc   cgTax brckt0 brckt1 brckt2 brkTot`,
+ age  fAftaTx TblASle  cgTax% cgTaxbl   T_inc   cgTax brckt0 brckt1 brckt2 brkTot`,
 		},
 	}
 	for i, elem := range tests {

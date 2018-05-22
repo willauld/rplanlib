@@ -573,6 +573,7 @@ func (ms ModelSpecs) printHeaderTaxBrackets() {
 }
 
 func (ms ModelSpecs) PrintTaxBrackets(xp *[]float64) {
+	// For the bracket output don't do any rounding (ms.OneK)
 	ms.Ao.output("\nOverall Tax Bracket Summary:\n")
 	ms.printHeaderTaxBrackets()
 	for year := 0; year < ms.Ip.Numyr; year++ {
@@ -593,11 +594,11 @@ func (ms ModelSpecs) PrintTaxBrackets(xp *[]float64) {
 			deposit[ms.Accounttable[j].acctype] += ms.depositAmount(xp, year, j)
 		}
 		str := fmt.Sprintf("&@%7.0f&@%7.0f&@%7.0f&@%7.0f&@%7.0f&@%7.0f&@%7.0f",
-			withdrawal[IRA]/ms.OneK,
-			deposit[IRA]/ms.OneK,
-			AccessVector(ms.Taxed, year)/ms.OneK,
-			ms.Ti.SStaxable*AccessVector(ms.SS[0], year)/ms.OneK,
-			ms.Ti.Stded*iMul/ms.OneK, T/ms.OneK, tax/ms.OneK)
+			withdrawal[IRA],                              // /ms.OneK,
+			deposit[IRA],                                 // /ms.OneK,
+			AccessVector(ms.Taxed, year),                 // /ms.OneK,
+			ms.Ti.SStaxable*AccessVector(ms.SS[0], year), // /ms.OneK,
+			ms.Ti.Stded*iMul /*/ms.OneK*/, T /*/ms.OneK*/, tax /*/ms.OneK*/)
 		ms.Ao.output(str)
 		bt := 0.0
 		for k := 0; k < len(*ms.Ti.Taxtable); k++ {
@@ -630,6 +631,7 @@ func (ms ModelSpecs) printHeaderShadowTaxBrackets() {
 }
 
 func (ms ModelSpecs) PrintShadowTaxBrackets(xp *[]float64) {
+	// For the bracket output don't do any rounding (ms.OneK)
 	ms.Ao.output("\nOverall Shadow Tax Bracket Summary:\n")
 	ms.printHeaderShadowTaxBrackets()
 	for year := 0; year < ms.Ip.Numyr; year++ {
@@ -650,11 +652,11 @@ func (ms ModelSpecs) PrintShadowTaxBrackets(xp *[]float64) {
 			deposit[ms.Accounttable[j].acctype] += ms.depositAmount(xp, year, j)
 		}
 		str := fmt.Sprintf("&@%7.0f&@%7.0f&@%7.0f&@%7.0f&@%7.0f&@%7.0f&@%7.0f",
-			withdrawal[IRA]/ms.OneK,
-			deposit[IRA]/ms.OneK,
-			AccessVector(ms.Taxed, year)/ms.OneK,
-			ms.Ti.SStaxable*AccessVector(ms.SS[0], year)/ms.OneK,
-			ms.Ti.Stded*iMul/ms.OneK, T/ms.OneK, tax/ms.OneK)
+			withdrawal[IRA],                              // /ms.OneK,
+			deposit[IRA],                                 // /ms.OneK,
+			AccessVector(ms.Taxed, year),                 // /ms.OneK,
+			ms.Ti.SStaxable*AccessVector(ms.SS[0], year), // /ms.OneK,
+			ms.Ti.Stded*iMul /*/ms.OneK*/, T /*/ms.OneK*/, tax /*/ms.OneK*/)
 		ms.Ao.output(str)
 		bt := 0.0
 		for l := 0; l < len(*ms.Ti.Capgainstable); l++ {
@@ -689,7 +691,7 @@ func (ms ModelSpecs) printHeaderCapgainsBrackets() {
 		ms.Ao.output(" age ")
 	}
 	str := fmt.Sprintf("&@%7s&@%7s&@%8s&@%7s&@%7s&@%7s",
-		"fAftaTx", "tAftaTx", "cgTax%%", "cgTaxbl",
+		"fAftaTx", "TblASle", "cgTax%%", "cgTaxbl",
 		"T_inc", "cgTax")
 	ms.Ao.output(str)
 	for l := 0; l < len(*ms.Ti.Capgainstable); l++ {
@@ -699,6 +701,7 @@ func (ms ModelSpecs) printHeaderCapgainsBrackets() {
 }
 
 func (ms ModelSpecs) PrintCapGainsBrackets(xp *[]float64) {
+	// For the bracket output don't do any rounding (ms.OneK)
 	ms.Ao.output("\nOverall Capital Gains Bracket Summary:\n")
 	ms.printHeaderCapgainsBrackets()
 	for year := 0; year < ms.Ip.Numyr; year++ {
@@ -706,25 +709,27 @@ func (ms ModelSpecs) PrintCapGainsBrackets(xp *[]float64) {
 		//iMul := math.Pow(ms.Ip.IRate, float64(ms.Ip.PrePlanYears+year))
 		f := 1.0
 		atw := 0.0
-		atd := 0.0
+		//atd := 0.0
 		att := 0.0
+		tas := 0.0
 		if ms.Ip.Accmap[Aftertax] > 0 {
 			f = ms.cgTaxableFraction(year)
-			j := len(ms.Accounttable) - 1                 // Aftertax / investment account always the last entry when present
-			atw = (*xp)[ms.Vindx.W(year, j)] / ms.OneK    // Aftertax / investment account
-			atd = ms.depositAmount(xp, year, j) / ms.OneK // Aftertax / investment account
+			j := len(ms.Accounttable) - 1    // Aftertax / investment account always the last entry when present
+			atw = (*xp)[ms.Vindx.W(year, j)] // / ms.OneK    // Aftertax / investment account
+			//atd = ms.depositAmount(xp, year, j) // / ms.OneK // Aftertax / investment account
 			//
 			// OK, this next bit can be confusing. In the line above atd
 			// includes both the D(i,j) and net amount from sell of assets
 			// like homes or real estate. But the sale of these illiquid assets
 			// does not use the aftertax account basis. They have been handled
 			// separately in S.cg_asset_taxed. Given this we only ad to
-			// cg_taxable the withdrawals over deposits, as is normal, plus
+			// cg_taxable the withdrawals /*over deposits(remove this)*/, as is normal, plus
 			// the taxable amounts from asset sales.
-			att = (f * ((*xp)[ms.Vindx.W(year, j)] - (*xp)[ms.Vindx.D(year, j)])) + AccessVector(ms.CgAssetTaxed, year)/ms.OneK // non-basis fraction / cg taxable $
-			if atd > atw {
-				att = AccessVector(ms.CgAssetTaxed, year) / ms.OneK // non-basis fraction / cg taxable $
-			}
+			att = (f * ((*xp)[ms.Vindx.W(year, j)] /*- (*xp)[ms.Vindx.D(year, j)]*/)) + AccessVector(ms.CgAssetTaxed, year) // /ms.OneK // non-basis fraction / cg taxable $ ## removing deposits 5/21/18
+			tas = AccessVector(ms.CgAssetTaxed, year)                                                                       // /ms.OneK // non-basis fraction / cg taxable $ ## removing deposits 5/21/18
+			//if atd > atw {
+			//	att = AccessVector(ms.CgAssetTaxed, year) // / ms.OneK // non-basis fraction / cg taxable $
+			//}
 		}
 		//T, spendable, tax, rate, cgtax, earlytax, rothearly := ms.IncomeSummary(year, xp)
 		T, _, _, _, cgtax, _, _ := ms.IncomeSummary(year, xp)
@@ -735,9 +740,9 @@ func (ms ModelSpecs) PrintCapGainsBrackets(xp *[]float64) {
 			ms.Ao.output(fmt.Sprintf(" %3d:", age))
 		}
 		str := fmt.Sprintf("&@%7.0f&@%7.0f&@%7.0f&@%7.0f&@%7.0f&@%7.0f",
-			atw, atd, // Aftertax / investment account
+			atw, tas, // Aftertax / investment account
 			f*100, att, // non-basis fraction / cg taxable $
-			T/ms.OneK, cgtax/ms.OneK)
+			T /*/ms.OneK*/, cgtax /*/ms.OneK*/)
 		ms.Ao.output(str)
 		bt := 0.0
 		bttax := 0.0
@@ -760,6 +765,85 @@ func (ms ModelSpecs) PrintCapGainsBrackets(xp *[]float64) {
 		*/
 	}
 	ms.printHeaderCapgainsBrackets()
+}
+
+func (ms ModelSpecs) printHeaderAssetSummary() {
+	if ms.Ip.MyKey2 != "" && ms.Ip.FilingStatus == Joint {
+		ms.Ao.output(fmt.Sprintf("%s/%s\n", ms.Ip.MyKey1, ms.Ip.MyKey2))
+		ms.Ao.output("    age ")
+	} else {
+		if ms.Ip.MyKey1 != "nokey" {
+			ms.Ao.output(fmt.Sprintf("%s\n", ms.Ip.MyKey1))
+		}
+		ms.Ao.output(" age ")
+	}
+	str := fmt.Sprintf("&@%20s&@%9s&@%9s&@%9s&@%9s&@%9s&@%9s\n",
+		"Name", "Price", "BrkrFee", "Owed",
+		"Net", "Basis", "Taxable")
+	ms.Ao.output(str)
+}
+
+func (ms ModelSpecs) PrintAssetSummary() {
+	// For the bracket output don't do any rounding (ms.OneK)
+	ms.Ao.output("\nAsset Sales Summary:\n\n")
+	ms.printHeaderAssetSummary()
+	for year := 0; year < ms.Ip.Numyr; year++ {
+		age := year + ms.Ip.StartPlan
+
+		//iMul := math.Pow(ms.Ip.IRate, float64(ms.Ip.PrePlanYears+year))
+
+		if ms.AssetSale[0][year] != 0.0 {
+			for indx := 1; indx < len(ms.AssetSale); indx++ {
+				if ms.AssetSale[indx][year] != 0.0 {
+					tag := ms.Assettags[indx]
+					value, brate, assetRR, basis, owed, prime := ms.AssetByTag(tag)
+					price := value * math.Pow(assetRR, float64(age-ms.Ip.Age1))
+					bfee := price * brate
+					net := price*(1-brate) - owed
+					if net < 0.0 {
+						net = 0.0
+					}
+					taxable := price*(1-brate) - basis
+					if prime == 1.0 {
+						taxable -= ms.Ti.Primeresidence *
+							math.Pow(ms.Ip.IRate, float64(age-ms.Ip.Age1))
+						tag = "*" + tag
+					}
+					if taxable < 0.0 {
+						taxable = 0.0
+					}
+					if ms.Ip.MyKey2 != "" && ms.Ip.FilingStatus == Joint {
+						ms.Ao.output(fmt.Sprintf("%3d/%3d:", age, age-ms.Ip.AgeDelta))
+					} else {
+						ms.Ao.output(fmt.Sprintf(" %3d:", age))
+					}
+					str := fmt.Sprintf(
+						"&@%20.20s&@%9.0f&@%9.0f&@%9.0f&@%9.0f&@%9.0f&@%9.0f\n",
+						tag, price, bfee, owed,
+						net, basis, taxable)
+					ms.Ao.output(str)
+				}
+			}
+		}
+	}
+}
+
+func (ms ModelSpecs) AssetByTag(name string) (value, brate, assetRR, basis, owed, prime float64) {
+	for i := 0; i < len(ms.Ip.Assets); i++ {
+		if ms.Ip.Assets[i].Tag == name {
+			value = float64(ms.Ip.Assets[i].Value)
+			brate = ms.Ip.Assets[i].BrokeragePercent / 100.0
+			assetRR = ms.Ip.Assets[i].AssetRRate
+			basis = float64(ms.Ip.Assets[i].CostAndImprovements)
+			owed = float64(ms.Ip.Assets[i].OwedAtAgeToSell)
+			prime = 0.0
+			if ms.Ip.Assets[i].PrimaryResidence {
+				prime = 1.0
+			}
+			return
+		}
+	}
+	return 0.0, 0.0, 0.0, 0.0, 0.0, 0.0
 }
 
 func (ms ModelSpecs) depositAmount(xp *[]float64, year int, index int) float64 {

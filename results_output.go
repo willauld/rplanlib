@@ -778,41 +778,43 @@ func (ms ModelSpecs) PrintAssetSummary() {
 	// For the bracket output don't do any rounding (ms.OneK)
 	ms.Ao.output("\nAsset Sales Summary:\n\n")
 	ms.printHeaderAssetSummary()
-	for year := 0; year < ms.Ip.Numyr; year++ {
-		age := year + ms.Ip.StartPlan
+	if ms.AssetSale != nil && len(ms.AssetSale[0]) >= ms.Ip.Numyr {
+		for year := 0; year < ms.Ip.Numyr; year++ {
+			age := year + ms.Ip.StartPlan
 
-		//iMul := math.Pow(ms.Ip.IRate, float64(ms.Ip.PrePlanYears+year))
+			//iMul := math.Pow(ms.Ip.IRate, float64(ms.Ip.PrePlanYears+year))
 
-		if ms.AssetSale[0][year] != 0.0 {
-			for indx := 1; indx < len(ms.AssetSale); indx++ {
-				if ms.AssetSale[indx][year] != 0.0 {
-					tag := ms.Assettags[indx]
-					value, brate, assetRR, basis, owed, prime := ms.AssetByTag(tag)
-					price := value * math.Pow(assetRR, float64(age-ms.Ip.Age1))
-					bfee := price * brate
-					net := price*(1-brate) - owed
-					if net < 0.0 {
-						net = 0.0
+			if ms.AssetSale[0][year] != 0.0 {
+				for indx := 1; indx < len(ms.AssetSale); indx++ {
+					if ms.AssetSale[indx][year] != 0.0 {
+						tag := ms.Assettags[indx]
+						value, brate, assetRR, basis, owed, prime := ms.AssetByTag(tag)
+						price := value * math.Pow(assetRR, float64(age-ms.Ip.Age1))
+						bfee := price * brate
+						net := price*(1-brate) - owed
+						if net < 0.0 {
+							net = 0.0
+						}
+						taxable := price*(1-brate) - basis
+						if prime == 1.0 {
+							taxable -= ms.Ti.Primeresidence *
+								math.Pow(ms.Ip.IRate, float64(age-ms.Ip.Age1))
+							tag = "*" + tag
+						}
+						if taxable < 0.0 {
+							taxable = 0.0
+						}
+						if ms.Ip.MyKey2 != "" && ms.Ip.FilingStatus == Joint {
+							ms.Ao.output(fmt.Sprintf("%3d/%3d:", age, age-ms.Ip.AgeDelta))
+						} else {
+							ms.Ao.output(fmt.Sprintf(" %3d:", age))
+						}
+						str := fmt.Sprintf(
+							"&@%20.20s&@%9.0f&@%9.0f&@%9.0f&@%9.0f&@%9.0f&@%9.0f\n",
+							tag, price, bfee, owed,
+							net, basis, taxable)
+						ms.Ao.output(str)
 					}
-					taxable := price*(1-brate) - basis
-					if prime == 1.0 {
-						taxable -= ms.Ti.Primeresidence *
-							math.Pow(ms.Ip.IRate, float64(age-ms.Ip.Age1))
-						tag = "*" + tag
-					}
-					if taxable < 0.0 {
-						taxable = 0.0
-					}
-					if ms.Ip.MyKey2 != "" && ms.Ip.FilingStatus == Joint {
-						ms.Ao.output(fmt.Sprintf("%3d/%3d:", age, age-ms.Ip.AgeDelta))
-					} else {
-						ms.Ao.output(fmt.Sprintf(" %3d:", age))
-					}
-					str := fmt.Sprintf(
-						"&@%20.20s&@%9.0f&@%9.0f&@%9.0f&@%9.0f&@%9.0f&@%9.0f\n",
-						tag, price, bfee, owed,
-						net, basis, taxable)
-					ms.Ao.output(str)
 				}
 			}
 		}

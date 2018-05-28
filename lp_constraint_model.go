@@ -14,6 +14,15 @@ type retiree struct {
 	definedContributionPlanStartAge int
 	definedContributionPlanEndAge   int
 }
+
+type ownerPosition int
+
+const (
+	noOwner        ownerPosition = iota
+	primaryOwner   ownerPosition = iota
+	secondaryOwner ownerPosition = iota
+)
+
 type account struct {
 	bal       float64
 	Origbal   float64
@@ -25,6 +34,7 @@ type account struct {
 	RRate         float64
 	acctype       Acctype
 	mykey         string
+	Owner         ownerPosition
 }
 
 // ModelSpecs struct contains the needed info for building an RPlanner constraint model
@@ -358,6 +368,7 @@ func NewModelSpecs(vindx VectorVarIndex,
 		}
 		a.acctype = IRA
 		a.mykey = ip.MyKey1
+		a.Owner = primaryOwner
 		a.Origbal = float64(ip.TDRA1)
 		a.Contrib = float64(ip.TDRAContrib1)
 		a.Contributions, dbal, _, err = genContrib(ip.TDRAContrib1,
@@ -379,6 +390,7 @@ func NewModelSpecs(vindx VectorVarIndex,
 		}
 		a.acctype = IRA
 		a.mykey = ip.MyKey2
+		a.Owner = secondaryOwner
 		a.Origbal = float64(ip.TDRA2)
 		a.Contrib = float64(ip.TDRAContrib2)
 		a.Contributions, dbal, _, err = genContrib(ip.TDRAContrib2,
@@ -400,6 +412,7 @@ func NewModelSpecs(vindx VectorVarIndex,
 		}
 		a.acctype = Roth
 		a.mykey = ip.MyKey1
+		a.Owner = primaryOwner
 		a.Origbal = float64(ip.Roth1)
 		a.Contrib = float64(ip.RothContrib1)
 		a.Contributions, dbal, _, err = genContrib(ip.RothContrib1,
@@ -422,6 +435,7 @@ func NewModelSpecs(vindx VectorVarIndex,
 		}
 		a.acctype = Roth
 		a.mykey = ip.MyKey2
+		a.Owner = secondaryOwner
 		a.Origbal = float64(ip.Roth2)
 		a.Contrib = float64(ip.RothContrib2)
 		a.Contributions, dbal, _, err = genContrib(ip.RothContrib2,
@@ -444,6 +458,7 @@ func NewModelSpecs(vindx VectorVarIndex,
 		}
 		a.acctype = Aftertax
 		a.mykey = "" // need to make this definable for pc versions
+		a.Owner = noOwner
 		a.Origbal = float64(ip.Aftatax)
 		a.origbasis = float64(ip.AftataxBasis)
 		a.Contrib = float64(ip.AftataxContrib)

@@ -24,10 +24,10 @@ const (
 )
 
 type account struct {
-	bal       float64
+	Bal       float64
 	Origbal   float64
-	basis     float64
-	origbasis float64
+	Basis     float64
+	Origbasis float64
 	//estateTax     float64
 	Contributions []float64
 	Contrib       float64
@@ -378,7 +378,7 @@ func NewModelSpecs(vindx VectorVarIndex,
 		if err != nil {
 			return nil, err
 		}
-		a.bal = a.Origbal*math.Pow(a.RRate, float64(ip.PrePlanYears)) + dbal
+		a.Bal = a.Origbal*math.Pow(a.RRate, float64(ip.PrePlanYears)) + dbal
 		ms.Accounttable = append(ms.Accounttable, a)
 	}
 	if ip.TDRA2 > 0 || ip.TDRAContrib2 > 0 {
@@ -400,7 +400,7 @@ func NewModelSpecs(vindx VectorVarIndex,
 		if err != nil {
 			return nil, err
 		}
-		a.bal = a.Origbal*math.Pow(a.RRate, float64(ip.PrePlanYears)) + dbal
+		a.Bal = a.Origbal*math.Pow(a.RRate, float64(ip.PrePlanYears)) + dbal
 		ms.Accounttable = append(ms.Accounttable, a)
 	}
 	if ip.Roth1 > 0 || ip.RothContrib1 > 0 {
@@ -422,7 +422,7 @@ func NewModelSpecs(vindx VectorVarIndex,
 		if err != nil {
 			return nil, err
 		}
-		a.bal = a.Origbal*math.Pow(a.RRate, float64(ip.PrePlanYears)) + dbal
+		a.Bal = a.Origbal*math.Pow(a.RRate, float64(ip.PrePlanYears)) + dbal
 		//fmt.Printf("Roth acc: %#v\n", a)
 		ms.Accounttable = append(ms.Accounttable, a)
 	}
@@ -445,7 +445,7 @@ func NewModelSpecs(vindx VectorVarIndex,
 		if err != nil {
 			return nil, err
 		}
-		a.bal = a.Origbal*math.Pow(a.RRate, float64(ip.PrePlanYears)) + dbal
+		a.Bal = a.Origbal*math.Pow(a.RRate, float64(ip.PrePlanYears)) + dbal
 		ms.Accounttable = append(ms.Accounttable, a)
 	}
 	if ip.Aftatax > 0 || ip.AftataxContrib > 0 {
@@ -460,7 +460,7 @@ func NewModelSpecs(vindx VectorVarIndex,
 		a.mykey = "" // need to make this definable for pc versions
 		a.Owner = noOwner
 		a.Origbal = float64(ip.Aftatax)
-		a.origbasis = float64(ip.AftataxBasis)
+		a.Origbasis = float64(ip.AftataxBasis)
 		a.Contrib = float64(ip.AftataxContrib)
 		a.Contributions, dbal, dbasis, err = genContrib(ip.AftataxContrib,
 			ms.convertAge(ip.AftataxContribStart, a.mykey),
@@ -469,8 +469,8 @@ func NewModelSpecs(vindx VectorVarIndex,
 		if err != nil {
 			return nil, err
 		}
-		a.bal = a.Origbal*math.Pow(a.RRate, float64(ip.PrePlanYears)) + dbal
-		a.basis = a.origbasis + dbasis
+		a.Bal = a.Origbal*math.Pow(a.RRate, float64(ip.PrePlanYears)) + dbal
+		a.Basis = a.Origbasis + dbasis
 		//fmt.Printf("aftertax accout: %#v\n", a)
 		ms.Accounttable = append(ms.Accounttable, a)
 	}
@@ -480,7 +480,7 @@ func NewModelSpecs(vindx VectorVarIndex,
 	}
 	ms.LiquidAssetPlanStart = 0.0
 	for _, a := range ms.Accounttable {
-		ms.LiquidAssetPlanStart += a.bal
+		ms.LiquidAssetPlanStart += a.Bal
 	}
 
 	ms.SS = make([][]float64, 0)
@@ -1133,7 +1133,7 @@ func (ms ModelSpecs) BuildModel() ([]float64, [][]float64, []float64, []ModelNot
 		row := make([]float64, nvars)
 		row[ms.Vindx.B(0, j)] = 1
 		A = append(A, row)
-		b = append(b, ms.Accounttable[j].bal)
+		b = append(b, ms.Accounttable[j].Bal)
 	}
 	//
 	// Constraint for (16b')
@@ -1144,7 +1144,7 @@ func (ms ModelSpecs) BuildModel() ([]float64, [][]float64, []float64, []ModelNot
 		row := make([]float64, nvars)
 		row[ms.Vindx.B(0, j)] = -1
 		A = append(A, row)
-		b = append(b, -1*ms.Accounttable[j].bal)
+		b = append(b, -1*ms.Accounttable[j].Bal)
 	}
 	//
 	// Constrant for (17') is default for sycpy so no code is needed
@@ -1213,13 +1213,13 @@ func (ms ModelSpecs) cgTaxableFraction(year int) float64 {
 	f := 1.0
 	if ms.Ip.Accmap[Aftertax] > 0 {
 		v := ms.Accounttable[len(ms.Accounttable)-1]
-		if v.bal > 0 { // don't want to divide by zero
+		if v.Bal > 0 { // don't want to divide by zero
 			//
 			// v.bal includes the rRate and v.basis includes
 			// the additional contributions up until
 			// startPlan so no need to inflate for ms.Ip.PrePlanYears
 			//
-			f = 1 - (v.basis / (v.bal * math.Pow(v.RRate, float64(year))))
+			f = 1 - (v.Basis / (v.Bal * math.Pow(v.RRate, float64(year))))
 		}
 	}
 	return f

@@ -1212,19 +1212,14 @@ func (ms ModelSpecs) cgTaxableFraction(year int) float64 {
 	// applies only in Plan years
 	f := 1.0
 	if ms.Ip.Accmap[Aftertax] > 0 {
-		//TODO: FIXME REMOVE THIS LOOP
-		for _, v := range ms.Accounttable {
-			if v.acctype == Aftertax {
-				if v.bal > 0 { // don't want to divide by zero
-					//
-					// v.bal includes the rRate and v.basis includes
-					// the additional contributions up until
-					// startPlan so no need to inflate for ms.Ip.PrePlanYears
-					//
-					f = 1 - (v.basis / (v.bal * math.Pow(v.RRate, float64(year))))
-				}
-				break // should be the last entry anyway but...
-			}
+		v := ms.Accounttable[len(ms.Accounttable)-1]
+		if v.bal > 0 { // don't want to divide by zero
+			//
+			// v.bal includes the rRate and v.basis includes
+			// the additional contributions up until
+			// startPlan so no need to inflate for ms.Ip.PrePlanYears
+			//
+			f = 1 - (v.basis / (v.bal * math.Pow(v.RRate, float64(year))))
 		}
 	}
 	return f

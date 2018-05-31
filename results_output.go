@@ -863,12 +863,8 @@ func (ms ModelSpecs) ordinaryTaxable(year int, xp *[]float64) float64 {
 	return T
 }
 
-// IncomeSummary returns key indicators to summarize income
-func (ms ModelSpecs) IncomeSummary(year int, xp *[]float64) (T, spendable, tax, rate, ncgtax, earlytax float64, rothearly bool) {
-	// TODO clean up and simplify this fuction
-	//
-	// return ordinaryTaxable, Spendable, Tax, Rate, CG_Tax
-	// Need to account for withdrawals from IRA deposited in Investment account NOT SPENDABLE
+// EarlyPenaltyCharged returns the charged amount of penalty and whether any portion of the penalty was from a Roth account
+func (ms ModelSpecs) EarlyPenaltyCharged(year int, xp *[]float64) (earlytax float64, rothearly bool) {
 	earlytax = 0.0
 	rothearly = false
 	for j, acc := range ms.Accounttable {
@@ -881,6 +877,18 @@ func (ms ModelSpecs) IncomeSummary(year int, xp *[]float64) (T, spendable, tax, 
 			}
 		}
 	}
+	return earlytax, rothearly
+}
+
+// IncomeSummary returns key indicators to summarize income
+func (ms ModelSpecs) IncomeSummary(year int, xp *[]float64) (T, spendable, tax, rate, ncgtax, earlytax float64, rothearly bool) {
+	// TODO clean up and simplify this fuction
+	//
+	// return ordinaryTaxable, Spendable, Tax, Rate, CG_Tax
+	// Need to account for withdrawals from IRA deposited in Investment account NOT SPENDABLE
+
+	earlytax, rothearly = ms.EarlyPenaltyCharged(year, xp)
+
 	T = ms.ordinaryTaxable(year, xp)
 	ntax := 0.0
 	rate = 0.0

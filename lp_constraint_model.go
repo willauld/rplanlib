@@ -1041,30 +1041,6 @@ func (ms ModelSpecs) BuildModel() ([]float64, [][]float64, []float64, []ModelNot
 			b = append(b, -1*cgt)
 		}
 	}
-	/*
-		//
-		// Add constraints for (14')
-		//
-		notes = append(notes, ModelNote{len(A), "Constraints 14':"})
-		if ms.Ip.Accmap[Aftertax] > 0 {
-			for year := 0; year < ms.Ip.Numyr; year++ {
-				adjInf := math.Pow(ms.Ip.IRate, float64(ms.Ip.PrePlanYears+year))
-				for l := 0; l < len(*ms.Ti.Capgainstable)-1; l++ {
-					row := make([]float64, nvars)
-					row[ms.Vindx.Y(year, l)] = 1
-					for k := 0; k < len(*ms.Ti.Taxtable)-1; k++ {
-						if (*ms.Ti.Taxtable)[k][0] >= (*ms.Ti.Capgainstable)[l][0]
-							&&
-						  (*ms.Ti.Taxtable)[k][0] < (*ms.Ti.Capgainstable)[l+1][0] {
-							row[ms.Vindx.X(year, k)] = 1
-						}
-					}
-					A = append(A, row)
-					b = append(b, (*ms.Ti.Capgainstable)[l][1]*adjInf) // mcg[i,l] inflation adjusted
-				}
-			}
-		}
-	*/
 	//
 	// Add constraints for (14Er')
 	//
@@ -1124,6 +1100,27 @@ func (ms ModelSpecs) BuildModel() ([]float64, [][]float64, []float64, []ModelNot
 			b = append(b, temp)
 		}
 	}
+	/**/
+	//
+	// Constraint for (15.5' and 15.75')
+	//   Withdradrawal must be <= balance
+	//      unless have sale of asset contributing
+	//
+	notes = append(notes, ModelNote{len(A), "Constraints 16.5':"})
+	for year := 0; year < ms.Ip.Numyr; year++ {
+		for j := 0; j < len(ms.Accounttable); j++ {
+			row := make([]float64, nvars)
+			row[ms.Vindx.W(year, j)] = 1
+			row[ms.Vindx.B(year, j)] = -1
+			A = append(A, row)
+			temp := 0.0
+			if ms.Accounttable[j].acctype == Aftertax {
+				temp = AccessVector(ms.AssetSale[0], year)
+			}
+			b = append(b, temp)
+		}
+	}
+	/**/
 	//
 	// Constraint for (16a')
 	//   Set the beginning b[1,j] balances
@@ -1146,6 +1143,7 @@ func (ms ModelSpecs) BuildModel() ([]float64, [][]float64, []float64, []ModelNot
 		A = append(A, row)
 		b = append(b, -1*ms.Accounttable[j].Bal)
 	}
+
 	//
 	// Constrant for (17') is default for sycpy so no code is needed
 	//

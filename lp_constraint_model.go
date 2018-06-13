@@ -958,9 +958,9 @@ func (ms ModelSpecs) BuildModel() ([]float64, [][]float64, []float64, []ModelNot
 		b = append(b, ms.Ti.Stded*adjInf-AccessVector(ms.Taxed, year)-ms.Ti.SStaxable*AccessVector(ms.SS[0], year))
 	}
 	//
-	// Add constraints for (11.5E')
+	// Add constraints for (15')
 	//
-	notes = append(notes, ModelNote{len(A), "Constraints 11.5E':"})
+	notes = append(notes, ModelNote{len(A), "Constraints 15':"})
 	if ms.Ip.Accmap[Aftertax] > 0 {
 		for year := 0; year < ms.Ip.Numyr; year++ {
 			adjInf := math.Pow(ms.Ip.IRate, float64(ms.Ip.PrePlanYears+year))
@@ -992,9 +992,9 @@ func (ms ModelSpecs) BuildModel() ([]float64, [][]float64, []float64, []ModelNot
 		}
 	}
 	//
-	// Add constraints for (12.5E')
+	// Add constraints for (16')
 	//
-	notes = append(notes, ModelNote{len(A), "Constraints 12.5E':"})
+	notes = append(notes, ModelNote{len(A), "Constraints 16':"})
 	if ms.Ip.Accmap[Aftertax] > 0 {
 		for year := 0; year < ms.Ip.Numyr; year++ {
 			for l := 0; l < len(*ms.Ti.Capgainstable)-1; l++ {
@@ -1042,9 +1042,9 @@ func (ms ModelSpecs) BuildModel() ([]float64, [][]float64, []float64, []ModelNot
 		}
 	}
 	//
-	// Add constraints for (14Er')
+	// Add constraints for (14-2018')
 	//
-	notes = append(notes, ModelNote{len(A), "Constraints 14':"})
+	notes = append(notes, ModelNote{len(A), "Constraints 14-2018':"})
 	if ms.Ip.Accmap[Aftertax] > 0 {
 		for year := 0; year < ms.Ip.Numyr; year++ {
 			adjInf := math.Pow(ms.Ip.IRate, float64(ms.Ip.PrePlanYears+year))
@@ -1058,9 +1058,9 @@ func (ms ModelSpecs) BuildModel() ([]float64, [][]float64, []float64, []ModelNot
 		}
 	}
 	//
-	// Add constraints for (15a')
+	// Add constraints for (17a')
 	//
-	notes = append(notes, ModelNote{len(A), "Constraints 15a':"})
+	notes = append(notes, ModelNote{len(A), "Constraints 17a':"})
 	for year := 0; year < ms.Ip.Numyr; year++ {
 		for j := 0; j < len(ms.Accounttable); j++ {
 			//j = len(ms.Accounttable)-1 // nl the last account, the investment account
@@ -1080,9 +1080,9 @@ func (ms ModelSpecs) BuildModel() ([]float64, [][]float64, []float64, []ModelNot
 		}
 	}
 	//
-	// Add constraints for (15b')
+	// Add constraints for (17b')
 	//
-	notes = append(notes, ModelNote{len(A), "Constraints 15b':"})
+	notes = append(notes, ModelNote{len(A), "Constraints 17b':"})
 	for year := 0; year < ms.Ip.Numyr; year++ {
 		for j := 0; j < len(ms.Accounttable); j++ {
 			//j = len(ms.Accounttable)-1 // nl the last account, the investment account
@@ -1100,13 +1100,12 @@ func (ms ModelSpecs) BuildModel() ([]float64, [][]float64, []float64, []ModelNot
 			b = append(b, temp)
 		}
 	}
-	/**/
 	//
-	// Constraint for (15.5' and 15.75')
+	// Constraint for (18' and 19')
 	//   Withdradrawal must be <= balance
 	//      unless have sale of asset contributing
 	//
-	notes = append(notes, ModelNote{len(A), "Constraints 16.5':"})
+	notes = append(notes, ModelNote{len(A), "Constraints 18' and 19':"})
 	for year := 0; year < ms.Ip.Numyr; year++ {
 		for j := 0; j < len(ms.Accounttable); j++ {
 			row := make([]float64, nvars)
@@ -1120,12 +1119,11 @@ func (ms ModelSpecs) BuildModel() ([]float64, [][]float64, []float64, []ModelNot
 			b = append(b, temp)
 		}
 	}
-	/**/
 	//
-	// Constraint for (16a')
+	// Constraint for (20a')
 	//   Set the beginning b[1,j] balances
 	//
-	notes = append(notes, ModelNote{len(A), "Constraints 16a':"})
+	notes = append(notes, ModelNote{len(A), "Constraints 20a':"})
 	for j := 0; j < len(ms.Accounttable); j++ {
 		row := make([]float64, nvars)
 		row[ms.Vindx.B(0, j)] = 1
@@ -1133,10 +1131,10 @@ func (ms ModelSpecs) BuildModel() ([]float64, [][]float64, []float64, []ModelNot
 		b = append(b, ms.Accounttable[j].Bal)
 	}
 	//
-	// Constraint for (16b')
+	// Constraint for (20b')
 	//   Set the beginning b[1,j] balances
 	//
-	notes = append(notes, ModelNote{len(A), "Constraints 16b':"})
+	notes = append(notes, ModelNote{len(A), "Constraints 20b':"})
 	for j := 0; j < len(ms.Accounttable); j++ {
 		row := make([]float64, nvars)
 		row[ms.Vindx.B(0, j)] = -1
@@ -1145,9 +1143,9 @@ func (ms ModelSpecs) BuildModel() ([]float64, [][]float64, []float64, []ModelNot
 	}
 
 	//
-	// Constrant for (17') is default for sycpy so no code is needed
+	// Constrant for (21') is default for sycpy so no code is needed
 	//
-	notes = append(notes, ModelNote{len(A), "Constraints 17':"})
+	notes = append(notes, ModelNote{len(A), "Constraints 21':"})
 
 	return c, A, b, notes
 }

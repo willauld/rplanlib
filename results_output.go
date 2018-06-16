@@ -1,8 +1,10 @@
 package rplanlib
 
 import (
+	"bytes"
 	"fmt"
 	"math"
+	"os"
 )
 
 const (
@@ -234,12 +236,27 @@ func (ms ModelSpecs) PrintIncomeExpenseDetails() {
 	ms.printIncomeHeader(headerlist, countlist, incomeCat, fieldwidth)
 }
 
+/*
+for _, p := range proverbs {
+	n, err := writer.Write([]byte(p))
+	if err != nil {
+		fmt.Println(err)
+		os.Exit(1)
+	}
+	if n != len(p) {
+		fmt.Println("failed to write data")
+		os.Exit(1)
+	}
+}
+*/
 // Print out the active input parameters (string string map)
-func (ms ModelSpecs) PrintInputParamsStrMap(m map[string]string) {
-	ms.Ao.output("InputParamsStrMap:\n")
+func PrintInputParamsStrMapToBuffer(m map[string]string) string {
+	var writer bytes.Buffer
+
+	writer.Write([]byte("InputParamsStrMap:\n"))
 	for i, v := range InputStrDefs {
 		if m[v] != "" {
-			ms.Ao.output(fmt.Sprintf("%3d&@'%32s'&@'%s'\n", i, v, m[v]))
+			writer.Write([]byte(fmt.Sprintf("%3d&@'%32s'&@'%s'\n", i, v, m[v])))
 		}
 	}
 	for j := 1; j < MaxStreams+1; j++ {
@@ -248,11 +265,25 @@ func (ms ModelSpecs) PrintInputParamsStrMap(m map[string]string) {
 				(j-1)*len(InputStreamStrDefs)
 			k := fmt.Sprintf("%s%d", v, j)
 			if m[k] != "" {
-				ms.Ao.output(fmt.Sprintf("%3d&@'%32s'&@'%s'\n", lineno, k, m[k]))
+				writer.Write([]byte(fmt.Sprintf("%3d&@'%32s'&@'%s'\n", lineno, k, m[k])))
 			}
 		}
 	}
-	ms.Ao.output("\n")
+	writer.Write([]byte("\n"))
+	return writer.String()
+}
+
+// Write to file the active input parameters (string string map)
+func WriteFileInputParamsStrMap(f *os.File, m map[string]string) {
+	if f != nil {
+		ao := NewAppOutput(nil, f)
+		ao.output(PrintInputParamsStrMapToBuffer(m))
+	}
+}
+
+// Print out the active input parameters (string string map)
+func (ms ModelSpecs) PrintInputParamsStrMap(m map[string]string) {
+	ms.Ao.output(PrintInputParamsStrMapToBuffer(m))
 }
 
 func (ms ModelSpecs) printAccHeader() {

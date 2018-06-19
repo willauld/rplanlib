@@ -185,8 +185,14 @@ func NewTaxInfo(status TaxStatus, taxYear int) Taxinfo {
 		},
 
 		// 401(k), 403(b) and TSP currently have the same limits
-		Contribspecs: map[string]float64{"401k": 18000, "401kCatchup": 6000,
-			"TDRA": 5500, "TDRACatchup": 1000, "CatchupAge": 50},
+		Contribspecs: map[string]float64{
+			"401k":             18000,
+			"401kCatchup":      6000,
+			"TDRA":             5500,
+			"TDRACatchup":      1000,
+			"CatchupAge":       50,
+			"TDRANOCONTRIBAGE": 70,
+		},
 
 		Penalty:      0.1,       // 10% early withdrawal penalty
 		SStaxable:    sstaxable, // maximum portion of SS that is taxable

@@ -825,18 +825,26 @@ func (ms ModelSpecs) BuildModel() ([]float64, [][]float64, []float64, []ModelNot
 	notes = append(notes, ModelNote{len(A), "Constraints 6':"})
 	for year := 0; year < ms.Ip.Numyr; year++ {
 		row := make([]float64, nvars)
+		atleastone := false
 		for j := 0; j < len(ms.Accounttable); j++ {
-			if ms.Accounttable[j].acctype != Aftertax {
-				row[ms.Vindx.D(year, j)] = 1 // TODO if this is not executed, DONT register this constrain, DONT add to A and b
+			t := ms.Accounttable[j].acctype
+			if t != Aftertax {
+				ownerAge := ms.accountOwnerAge(year, ms.Accounttable[j])
+				if t != IRA || ownerAge < int(ms.Ti.Contribspecs["TDRANOCONTRIBAGE"]) {
+					row[ms.Vindx.D(year, j)] = 1 // TODO if this is not executed, DONT register this constrain, DONT add to A and b
+					atleastone = true
+				}
 			}
 		}
-		A = append(A, row)
-		//b+=[min(ms.Income[year],ms.Ti.maxContribution(year,None))]
-		// using ms.Taxed rather than ms.Income because income could
-		// include non-taxed anueities that don't count.
-		None := ""
-		infyears := ms.Ip.PrePlanYears + year
-		b = append(b, math.Min(AccessVector(ms.Taxed, year), ms.Ti.maxContribution(year, infyears, ms.Retirees, None, ms.Ip.IRate)))
+		if atleastone {
+			A = append(A, row)
+			//b+=[min(ms.Income[year],ms.Ti.maxContribution(year,None))]
+			// using ms.Taxed rather than ms.Income because income could
+			// include non-taxed anueities that don't count.
+			None := ""
+			infyears := ms.Ip.PrePlanYears + year
+			b = append(b, math.Min(AccessVector(ms.Taxed, year), ms.Ti.maxContribution(year, infyears, ms.Retirees, None, ms.Ip.IRate)))
+		}
 	}
 	//
 	// Add constaints for (7') rows
@@ -844,19 +852,27 @@ func (ms ModelSpecs) BuildModel() ([]float64, [][]float64, []float64, []ModelNot
 	notes = append(notes, ModelNote{len(A), "Constraints 7':"})
 	for year := 0; year < ms.Ip.Numyr; year++ {
 		// TODO this is not needed when there is only one retiree
+		atleastone := false
 		infyears := ms.Ip.PrePlanYears + year
 		for _, v := range ms.Retirees {
 			row := make([]float64, nvars)
 			for j := 0; j < len(ms.Accounttable); j++ {
 				if v.mykey == ms.Accounttable[j].mykey {
-					// ["acctype"] != "aftertax": no "mykey" in aftertax
-					// (this will either break or just not match - we
-					// will see)
-					row[ms.Vindx.D(year, j)] = 1 // TODO if this is not executed, DONT register this constraint, DONT add to A and b
+					t := ms.Accounttable[j].acctype
+					ownerAge := ms.accountOwnerAge(year, ms.Accounttable[j])
+					if t != IRA || ownerAge < int(ms.Ti.Contribspecs["TDRANOCONTRIBAGE"]) {
+						// ["acctype"] != "aftertax": no "mykey" in aftertax
+						// (this will either break or just not match - we
+						// will see)
+						row[ms.Vindx.D(year, j)] = 1 // TODO if this is not executed, DONT register this constraint, DONT add to A and b
+						atleastone = true
+					}
 				}
 			}
-			A = append(A, row)
-			b = append(b, ms.Ti.maxContribution(year, infyears, ms.Retirees, v.mykey, ms.Ip.IRate))
+			if atleastone {
+				A = append(A, row)
+				b = append(b, ms.Ti.maxContribution(year, infyears, ms.Retirees, v.mykey, ms.Ip.IRate))
+			}
 		}
 	}
 	//
@@ -885,8 +901,8 @@ func (ms ModelSpecs) BuildModel() ([]float64, [][]float64, []float64, []ModelNot
 			// at most the first two accounts are type IRA w/
 			// RMD requirement
 			if ms.Accounttable[j].acctype == IRA {
-				ownerage := ms.accountOwnerAge(year, ms.Accounttable[j])
-				if ownerage >= 70 {
+				ownerAge := ms.accountOwnerAge(year, ms.Accounttable[j])
+				if ownerAge >= int(ms.Ti.Contribspecs["TDRANOCONTRIBAGE"]) {
 					row := make([]float64, nvars)
 					row[ms.Vindx.D(year, j)] = 1
 					A = append(A, row)
@@ -902,12 +918,14 @@ func (ms ModelSpecs) BuildModel() ([]float64, [][]float64, []float64, []ModelNot
 	if !ms.AllowTdraRothraDeposits {
 		for year := 0; year < ms.Ip.Numyr; year++ {
 			for j := 0; j < len(ms.Accounttable); j++ {
-				v := ms.Accounttable[j].Contributions
-				max := 0.0
-				if v != nil {
-					max = v[year]
-				}
-				if ms.Accounttable[j].acctype != Aftertax { //Todo: move this if statement up just under the for to remove all unnessasary work
+				ownerAge := ms.accountOwnerAge(year, ms.Accounttable[j])
+				t := ms.Accounttable[j].acctype
+				if t != Aftertax && (t != IRA || ownerAge < int(ms.Ti.Contribspecs["TDRANOCONTRIBAGE"])) { // IRA over age 70 handled by 9'
+					v := ms.Accounttable[j].Contributions
+					max := 0.0
+					if v != nil {
+						max = v[year]
+					}
 					row := make([]float64, nvars)
 					row[ms.Vindx.D(year, j)] = 1
 					A = append(A, row)

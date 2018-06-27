@@ -53,24 +53,24 @@ func (ms ModelSpecs) activitySummaryHeader(fieldwidth int) {
 	if names != "" {
 		format := fmt.Sprintf("%%%ds", 2*ageWidth)
 		str := fmt.Sprintf(format, names)
-		ms.Ao.output(str)
+		ms.Ao.Output(str)
 	}
 	format := fmt.Sprintf("%%%d.%ds", ageWidth, ageWidth)
 	str := fmt.Sprintf(format, "age ")
-	ms.Ao.output(str)
+	ms.Ao.Output(str)
 	headers := []string{"fIRA", "tIRA", "RMDref", "fRoth", "tRoth", "fAftaTx", "tAftaTx", "o_inc", "SS", "Expense", "TFedTax", "Spndble"}
 	for _, s := range headers {
 		format := fmt.Sprintf("&@%%%d.%ds", fieldwidth, fieldwidth)
 		str := fmt.Sprintf(format, s)
-		ms.Ao.output(str)
+		ms.Ao.Output(str)
 	}
-	ms.Ao.output("\n")
+	ms.Ao.Output("\n")
 }
 
 func (ms ModelSpecs) PrintActivitySummary(xp *[]float64) {
 
-	ms.Ao.output("\nActivity Summary:\n")
-	ms.Ao.output("\n")
+	ms.Ao.Output("\nActivity Summary:\n")
+	ms.Ao.Output("\n")
 	fieldwidth := 7
 	ms.activitySummaryHeader(fieldwidth)
 	for year := 0; year < ms.Ip.Numyr; year++ {
@@ -95,9 +95,9 @@ func (ms ModelSpecs) PrintActivitySummary(xp *[]float64) {
 
 		if ms.Ip.MyKey2 != "" && ms.Ip.FilingStatus == Joint {
 			//delta := ms.Ip.Age1 - ms.Ip.Age2
-			ms.Ao.output(fmt.Sprintf("%3d/%3d:", year+ms.Ip.StartPlan, year+ms.Ip.StartPlan-ms.Ip.AgeDelta))
+			ms.Ao.Output(fmt.Sprintf("%3d/%3d:", year+ms.Ip.StartPlan, year+ms.Ip.StartPlan-ms.Ip.AgeDelta))
 		} else {
-			ms.Ao.output(fmt.Sprintf(" %3d:", year+ms.Ip.StartPlan))
+			ms.Ao.Output(fmt.Sprintf(" %3d:", year+ms.Ip.StartPlan))
 		}
 		items := []float64{withdrawal[IRA] / ms.OneK, deposit[IRA] / ms.OneK, rmdref / ms.OneK, // IRA
 			withdrawal[Roth] / ms.OneK, deposit[Roth] / ms.OneK, // Roth
@@ -107,7 +107,7 @@ func (ms ModelSpecs) PrintActivitySummary(xp *[]float64) {
 		for _, f := range items {
 			format := fmt.Sprintf("&@%%%d.0f", fieldwidth)
 			str := fmt.Sprintf(format, f)
-			ms.Ao.output(str)
+			ms.Ao.Output(str)
 			//ao.output("&@{:>{width}.0f}".format(i, width=fieldwidth))
 		}
 		s := (*xp)[ms.Vindx.S(year)] / ms.OneK
@@ -118,8 +118,8 @@ func (ms ModelSpecs) PrintActivitySummary(xp *[]float64) {
 			s = spendable / ms.OneK
 			star = '*'
 		}
-		ms.Ao.output(fmt.Sprintf("&@%7.0f%c", s, star))
-		ms.Ao.output("\n")
+		ms.Ao.Output(fmt.Sprintf("&@%7.0f%c", s, star))
+		ms.Ao.Output("\n")
 	}
 	ms.activitySummaryHeader(fieldwidth)
 }
@@ -141,7 +141,7 @@ func (ms ModelSpecs) printIncomeHeader(headerkeylist []string, countlist []int, 
 		ageWidth = 5
 	}
 	str := fmt.Sprintf("%[1]*.[1]*[2]s", ageWidth, names)
-	ms.Ao.output(str)
+	ms.Ao.Output(str)
 	for i := 0; i < len(countlist); i++ {
 		if countlist[i] > 0 {
 			ats := 1 // number of '@' to add
@@ -150,19 +150,19 @@ func (ms ModelSpecs) printIncomeHeader(headerkeylist []string, countlist []int, 
 			}
 			totalspace := fieldwidth*countlist[i] + countlist[i] - 1 // -1 is for the &
 			str = fmt.Sprintf("&%s%-[3]*.[3]*[2]s", atv[:ats], incomeCat[i], totalspace)
-			ms.Ao.output(str)
+			ms.Ao.Output(str)
 		}
 	}
-	ms.Ao.output("\n")
+	ms.Ao.Output("\n")
 	str = fmt.Sprintf("%[1]*[2]s", ageWidth, "age ")
-	ms.Ao.output(str)
+	ms.Ao.Output(str)
 	for _, str := range headerkeylist {
 		if str == "nokey" { // HAACCKKK
 			str = "  "
 		}
-		ms.Ao.output(fmt.Sprintf("&@%[2]*.[2]*[1]s", str, fieldwidth))
+		ms.Ao.Output(fmt.Sprintf("&@%[2]*.[2]*[1]s", str, fieldwidth))
 	}
-	ms.Ao.output("\n")
+	ms.Ao.Output("\n")
 }
 
 /**/
@@ -216,22 +216,22 @@ func (ms ModelSpecs) PrintIncomeExpenseDetails() {
 		e := fmt.Errorf("printIncomeExpenseDetails: ms.OneK is %f which is not allowed", ms.OneK)
 		panic(e)
 	}
-	ms.Ao.output("\nIncome and Expense Summary:\n\n")
+	ms.Ao.Output("\nIncome and Expense Summary:\n\n")
 	headerlist, countlist, datamatrix := ms.getSSIncomeAssetExpenseList()
 	incomeCat := []string{"SSincome:", "Income:", "AssetSale:", "Expense:"}
 	fieldwidth := 8
 	ms.printIncomeHeader(headerlist, countlist, incomeCat, fieldwidth)
 	for year := 0; year < ms.Ip.Numyr; year++ {
 		if ms.Ip.MyKey2 != "" && ms.Ip.FilingStatus == Joint {
-			ms.Ao.output(fmt.Sprintf("%3d/%3d:", year+ms.Ip.StartPlan, year+ms.Ip.StartPlan-ms.Ip.AgeDelta))
+			ms.Ao.Output(fmt.Sprintf("%3d/%3d:", year+ms.Ip.StartPlan, year+ms.Ip.StartPlan-ms.Ip.AgeDelta))
 		} else {
-			ms.Ao.output(fmt.Sprintf(" %3d:", year+ms.Ip.StartPlan))
+			ms.Ao.Output(fmt.Sprintf(" %3d:", year+ms.Ip.StartPlan))
 		}
 		for i := 0; i < len(datamatrix); i++ {
 			str := fmt.Sprintf("&@%[2]*.0[1]f", datamatrix[i][year]/ms.OneK, fieldwidth)
-			ms.Ao.output(str)
+			ms.Ao.Output(str)
 		}
-		ms.Ao.output("\n")
+		ms.Ao.Output("\n")
 	}
 	ms.printIncomeHeader(headerlist, countlist, incomeCat, fieldwidth)
 }
@@ -277,85 +277,85 @@ func PrintInputParamsStrMapToBuffer(m map[string]string) string {
 func WriteFileInputParamsStrMap(f *os.File, m map[string]string) {
 	if f != nil {
 		ao := NewAppOutput(nil, f)
-		ao.output(PrintInputParamsStrMapToBuffer(m))
+		ao.Output(PrintInputParamsStrMapToBuffer(m))
 	}
 }
 
 // Print out the active input parameters (string string map)
 func (ms ModelSpecs) PrintInputParamsStrMap(m map[string]string) {
-	ms.Ao.output(PrintInputParamsStrMapToBuffer(m))
+	ms.Ao.Output(PrintInputParamsStrMapToBuffer(m))
 }
 
 func (ms ModelSpecs) printAccHeader() {
 	if ms.Ip.FilingStatus == Joint && ms.Ip.MyKey2 != "" {
-		ms.Ao.output(fmt.Sprintf("%s/%s\n", ms.Ip.MyKey1, ms.Ip.MyKey2))
-		ms.Ao.output("    age ")
+		ms.Ao.Output(fmt.Sprintf("%s/%s\n", ms.Ip.MyKey1, ms.Ip.MyKey2))
+		ms.Ao.Output("    age ")
 	} else {
 		if ms.Ip.MyKey1 != "nokey" {
-			ms.Ao.output(fmt.Sprintf("%s\n", ms.Ip.MyKey1))
+			ms.Ao.Output(fmt.Sprintf("%s\n", ms.Ip.MyKey1))
 		}
-		ms.Ao.output(" age ")
+		ms.Ao.Output(" age ")
 	}
 	if ms.Ip.Accmap[IRA] > 1 {
 		str := fmt.Sprintf("&@%7s&@%7s&@%7s&@%7s&@%7s&@%7s&@%7s&@%7s",
 			"IRA1", "fIRA1", "tIRA1", "RMDref1", "IRA2", "fIRA2",
 			"tIRA2", "RMDref2")
-		ms.Ao.output(str)
+		ms.Ao.Output(str)
 	} else if ms.Ip.Accmap[IRA] == 1 {
 		str := fmt.Sprintf("&@%7s&@%7s&@%7s&@%7s",
 			"IRA", "fIRA", "tIRA", "RMDref")
-		ms.Ao.output(str)
+		ms.Ao.Output(str)
 	}
 	if ms.Ip.Accmap[Roth] > 1 {
 		str := fmt.Sprintf("&@%7s&@%7s&@%7s&@%7s&@%7s&@%7s",
 			"Roth1", "fRoth1", "tRoth1", "Roth2", "fRoth2", "tRoth2")
-		ms.Ao.output(str)
+		ms.Ao.Output(str)
 	} else if ms.Ip.Accmap[Roth] == 1 {
 		str := fmt.Sprintf("&@%7s&@%7s&@%7s", "Roth", "fRoth", "tRoth")
-		ms.Ao.output(str)
+		ms.Ao.Output(str)
 	}
 	if ms.Ip.Accmap[Aftertax] == 1 {
 		str := fmt.Sprintf("&@%7s&@%7s&@%7s", "AftaTx", "fAftaTx", "tAftaTx")
-		ms.Ao.output(str)
+		ms.Ao.Output(str)
 	}
-	ms.Ao.output("\n")
+	ms.Ao.Output("\n")
 }
 
 func (ms ModelSpecs) PrintAccountTrans(xp *[]float64) {
 
-	ms.Ao.output("\nAccount Transactions Summary:\n\n")
+	ms.Ao.Output("\nAccount Transactions Summary:\n\n")
 	ms.printAccHeader()
 	//
 	// Print pre-plan info
 	//
 	var index int
 	if ms.Ip.MyKey2 != "" && ms.Ip.FilingStatus == Joint {
-		ms.Ao.output(fmt.Sprintf("%3d/%3d:", ms.Ip.Age1, ms.Ip.Age1-ms.Ip.AgeDelta))
+		ms.Ao.Output(fmt.Sprintf("%3d/%3d:", ms.Ip.Age1, ms.Ip.Age1-ms.Ip.AgeDelta))
 	} else {
-		ms.Ao.output(fmt.Sprintf(" %3d:", ms.Ip.Age1))
+		ms.Ao.Output(fmt.Sprintf(" %3d:", ms.Ip.Age1))
 	}
 	for i := 0; i < ms.Ip.Accmap[IRA]; i++ {
 		str := fmt.Sprintf("&@%7.0f&@%7.0f&@%7.0f&@%7.0f",
 			ms.Accounttable[i].Origbal/ms.OneK, 0.0,
 			ms.Accounttable[i].Contrib/ms.OneK, 0.0) // IRAn
-		ms.Ao.output(str)
+		ms.Ao.Output(str)
 	}
 	for i := 0; i < ms.Ip.Accmap[Roth]; i++ {
 		index = ms.Ip.Accmap[IRA] + i
 		str := fmt.Sprintf("&@%7.0f&@%7.0f&@%7.0f",
 			ms.Accounttable[index].Origbal/ms.OneK, 0.0,
 			ms.Accounttable[index].Contrib/ms.OneK) // rothn
-		ms.Ao.output(str)
+		ms.Ao.Output(str)
 	}
 	index = ms.Ip.Accmap[IRA] + ms.Ip.Accmap[Roth]
 	if index == len(ms.Accounttable)-1 {
 		str := fmt.Sprintf("&@%7.0f&@%7.0f&@%7.0f",
 			ms.Accounttable[index].Origbal/ms.OneK, 0.0,
 			ms.Accounttable[index].Contrib/ms.OneK) // aftertax
-		ms.Ao.output(str)
+		ms.Ao.Output(str)
 	}
-	ms.Ao.output("\n")
-	ms.Ao.output("Plan Start: ---------\n")
+	ms.Ao.Output("\n")
+	ms.Ao.Output("Plan Start: ---------\n")
 	//
 	// Print plan info for each year
 	// TODO clean up the if/else below to follow the above forloop pattern
@@ -372,9 +372,9 @@ func (ms ModelSpecs) PrintAccountTrans(xp *[]float64) {
 		}
 
 		if ms.Ip.MyKey2 != "" && ms.Ip.FilingStatus == Joint {
-			ms.Ao.output(fmt.Sprintf("%3d/%3d:", year+ms.Ip.StartPlan, year+ms.Ip.StartPlan-ms.Ip.AgeDelta))
+			ms.Ao.Output(fmt.Sprintf("%3d/%3d:", year+ms.Ip.StartPlan, year+ms.Ip.StartPlan-ms.Ip.AgeDelta))
 		} else {
-			ms.Ao.output(fmt.Sprintf(" %3d:", year+ms.Ip.StartPlan))
+			ms.Ao.Output(fmt.Sprintf(" %3d:", year+ms.Ip.StartPlan))
 		}
 		if ms.Ip.Accmap[IRA] > 1 {
 			str := fmt.Sprintf("&@%7.0f&@%7.0f&@%7.0f&@%7.0f&@%7.0f&@%7.0f&@%7.0f&@%7.0f",
@@ -386,14 +386,14 @@ func (ms ModelSpecs) PrintAccountTrans(xp *[]float64) {
 				(*xp)[ms.Vindx.W(year, 1)]/ms.OneK,
 				ms.depositAmount(xp, year, 1)/ms.OneK,
 				rmdref[1]/ms.OneK) // IRA2
-			ms.Ao.output(str)
+			ms.Ao.Output(str)
 		} else if ms.Ip.Accmap[IRA] == 1 {
 			str := fmt.Sprintf("&@%7.0f&@%7.0f&@%7.0f&@%7.0f",
 				(*xp)[ms.Vindx.B(year, 0)]/ms.OneK,
 				(*xp)[ms.Vindx.W(year, 0)]/ms.OneK,
 				ms.depositAmount(xp, year, 0)/ms.OneK,
 				rmdref[0]/ms.OneK) // IRA1
-			ms.Ao.output(str)
+			ms.Ao.Output(str)
 		}
 		index := ms.Ip.Accmap[IRA]
 		if ms.Ip.Accmap[Roth] > 1 {
@@ -404,13 +404,13 @@ func (ms ModelSpecs) PrintAccountTrans(xp *[]float64) {
 				(*xp)[ms.Vindx.B(year, index+1)]/ms.OneK,
 				(*xp)[ms.Vindx.W(year, index+1)]/ms.OneK,
 				ms.depositAmount(xp, year, index+1)/ms.OneK) // roth2
-			ms.Ao.output(str)
+			ms.Ao.Output(str)
 		} else if ms.Ip.Accmap[Roth] == 1 {
 			str := fmt.Sprintf("&@%7.0f&@%7.0f&@%7.0f",
 				(*xp)[ms.Vindx.B(year, index)]/ms.OneK,
 				(*xp)[ms.Vindx.W(year, index)]/ms.OneK,
 				ms.depositAmount(xp, year, index)/ms.OneK) // roth1
-			ms.Ao.output(str)
+			ms.Ao.Output(str)
 		}
 		index = ms.Ip.Accmap[IRA] + ms.Ip.Accmap[Roth]
 		//assert index == len(S.accounttable)-1
@@ -419,59 +419,59 @@ func (ms ModelSpecs) PrintAccountTrans(xp *[]float64) {
 				(*xp)[ms.Vindx.B(year, index)]/ms.OneK,
 				(*xp)[ms.Vindx.W(year, index)]/ms.OneK,
 				ms.depositAmount(xp, year, index)/ms.OneK) // aftertax account
-			ms.Ao.output(str)
+			ms.Ao.Output(str)
 		}
-		ms.Ao.output("\n")
+		ms.Ao.Output("\n")
 	}
-	ms.Ao.output("Plan End: -----------\n")
+	ms.Ao.Output("Plan End: -----------\n")
 	//
 	// Post plan info
 	//
 	year := ms.Ip.Numyr
 	if ms.Ip.MyKey2 != "" && ms.Ip.FilingStatus == Joint {
-		ms.Ao.output(fmt.Sprintf("%3d/%3d:", year+ms.Ip.StartPlan, ms.Ip.Numyr+ms.Ip.StartPlan-ms.Ip.AgeDelta))
+		ms.Ao.Output(fmt.Sprintf("%3d/%3d:", year+ms.Ip.StartPlan, ms.Ip.Numyr+ms.Ip.StartPlan-ms.Ip.AgeDelta))
 	} else {
-		ms.Ao.output(fmt.Sprintf(" %3d:", year+ms.Ip.StartPlan))
+		ms.Ao.Output(fmt.Sprintf(" %3d:", year+ms.Ip.StartPlan))
 	}
 	for i := 0; i < ms.Ip.Accmap[IRA]; i++ {
 		str := fmt.Sprintf("&@%7.0f&@%7.0f&@%7.0f&@%7.0f",
 			(*xp)[ms.Vindx.B(year, i)]/ms.OneK, 0.0, 0.0, 0.0) // IRAn
-		ms.Ao.output(str)
+		ms.Ao.Output(str)
 	}
 	for i := 0; i < ms.Ip.Accmap[Roth]; i++ {
 		index = ms.Ip.Accmap[IRA] + i
 		str := fmt.Sprintf("&@%7.0f&@%7.0f&@%7.0f",
 			(*xp)[ms.Vindx.B(year, index)]/ms.OneK, 0.0, 0.0) // rothn
-		ms.Ao.output(str)
+		ms.Ao.Output(str)
 	}
 	index = ms.Ip.Accmap[IRA] + ms.Ip.Accmap[Roth]
 	if index == len(ms.Accounttable)-1 {
 		str := fmt.Sprintf("&@%7.0f&@%7.0f&@%7.0f",
 			(*xp)[ms.Vindx.B(year, index)]/ms.OneK, 0.0, 0.0) // aftertax
-		ms.Ao.output(str)
+		ms.Ao.Output(str)
 	}
-	ms.Ao.output("\n")
+	ms.Ao.Output("\n")
 	ms.printAccHeader()
 }
 
 func (ms ModelSpecs) printAccWithdHeader() {
 	if ms.Ip.MyKey2 != "" && ms.Ip.FilingStatus == Joint {
-		ms.Ao.output(fmt.Sprintf("%s/%s\n", ms.Ip.MyKey1, ms.Ip.MyKey2))
-		ms.Ao.output("    age ")
+		ms.Ao.Output(fmt.Sprintf("%s/%s\n", ms.Ip.MyKey1, ms.Ip.MyKey2))
+		ms.Ao.Output("    age ")
 	} else {
 		if ms.Ip.MyKey1 != "nokey" {
-			ms.Ao.output(fmt.Sprintf("%s\n", ms.Ip.MyKey1))
+			ms.Ao.Output(fmt.Sprintf("%s\n", ms.Ip.MyKey1))
 		}
-		ms.Ao.output(" age ")
+		ms.Ao.Output(" age ")
 	}
 	str := fmt.Sprintf("&@%7s&@%7s&@%8s&@%8s", "fACC", "Real", "%%Liq", "%%All")
-	ms.Ao.output(str)
-	ms.Ao.output("\n")
+	ms.Ao.Output(str)
+	ms.Ao.Output("\n")
 }
 
 func (ms ModelSpecs) PrintAccountWithdrawals(xp *[]float64) {
 
-	ms.Ao.output("\nAccount Withdrawals Summary:\n\n")
+	ms.Ao.Output("\nAccount Withdrawals Summary:\n\n")
 	ms.printAccWithdHeader()
 	//
 	// Print plan withdrawals for each year
@@ -480,9 +480,9 @@ func (ms ModelSpecs) PrintAccountWithdrawals(xp *[]float64) {
 	for year := 0; year < ms.Ip.Numyr; year++ {
 		adjInf := math.Pow(ms.Ip.IRate, float64(year))
 		if ms.Ip.MyKey2 != "" && ms.Ip.FilingStatus == Joint {
-			ms.Ao.output(fmt.Sprintf("%3d/%3d:", year+ms.Ip.StartPlan, year+ms.Ip.StartPlan-ms.Ip.AgeDelta))
+			ms.Ao.Output(fmt.Sprintf("%3d/%3d:", year+ms.Ip.StartPlan, year+ms.Ip.StartPlan-ms.Ip.AgeDelta))
 		} else {
-			ms.Ao.output(fmt.Sprintf(" %3d:", year+ms.Ip.StartPlan))
+			ms.Ao.Output(fmt.Sprintf(" %3d:", year+ms.Ip.StartPlan))
 		}
 		totWithdrawals := 0.0
 		for j := 0; j < ms.Ip.Numacc; j++ {
@@ -495,33 +495,33 @@ func (ms ModelSpecs) PrintAccountWithdrawals(xp *[]float64) {
 		str := fmt.Sprintf("&@%7.0f&@%7.0f&@%7.2f&@%7.2f",
 			totWithdrawals, realWithdrawals,
 			realPercentOfOrigLiquidBal, realPercentOfOrigAllAssets)
-		ms.Ao.output(str)
-		ms.Ao.output("\n")
+		ms.Ao.Output(str)
+		ms.Ao.Output("\n")
 	}
-	ms.Ao.output("\n")
+	ms.Ao.Output("\n")
 	ms.printAccWithdHeader()
 }
 
 func (ms ModelSpecs) printHeaderTax() {
 	if ms.Ip.MyKey2 != "" && ms.Ip.FilingStatus == Joint {
-		ms.Ao.output(fmt.Sprintf("%s/%s\n", ms.Ip.MyKey1, ms.Ip.MyKey2))
-		ms.Ao.output("    age ")
+		ms.Ao.Output(fmt.Sprintf("%s/%s\n", ms.Ip.MyKey1, ms.Ip.MyKey2))
+		ms.Ao.Output("    age ")
 	} else {
 		if ms.Ip.MyKey1 != "nokey" {
-			ms.Ao.output(fmt.Sprintf("%s\n", ms.Ip.MyKey1))
+			ms.Ao.Output(fmt.Sprintf("%s\n", ms.Ip.MyKey1))
 		}
-		ms.Ao.output(" age ")
+		ms.Ao.Output(" age ")
 	}
 	str := fmt.Sprintf("&@%7s&@%7s&@%7s&@%7s&@%7s&@%7s&@%7s&@%7s&@%8s&@%7s&@%7s&@%8s&@%7s&@%7s&@%7s",
 		"fIRA", "tIRA", "TxbleO", "TxbleSS", "deduct",
 		"T_inc", "earlyP", "fedtax", "mTaxB%%", "fAftaTx",
 		"tAftaTx", "cgTax%%", "cgTax", "TFedTax", "spndble")
-	ms.Ao.output(str)
-	ms.Ao.output("\n")
+	ms.Ao.Output(str)
+	ms.Ao.Output("\n")
 }
 
 func (ms ModelSpecs) PrintTax(xp *[]float64) {
-	ms.Ao.output("\nTax Summary:\n\n")
+	ms.Ao.Output("\nTax Summary:\n\n")
 	ms.printHeaderTax()
 	for year := 0; year < ms.Ip.Numyr; year++ {
 		age := year + ms.Ip.StartPlan
@@ -537,9 +537,9 @@ func (ms ModelSpecs) PrintTax(xp *[]float64) {
 			deposit[ms.Accounttable[j].acctype] += ms.depositAmount(xp, year, j)
 		}
 		if ms.Ip.MyKey2 != "" && ms.Ip.FilingStatus == Joint {
-			ms.Ao.output(fmt.Sprintf("%3d/%3d:", age, age-ms.Ip.AgeDelta))
+			ms.Ao.Output(fmt.Sprintf("%3d/%3d:", age, age-ms.Ip.AgeDelta))
 		} else {
-			ms.Ao.output(fmt.Sprintf(" %3d:", year+ms.Ip.StartPlan))
+			ms.Ao.Output(fmt.Sprintf(" %3d:", year+ms.Ip.StartPlan))
 		}
 		star := ' '
 		if rothearly {
@@ -562,8 +562,8 @@ func (ms ModelSpecs) PrintTax(xp *[]float64) {
 			cgtax/ms.OneK,
 			ttax/ms.OneK,
 			(*xp)[ms.Vindx.S(year)]/ms.OneK)
-		ms.Ao.output(str)
-		ms.Ao.output("\n")
+		ms.Ao.Output(str)
+		ms.Ao.Output("\n")
 	}
 	ms.printHeaderTax()
 }
@@ -577,35 +577,35 @@ func (ms ModelSpecs) printHeaderTaxBrackets() {
 	ampWidth := spaces
 	atWidth := 7
 	str := fmt.Sprintf("%s%sMarginal Rate(%s):", ampv[:ampWidth], atv[:atWidth], "%%")
-	ms.Ao.output(str)
+	ms.Ao.Output(str)
 	for k := 0; k < len(*ms.Ti.Taxtable); k++ {
 		//(cut, size, rate, base) = ms.Ti.taxtable[k]
 		rate := (*ms.Ti.Taxtable)[k][2]
-		ms.Ao.output(fmt.Sprintf("&@%6.0f", rate*100))
+		ms.Ao.Output(fmt.Sprintf("&@%6.0f", rate*100))
 	}
-	ms.Ao.output("\n")
+	ms.Ao.Output("\n")
 	if ms.Ip.MyKey2 != "" && ms.Ip.FilingStatus == Joint {
-		ms.Ao.output(fmt.Sprintf("%s/%s\n", ms.Ip.MyKey1, ms.Ip.MyKey2))
-		ms.Ao.output("    age ")
+		ms.Ao.Output(fmt.Sprintf("%s/%s\n", ms.Ip.MyKey1, ms.Ip.MyKey2))
+		ms.Ao.Output("    age ")
 	} else {
 		if ms.Ip.MyKey1 != "nokey" {
-			ms.Ao.output(fmt.Sprintf("%s\n", ms.Ip.MyKey1))
+			ms.Ao.Output(fmt.Sprintf("%s\n", ms.Ip.MyKey1))
 		}
-		ms.Ao.output(" age ")
+		ms.Ao.Output(" age ")
 	}
 	str = fmt.Sprintf("&@%7s&@%7s&@%7s&@%7s&@%7s&@%7s&@%7s",
 		"fIRA", "tIRA", "TxbleO", "TxbleSS", "deduct",
 		"T_inc", "fedtax")
-	ms.Ao.output(str)
+	ms.Ao.Output(str)
 	for k := 0; k < len(*ms.Ti.Taxtable); k++ {
-		ms.Ao.output(fmt.Sprintf("&@brckt%d", k))
+		ms.Ao.Output(fmt.Sprintf("&@brckt%d", k))
 	}
-	ms.Ao.output("&@brkTot\n")
+	ms.Ao.Output("&@brkTot\n")
 }
 
 func (ms ModelSpecs) PrintTaxBrackets(xp *[]float64) {
 	// For the bracket output don't do any rounding (ms.OneK)
-	ms.Ao.output("\nOverall Tax Bracket Summary:\n")
+	ms.Ao.Output("\nOverall Tax Bracket Summary:\n")
 	ms.printHeaderTaxBrackets()
 	for year := 0; year < ms.Ip.Numyr; year++ {
 		age := year + ms.Ip.StartPlan
@@ -614,9 +614,9 @@ func (ms ModelSpecs) PrintTaxBrackets(xp *[]float64) {
 		T, _, tax, _, _, _, _ := ms.IncomeSummary(year, xp)
 		//ttax := tax + cgtax
 		if ms.Ip.MyKey2 != "" && ms.Ip.FilingStatus == Joint {
-			ms.Ao.output(fmt.Sprintf("%3d/%3d:", age, age-ms.Ip.AgeDelta))
+			ms.Ao.Output(fmt.Sprintf("%3d/%3d:", age, age-ms.Ip.AgeDelta))
 		} else {
-			ms.Ao.output(fmt.Sprintf(" %3d:", age))
+			ms.Ao.Output(fmt.Sprintf(" %3d:", age))
 		}
 		withdrawal := map[Acctype]float64{IRA: 0, Roth: 0, Aftertax: 0}
 		deposit := map[Acctype]float64{IRA: 0, Roth: 0, Aftertax: 0}
@@ -630,40 +630,40 @@ func (ms ModelSpecs) PrintTaxBrackets(xp *[]float64) {
 			AccessVector(ms.Taxed, year),                 // /ms.OneK,
 			ms.Ti.SStaxable*AccessVector(ms.SS[0], year), // /ms.OneK,
 			ms.Ti.Stded*iMul /*/ms.OneK*/, T /*/ms.OneK*/, tax /*/ms.OneK*/)
-		ms.Ao.output(str)
+		ms.Ao.Output(str)
 		bt := 0.0
 		for k := 0; k < len(*ms.Ti.Taxtable); k++ {
-			ms.Ao.output(fmt.Sprintf("&@%6.0f", (*xp)[ms.Vindx.X(year, k)]))
+			ms.Ao.Output(fmt.Sprintf("&@%6.0f", (*xp)[ms.Vindx.X(year, k)]))
 			bt += (*xp)[ms.Vindx.X(year, k)]
 		}
-		ms.Ao.output(fmt.Sprintf("&@%6.0f\n", bt))
+		ms.Ao.Output(fmt.Sprintf("&@%6.0f\n", bt))
 	}
 	ms.printHeaderTaxBrackets()
 }
 
 func (ms ModelSpecs) printHeaderShadowTaxBrackets() {
 	if ms.Ip.MyKey2 != "" && ms.Ip.FilingStatus == Joint {
-		ms.Ao.output(fmt.Sprintf("%s/%s\n", ms.Ip.MyKey1, ms.Ip.MyKey2))
-		ms.Ao.output("    age ")
+		ms.Ao.Output(fmt.Sprintf("%s/%s\n", ms.Ip.MyKey1, ms.Ip.MyKey2))
+		ms.Ao.Output("    age ")
 	} else {
 		if ms.Ip.MyKey1 != "nokey" {
-			ms.Ao.output(fmt.Sprintf("%s\n", ms.Ip.MyKey1))
+			ms.Ao.Output(fmt.Sprintf("%s\n", ms.Ip.MyKey1))
 		}
-		ms.Ao.output(" age ")
+		ms.Ao.Output(" age ")
 	}
 	str := fmt.Sprintf("&@%7s&@%7s&@%7s&@%7s&@%7s&@%7s&@%7s",
 		"fIRA", "tIRA", "TxbleO", "TxbleSS", "deduct",
 		"T_inc", "fedtax")
-	ms.Ao.output(str)
+	ms.Ao.Output(str)
 	for l := 0; l < len(*ms.Ti.Capgainstable); l++ {
-		ms.Ao.output(fmt.Sprintf("&@brckt%d", l))
+		ms.Ao.Output(fmt.Sprintf("&@brckt%d", l))
 	}
-	ms.Ao.output("&@brkTot\n")
+	ms.Ao.Output("&@brkTot\n")
 }
 
 func (ms ModelSpecs) PrintShadowTaxBrackets(xp *[]float64) {
 	// For the bracket output don't do any rounding (ms.OneK)
-	ms.Ao.output("\nOverall Shadow Tax Bracket Summary:\n")
+	ms.Ao.Output("\nOverall Shadow Tax Bracket Summary:\n")
 	ms.printHeaderShadowTaxBrackets()
 	for year := 0; year < ms.Ip.Numyr; year++ {
 		age := year + ms.Ip.StartPlan
@@ -672,9 +672,9 @@ func (ms ModelSpecs) PrintShadowTaxBrackets(xp *[]float64) {
 		T, _, tax, _, _, _, _ := ms.IncomeSummary(year, xp)
 		//ttax := tax + cgtax
 		if ms.Ip.MyKey2 != "" && ms.Ip.FilingStatus == Joint {
-			ms.Ao.output(fmt.Sprintf("%3d/%3d:", age, age-ms.Ip.AgeDelta))
+			ms.Ao.Output(fmt.Sprintf("%3d/%3d:", age, age-ms.Ip.AgeDelta))
 		} else {
-			ms.Ao.output(fmt.Sprintf(" %3d:", age))
+			ms.Ao.Output(fmt.Sprintf(" %3d:", age))
 		}
 		withdrawal := map[Acctype]float64{IRA: 0, Roth: 0, Aftertax: 0}
 		deposit := map[Acctype]float64{IRA: 0, Roth: 0, Aftertax: 0}
@@ -688,13 +688,13 @@ func (ms ModelSpecs) PrintShadowTaxBrackets(xp *[]float64) {
 			AccessVector(ms.Taxed, year),                 // /ms.OneK,
 			ms.Ti.SStaxable*AccessVector(ms.SS[0], year), // /ms.OneK,
 			ms.Ti.Stded*iMul /*/ms.OneK*/, T /*/ms.OneK*/, tax /*/ms.OneK*/)
-		ms.Ao.output(str)
+		ms.Ao.Output(str)
 		bt := 0.0
 		for l := 0; l < len(*ms.Ti.Capgainstable); l++ {
-			ms.Ao.output(fmt.Sprintf("&@%6.0f", (*xp)[ms.Vindx.Sy(year, l)]))
+			ms.Ao.Output(fmt.Sprintf("&@%6.0f", (*xp)[ms.Vindx.Sy(year, l)]))
 			bt += (*xp)[ms.Vindx.Sy(year, l)]
 		}
-		ms.Ao.output(fmt.Sprintf("&@%6.0f\n", bt))
+		ms.Ao.Output(fmt.Sprintf("&@%6.0f\n", bt))
 	}
 	ms.printHeaderShadowTaxBrackets()
 }
@@ -706,34 +706,34 @@ func (ms ModelSpecs) printHeaderCapgainsBrackets() {
 	}
 	ampWidth := spaces
 	atWidth := 6
-	ms.Ao.output(fmt.Sprintf("%s%sMarginal Rate(%s):", ampv[:ampWidth], atv[:atWidth], "%%"))
+	ms.Ao.Output(fmt.Sprintf("%s%sMarginal Rate(%s):", ampv[:ampWidth], atv[:atWidth], "%%"))
 	for l := 0; l < len(*ms.Ti.Capgainstable); l++ {
 		rate := (*ms.Ti.Capgainstable)[l][2]
-		ms.Ao.output(fmt.Sprintf("&@%6.0f", rate*100))
+		ms.Ao.Output(fmt.Sprintf("&@%6.0f", rate*100))
 	}
-	ms.Ao.output("\n")
+	ms.Ao.Output("\n")
 	if ms.Ip.MyKey2 != "" && ms.Ip.FilingStatus == Joint {
-		ms.Ao.output(fmt.Sprintf("%s/%s\n", ms.Ip.MyKey1, ms.Ip.MyKey2))
-		ms.Ao.output("    age ")
+		ms.Ao.Output(fmt.Sprintf("%s/%s\n", ms.Ip.MyKey1, ms.Ip.MyKey2))
+		ms.Ao.Output("    age ")
 	} else {
 		if ms.Ip.MyKey1 != "nokey" {
-			ms.Ao.output(fmt.Sprintf("%s\n", ms.Ip.MyKey1))
+			ms.Ao.Output(fmt.Sprintf("%s\n", ms.Ip.MyKey1))
 		}
-		ms.Ao.output(" age ")
+		ms.Ao.Output(" age ")
 	}
 	str := fmt.Sprintf("&@%7s&@%7s&@%8s&@%7s&@%7s&@%7s",
 		"fAftaTx", "TblASle", "cgTax%%", "cgTaxbl",
 		"T_inc", "cgTax")
-	ms.Ao.output(str)
+	ms.Ao.Output(str)
 	for l := 0; l < len(*ms.Ti.Capgainstable); l++ {
-		ms.Ao.output(fmt.Sprintf("&@brckt%d", l))
+		ms.Ao.Output(fmt.Sprintf("&@brckt%d", l))
 	}
-	ms.Ao.output("&@brkTot\n")
+	ms.Ao.Output("&@brkTot\n")
 }
 
 func (ms ModelSpecs) PrintCapGainsBrackets(xp *[]float64) {
 	// For the bracket output don't do any rounding (ms.OneK)
-	ms.Ao.output("\nOverall Capital Gains Bracket Summary:\n")
+	ms.Ao.Output("\nOverall Capital Gains Bracket Summary:\n")
 	ms.printHeaderCapgainsBrackets()
 	for year := 0; year < ms.Ip.Numyr; year++ {
 		age := year + ms.Ip.StartPlan
@@ -759,13 +759,13 @@ func (ms ModelSpecs) PrintCapGainsBrackets(xp *[]float64) {
 		//T, spendable, tax, rate, cgtax, earlytax, rothearly := ms.IncomeSummary(year, xp)
 		T, _, _, _, cgtax, _, _ := ms.IncomeSummary(year, xp)
 		if ms.Ip.MyKey2 != "" && ms.Ip.FilingStatus == Joint {
-			ms.Ao.output(fmt.Sprintf("%3d/%3d:", age, age-ms.Ip.AgeDelta))
+			ms.Ao.Output(fmt.Sprintf("%3d/%3d:", age, age-ms.Ip.AgeDelta))
 		} else {
-			ms.Ao.output(fmt.Sprintf(" %3d:", age))
+			ms.Ao.Output(fmt.Sprintf(" %3d:", age))
 		}
 		str := fmt.Sprintf("&@%7.0f&@%7.0f&@%7.0f&@%7.0f&@%7.0f&@%7.0f",
 			atw, tas, f*100, att, T, cgtax)
-		ms.Ao.output(str)
+		ms.Ao.Output(str)
 		bt := 0.0
 		bttax := 0.0
 		for l := 0; l < len(*ms.Ti.Capgainstable); l++ {
@@ -773,11 +773,11 @@ func (ms ModelSpecs) PrintCapGainsBrackets(xp *[]float64) {
 			if ms.Ip.Accmap[Aftertax] > 0 {
 				ty = (*xp)[ms.Vindx.Y(year, l)]
 			}
-			ms.Ao.output(fmt.Sprintf("&@%6.0f", ty))
+			ms.Ao.Output(fmt.Sprintf("&@%6.0f", ty))
 			bt += ty
 			bttax += ty * (*ms.Ti.Capgainstable)[l][2]
 		}
-		ms.Ao.output(fmt.Sprintf("&@%6.0f\n", bt))
+		ms.Ao.Output(fmt.Sprintf("&@%6.0f\n", bt))
 		/*
 		   if args.verbosewga:
 		       print(" cg bracket ttax %6.0f " % bttax, end='')
@@ -791,23 +791,23 @@ func (ms ModelSpecs) PrintCapGainsBrackets(xp *[]float64) {
 
 func (ms ModelSpecs) printHeaderAssetSummary() {
 	if ms.Ip.MyKey2 != "" && ms.Ip.FilingStatus == Joint {
-		ms.Ao.output(fmt.Sprintf("%s/%s\n", ms.Ip.MyKey1, ms.Ip.MyKey2))
-		ms.Ao.output("    age ")
+		ms.Ao.Output(fmt.Sprintf("%s/%s\n", ms.Ip.MyKey1, ms.Ip.MyKey2))
+		ms.Ao.Output("    age ")
 	} else {
 		if ms.Ip.MyKey1 != "nokey" {
-			ms.Ao.output(fmt.Sprintf("%s\n", ms.Ip.MyKey1))
+			ms.Ao.Output(fmt.Sprintf("%s\n", ms.Ip.MyKey1))
 		}
-		ms.Ao.output(" age ")
+		ms.Ao.Output(" age ")
 	}
 	str := fmt.Sprintf("&@%20s&@%9s&@%9s&@%9s&@%9s&@%9s&@%9s\n",
 		"Name", "Price", "BrkrFee", "Owed",
 		"Net", "Basis", "Taxable")
-	ms.Ao.output(str)
+	ms.Ao.Output(str)
 }
 
 func (ms ModelSpecs) PrintAssetSummary() {
 	// For the bracket output don't do any rounding (ms.OneK)
-	ms.Ao.output("\nAsset Sales Summary:\n\n")
+	ms.Ao.Output("\nAsset Sales Summary:\n\n")
 	ms.printHeaderAssetSummary()
 	if ms.AssetSale != nil && len(ms.AssetSale[0]) >= ms.Ip.Numyr {
 		for year := 0; year < ms.Ip.Numyr; year++ {
@@ -836,15 +836,15 @@ func (ms ModelSpecs) PrintAssetSummary() {
 							taxable = 0.0
 						}
 						if ms.Ip.MyKey2 != "" && ms.Ip.FilingStatus == Joint {
-							ms.Ao.output(fmt.Sprintf("%3d/%3d:", age, age-ms.Ip.AgeDelta))
+							ms.Ao.Output(fmt.Sprintf("%3d/%3d:", age, age-ms.Ip.AgeDelta))
 						} else {
-							ms.Ao.output(fmt.Sprintf(" %3d:", age))
+							ms.Ao.Output(fmt.Sprintf(" %3d:", age))
 						}
 						str := fmt.Sprintf(
 							"&@%20.20s&@%9.0f&@%9.0f&@%9.0f&@%9.0f&@%9.0f&@%9.0f\n",
 							tag, price, bfee, owed,
 							net, basis, taxable)
-						ms.Ao.output(str)
+						ms.Ao.Output(str)
 					}
 				}
 			}
@@ -981,45 +981,45 @@ func (ms ModelSpecs) getResultTotals(xp *[]float64) (twithd, tcombined, tT, ttax
 
 func (ms ModelSpecs) PrintBaseConfig(xp *[]float64) { // input is res.x
 	totwithd, tincome, tTaxable, tincometax, tcgtax, tearlytax, tspendable, tbeginbal, tendbal := ms.getResultTotals(xp)
-	ms.Ao.output("\n")
-	ms.Ao.output("======\n")
+	ms.Ao.Output("\n")
+	ms.Ao.Output("======\n")
 	// Probably should switch from using tbeginbal to ms.LiquidAssetPlanStart
 	str := fmt.Sprintf("Optimized for %s with %s status\n\tstarting at age %d with an estate of $%s liquid and $%s illiquid\n", ms.Ip.Maximize, ms.Ip.FilingStatus /*retirement_type?*/, ms.Ip.StartPlan, RenderFloat("#_###.", tbeginbal), RenderFloat("#_###.", ms.IlliquidAssetPlanStart))
-	ms.Ao.output(str)
-	ms.Ao.output("\n")
+	ms.Ao.Output(str)
+	ms.Ao.Output("\n")
 	if ms.Ip.Min == 0 && ms.Ip.Max == 0 {
-		ms.Ao.output("No desired minimum or maximum amount specified\n")
+		ms.Ao.Output("No desired minimum or maximum amount specified\n")
 	} else if ms.Ip.Min == 0 {
 		// max specified
-		ms.Ao.output(fmt.Sprintf("Maximum desired: $%s\n", RenderFloat("#_###.", float64(ms.Ip.Max))))
+		ms.Ao.Output(fmt.Sprintf("Maximum desired: $%s\n", RenderFloat("#_###.", float64(ms.Ip.Max))))
 
 	} else {
 		// min specified
-		ms.Ao.output(fmt.Sprintf("Minium desired: $%s\n", RenderFloat("#_###.", float64(ms.Ip.Min))))
+		ms.Ao.Output(fmt.Sprintf("Minium desired: $%s\n", RenderFloat("#_###.", float64(ms.Ip.Min))))
 	}
-	ms.Ao.output("\n")
+	ms.Ao.Output("\n")
 	str = fmt.Sprintf("After tax yearly income: $%s adjusting for inflation\n\tand final estate at age %d with $%s liquid and $%s illiquid\n", RenderFloat("#_###.", (*xp)[ms.Vindx.S(0)]), ms.Ip.RetireAge1+ms.Ip.Numyr, RenderFloat("#_###.", tendbal), RenderFloat("#_###.", ms.IlliquidAssetPlanEnd))
-	ms.Ao.output(str)
-	ms.Ao.output("\n")
-	ms.Ao.output(fmt.Sprintf("total withdrawals: $%s\n", RenderFloat("#_###.", totwithd)))
-	ms.Ao.output(fmt.Sprintf("total ordinary taxable income $%s\n", RenderFloat("#_###.", tTaxable)))
+	ms.Ao.Output(str)
+	ms.Ao.Output("\n")
+	ms.Ao.Output(fmt.Sprintf("total withdrawals: $%s\n", RenderFloat("#_###.", totwithd)))
+	ms.Ao.Output(fmt.Sprintf("total ordinary taxable income $%s\n", RenderFloat("#_###.", tTaxable)))
 	if tTaxable > 0.0 {
 		s1 := RenderFloat("#_###.", tincometax+tearlytax)
 		s2 := RenderFloat("##.#", 100*(tincometax+tearlytax)/tTaxable)
-		ms.Ao.output(fmt.Sprintf("total ordinary tax on all taxable income: $%s (%s%s) of taxable income\n", s1, s2, "%%"))
+		ms.Ao.Output(fmt.Sprintf("total ordinary tax on all taxable income: $%s (%s%s) of taxable income\n", s1, s2, "%%"))
 	} else {
 		s1 := RenderFloat("#_###.", tincometax+tearlytax)
-		ms.Ao.output(fmt.Sprintf("total ordinary tax on all taxable income: $%s\n", s1))
+		ms.Ao.Output(fmt.Sprintf("total ordinary tax on all taxable income: $%s\n", s1))
 	}
-	ms.Ao.output(fmt.Sprintf("total income (withdrawals + other) $%s\n", RenderFloat("#_###.", tincome)))
-	ms.Ao.output(fmt.Sprintf("total cap gains tax: $%s\n", RenderFloat("#_###.", tcgtax)))
+	ms.Ao.Output(fmt.Sprintf("total income (withdrawals + other) $%s\n", RenderFloat("#_###.", tincome)))
+	ms.Ao.Output(fmt.Sprintf("total cap gains tax: $%s\n", RenderFloat("#_###.", tcgtax)))
 	if int(tincome) > 0 {
 		s1 := RenderFloat("#_###.", tincometax+tcgtax+tearlytax)
 		s2 := RenderFloat("##.#", 100*(tincometax+tcgtax+tearlytax)/tincome)
-		ms.Ao.output(fmt.Sprintf("total all tax on all income: $%s (%s%s)\n", s1, s2, "%%"))
+		ms.Ao.Output(fmt.Sprintf("total all tax on all income: $%s (%s%s)\n", s1, s2, "%%"))
 	}
-	ms.Ao.output(fmt.Sprintf("Total spendable (after tax money): $%s\n", RenderFloat("#_###.", tspendable)))
-	ms.Ao.output("\n")
+	ms.Ao.Output(fmt.Sprintf("Total spendable (after tax money): $%s\n", RenderFloat("#_###.", tspendable)))
+	ms.Ao.Output("\n")
 }
 
 /*

@@ -27,7 +27,7 @@ func NewAppOutput(csvfile, tablefile *os.File) AppOutput {
 	return ao
 }
 
-func (ao AppOutput) output(str string) { // TODO move to a better place
+func (ao AppOutput) Output(str string) { // TODO move to a better place
 	//
 	// output writes the information after doing two separate
 	// transformations. One for standard out and the other for

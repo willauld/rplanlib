@@ -853,27 +853,31 @@ func (ms ModelSpecs) BuildModel() ([]float64, [][]float64, []float64, []ModelNot
 	//
 	notes = append(notes, ModelNote{len(A), "Constraints 7':"})
 	for year := 0; year < ms.Ip.Numyr; year++ {
-		// TODO this is not needed when there is only one retiree
-		atleastone := false
-		infyears := ms.Ip.PrePlanYears + year
 		for _, v := range ms.Retirees {
-			row := make([]float64, nvars)
-			for j := 0; j < len(ms.Accounttable); j++ {
-				if v.mykey == ms.Accounttable[j].mykey {
-					t := ms.Accounttable[j].acctype
-					ownerAge := ms.accountOwnerAge(year, ms.Accounttable[j])
-					if t != IRA || ownerAge < int(ms.Ti.Contribspecs["TDRANOCONTRIBAGE"]) {
-						// ["acctype"] != "aftertax": no "mykey" in aftertax
-						// (this will either break or just not match - we
-						// will see)
-						row[ms.Vindx.D(year, j)] = 1 // TODO if this is not executed, DONT register this constraint, DONT add to A and b
-						atleastone = true
+			if AccessVector(ms.Taxed, year) <= 0.0 {
+				// No deposits to tax favored accounts are allow when
+				// there is no taxable income.
+				// In this case (6') constrains will cover (7')
+				atleastone := false
+				row := make([]float64, nvars)
+				for j := 0; j < len(ms.Accounttable); j++ {
+					if v.mykey == ms.Accounttable[j].mykey {
+						t := ms.Accounttable[j].acctype
+						ownerAge := ms.accountOwnerAge(year, ms.Accounttable[j])
+						if t != IRA || ownerAge < int(ms.Ti.Contribspecs["TDRANOCONTRIBAGE"]) {
+							// ["acctype"] != "aftertax": no "mykey" in aftertax
+							// (this will either break or just not match - we
+							// will see)
+							row[ms.Vindx.D(year, j)] = 1 // TODO if this is not executed, DONT register this constraint, DONT add to A and b
+							atleastone = true
+						}
 					}
 				}
-			}
-			if atleastone {
-				A = append(A, row)
-				b = append(b, ms.Ti.maxContribution(year, infyears, ms.Retirees, v.mykey, ms.Ip.IRate))
+				if atleastone {
+					A = append(A, row)
+					infyears := ms.Ip.PrePlanYears + year
+					b = append(b, math.Min(AccessVector(ms.Taxed, year), ms.Ti.maxContribution(year, infyears, ms.Retirees, v.mykey, ms.Ip.IRate)))
+				}
 			}
 		}
 	}
@@ -919,19 +923,24 @@ func (ms ModelSpecs) BuildModel() ([]float64, [][]float64, []float64, []ModelNot
 	notes = append(notes, ModelNote{len(A), "Constraints N':"})
 	if !ms.AllowTdraRothraDeposits {
 		for year := 0; year < ms.Ip.Numyr; year++ {
-			for j := 0; j < len(ms.Accounttable); j++ {
-				ownerAge := ms.accountOwnerAge(year, ms.Accounttable[j])
-				t := ms.Accounttable[j].acctype
-				if t != Aftertax && (t != IRA || ownerAge < int(ms.Ti.Contribspecs["TDRANOCONTRIBAGE"])) { // IRA over age 70 handled by 9'
-					v := ms.Accounttable[j].Contributions
-					max := 0.0
-					if v != nil {
-						max = v[year]
+			if AccessVector(ms.Taxed, year) <= 0.0 {
+				// No deposits to tax favored accounts are allow when
+				// there is no taxable income.
+				// In this case (6') constrains will cover (N')
+				for j := 0; j < len(ms.Accounttable); j++ {
+					ownerAge := ms.accountOwnerAge(year, ms.Accounttable[j])
+					t := ms.Accounttable[j].acctype
+					if t != Aftertax && (t != IRA || ownerAge < int(ms.Ti.Contribspecs["TDRANOCONTRIBAGE"])) { // IRA over age 70 handled by 9'
+						v := ms.Accounttable[j].Contributions
+						max := 0.0
+						if v != nil {
+							max = v[year]
+						}
+						row := make([]float64, nvars)
+						row[ms.Vindx.D(year, j)] = 1
+						A = append(A, row)
+						b = append(b, max)
 					}
-					row := make([]float64, nvars)
-					row[ms.Vindx.D(year, j)] = 1
-					A = append(A, row)
-					b = append(b, max)
 				}
 			}
 		}

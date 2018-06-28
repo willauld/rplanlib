@@ -687,11 +687,13 @@ func (ms ModelSpecs) BuildModel() ([]float64, [][]float64, []float64, []ModelNot
 
 	//fmt.Printf("\nms.accounttable len: %d\n", len(ms.accounttable))
 
+	// This constant is to emphasise spending and assest over taxes
+	Emphasis := 1000.0
 	//
 	// Add objective function (S1') becomes (R1') if PlusEstate is added
 	//
 	for year := 0; year < ms.Ip.Numyr; year++ {
-		c[ms.Vindx.S(year)] = -1
+		c[ms.Vindx.S(year)] = -1 * Emphasis
 	}
 	//
 	// Add objective function tax bracket forcing function
@@ -724,13 +726,13 @@ func (ms ModelSpecs) BuildModel() ([]float64, [][]float64, []float64, []ModelNot
 	if ms.Ip.Maximize == PlusEstate {
 		for j := 0; j < len(ms.Accounttable); j++ {
 			estateTax := ms.Ti.AccountEstateTax[ms.Accounttable[j].acctype]
-			c[ms.Vindx.B(ms.Ip.Numyr, j)] = -1 * estateTax // account discount rate
+			c[ms.Vindx.B(ms.Ip.Numyr, j)] = -1 * Emphasis * estateTax // account discount rate
 		}
 		//fmt.Fprintf(ms.Logfile, "\nConstructing Spending + Estate Model:\n")
 		notes = append(notes, ModelNote{-1, "Objective function R1':"})
 	} else {
 		//fmt.Fprintf(ms.Logfile, "\nConstructing Spending Model:\n")
-		balancer := 0.001
+		balancer := 0.001 * Emphasis
 		for j := 0; j < len(ms.Accounttable); j++ {
 			estateTax := ms.Ti.AccountEstateTax[ms.Accounttable[j].acctype]
 			c[ms.Vindx.B(ms.Ip.Numyr, j)] = -1 * balancer * estateTax // balance and discount rate
@@ -1265,7 +1267,7 @@ func (ms ModelSpecs) PrecheckConsistancy() bool {
 	return true
 }
 
-func (ms ModelSpecs) consistancyCheck(X *[]float64) {
+func (ms ModelSpecs) ConsistancyCheck(X *[]float64) {
 	// check to see if the ordinary tax brackets are filled in properly
 	fmt.Printf("\n\nConsistancy Checking:\n\n")
 

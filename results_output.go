@@ -691,8 +691,12 @@ func (ms ModelSpecs) PrintShadowTaxBrackets(xp *[]float64) {
 		ms.Ao.Output(str)
 		bt := 0.0
 		for l := 0; l < len(*ms.Ti.Capgainstable); l++ {
-			ms.Ao.Output(fmt.Sprintf("&@%6.0f", (*xp)[ms.Vindx.Sy(year, l)]))
-			bt += (*xp)[ms.Vindx.Sy(year, l)]
+			sy := 0.0
+			if ms.Ip.Accmap[Aftertax] > 0 {
+				sy = (*xp)[ms.Vindx.Sy(year, l)]
+			}
+			ms.Ao.Output(fmt.Sprintf("&@%6.0f", sy))
+			bt += sy
 		}
 		ms.Ao.Output(fmt.Sprintf("&@%6.0f\n", bt))
 	}

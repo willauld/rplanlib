@@ -688,7 +688,8 @@ func (ms ModelSpecs) BuildModel() ([]float64, [][]float64, []float64, []ModelNot
 	//fmt.Printf("\nms.accounttable len: %d\n", len(ms.accounttable))
 
 	// This constant is to emphasise spending and assest over taxes
-	Emphasis := 1000.0
+	Emphasis := 500.0
+	//Deemphasis := 0.0
 	//
 	// Add objective function (S1') becomes (R1') if PlusEstate is added
 	//
@@ -1285,7 +1286,6 @@ func (ms ModelSpecs) ConsistancyCheck(X *[]float64) {
 		// First the ordinary income brackets
 		//
 		s := 0.0     // Sum for all bracket contents
-		fz := false  // Fount Zero for bracket contents
 		fnf := false // Found Not Full bracket contents
 		iMul := math.Pow(ms.Ip.IRate, float64(ms.Ip.PrePlanYears+year))
 		for k := 0; k < len(*ms.Ti.Taxtable); k++ {
@@ -1294,17 +1294,10 @@ func (ms ModelSpecs) ConsistancyCheck(X *[]float64) {
 			s += (*X)[ms.Vindx.X(year, k)]
 			if fnf && (*X)[ms.Vindx.X(year, k)] > 0 {
 				// TODO FIXME ERROR? WARN? Should not just print to stdout
-				fmt.Printf("Improperly packed brackets in year %d, bracket %d not empty while previous bracket not full", year, k)
+				fmt.Printf("\nImproperly packed brackets in year %d, bracket %d not empty while previous bracket not full", year, k)
 			}
-			if (*X)[ms.Vindx.X(year, k)]+1 < size {
+			if math.Abs(size-(*X)[ms.Vindx.X(year, k)]) > 0.1 {
 				fnf = true
-			}
-			if fz && (*X)[ms.Vindx.X(year, k)] > 0 {
-				// TODO FIXME ERROR? WARN? Should not just print to stdout
-				fmt.Printf("Inproperly packed tax brackets in year %d bracket %d", year, k)
-			}
-			if (*X)[ms.Vindx.X(year, k)] == 0.0 {
-				fz = true
 			}
 		}
 		//
@@ -1313,34 +1306,29 @@ func (ms ModelSpecs) ConsistancyCheck(X *[]float64) {
 		if ms.Ip.Accmap[Aftertax] > 0 {
 			// first the Shadow brackets that bridge between ordinary and cg
 			sg := 0.0    // Sum for all shadow bracket contents
-			fz := false  // Fount Zero for shadow bracket contents
 			fnf := false // Found Not Full shadow bracket contents
+			gap := 0.0
 			for l := 0; l < len(*ms.Ti.Capgainstable); l++ {
 				size := (*ms.Ti.Capgainstable)[l][1]
 				size *= iMul
 				sg += (*X)[ms.Vindx.Sy(year, l)]
 				if fnf && (*X)[ms.Vindx.Sy(year, l)] > 0 {
 					// TODO FIXME ERROR? WARN? Should not just print to stdout
-					fmt.Printf("Improperly packed brackets in year %d, bracket %d not empty while previous bracket not full", year, l)
+					fmt.Printf("\nImproperly packed shadow brackets in year %d, bracket %d not empty while previous bracket not full (short by %6.0f)", year, l, gap)
 				}
-				if (*X)[ms.Vindx.Sy(year, l)]+1 < size {
+				gap = math.Abs(size - (*X)[ms.Vindx.Sy(year, l)])
+				fnf = false
+				if gap > 0.1 {
 					fnf = true
 				}
-				if fz && (*X)[ms.Vindx.Sy(year, l)] > 0 {
-					// TODO FIXME ERROR? WARN? Should not just print to stdout
-					fmt.Printf("Inproperly packed tax brackets in year %d bracket %d", year, l)
-				}
-				if (*X)[ms.Vindx.Sy(year, l)] == 0.0 {
-					fz = true
-				}
 			}
-			if int(sg) != int(s) {
-				fmt.Printf("Each year sum of shadow brackets %d should equal the sum of ordinary income brackets %d but they do not\n", int(sg), int(s))
+			sumDiff := math.Abs(sg - s)
+			if sumDiff > 0.1 {
+				fmt.Printf("\nEach year sum of shadow brackets %6.2f should equal the sum of ordinary income brackets %6.2f but they do not\n", sg, s)
 			}
 
 			// second the capital gains brackets
 			scg := 0.0  // Sum for all CG bracket content
-			fz = false  // Found Zero bracket content
 			fnf = false // Found Not Full bracket content
 			for l := 0; l < len(*ms.Ti.Capgainstable); l++ {
 				size := (*ms.Ti.Capgainstable)[l][1]
@@ -1354,24 +1342,17 @@ func (ms ModelSpecs) ConsistancyCheck(X *[]float64) {
 				}
 				if fnf && bamount > 0 {
 					// TODO FIXME ERROR? WARN? Should not just print to stdout
-					fmt.Printf("Inproper packed CG brackets in year %d, bracket %d not empty while previous bracket not full", year, l)
+					fmt.Printf("\nInproper packed CG brackets in year %d, bracket %d not empty while previous bracket not full\n", year, l)
 				}
 				if bamount+1 < size {
 					fnf = true
-				}
-				if fz && bamount > 0 {
-					// TODO FIXME ERROR? WARN? Should not just print to stdout
-					fmt.Printf("Inproperly packed GC tax brackets in year %d bracket %d", year, l)
-				}
-				if bamount == 0.0 {
-					fz = true
 				}
 			}
 		}
 		TaxableOrdinary := ms.ordinaryTaxable(year, X)
 		if (TaxableOrdinary+0.1 < s) || (TaxableOrdinary-0.1 > s) {
 			// TODO FIXME ERROR? WARN? Should not just print to stdout
-			fmt.Printf("Error: Expected (age:%d) Taxable Ordinary income %6.2f doesn't match bracket sum %6.2f",
+			fmt.Printf("\nError: Expected (age:%d) Taxable Ordinary income %6.2f doesn't match bracket sum %6.2f\n",
 				year+ms.Ip.StartPlan, TaxableOrdinary, s)
 		}
 		for j := 0; j < len(ms.Accounttable); j++ {
@@ -1379,21 +1360,23 @@ func (ms ModelSpecs) ConsistancyCheck(X *[]float64) {
 			if a > 1 {
 				v := ms.Accounttable[j]
 				// TODO FIXME ERROR? WARN? Should not just print to stdout
-				fmt.Printf("account[%d], type %s, mykey %s", j, v.acctype.String(), v.mykey)
-				fmt.Printf("account[%d] year to year balance NOT OK years %d to %d", j, year, year+1)
-				fmt.Printf("difference is %v", a)
+				fmt.Printf("\naccount[%d], type %s, mykey %s\n", j, v.acctype.String(), v.mykey)
+				fmt.Printf("\tyear to year balance NOT OK years %d to %d\n", j, year, year+1)
+				fmt.Printf("\tdifference is %v\n", a)
 			}
 		}
 
 		_, spendable, tax, _, cgTax, _, _ := ms.IncomeSummary(year, X)
 		if spendable+0.1 < (*X)[ms.Vindx.S(year)] || spendable-0.1 > (*X)[ms.Vindx.S(year)] {
 			// TODO FIXME ERROR? WARN? Should not just print to stdout
-			fmt.Printf("Calc Spendable %6.2f should equal s(year:%d) %6.2f", spendable, year, (*X)[ms.Vindx.S(year)])
+			diff := math.Abs(spendable - (*X)[ms.Vindx.S(year)])
+			fmt.Printf("\nCalc Spendable %6.2f should equal s(year:%d) %6.2f but differ by: %6.2f\n", spendable, year, (*X)[ms.Vindx.S(year)], diff)
+			fmt.Printf("\t")
 			for j := 0; j < len(ms.Accounttable); j++ {
-				fmt.Printf("+w[%d,%d]: %6.0f", year, j, (*X)[ms.Vindx.W(year, j)])
-				fmt.Printf("-D[%d,%d]: %6.0f", year, j, ms.depositAmount(X, year, j))
+				fmt.Printf(" +w[%d,%d]: %6.0f", year, j, (*X)[ms.Vindx.W(year, j)])
+				fmt.Printf(" -D[%d,%d]: %6.0f", year, j, ms.depositAmount(X, year, j))
 			}
-			fmt.Printf("+o[%d]: %6.0f +SS[%d]: %6.0f -tax: %6.0f -cg_tax: %6.0f", year, AccessVector(ms.Income[0], year), year, AccessVector(ms.SS[0], year), tax, cgTax)
+			fmt.Printf(" +o[%d]: %6.0f +SS[%d]: %6.0f -e[%d]: %6.0f -tax: %6.0f -cg_tax: %6.0f\n", year, AccessVector(ms.Income[0], year), year, AccessVector(ms.SS[0], year), year, AccessVector(ms.Expenses[0], year), tax, cgTax)
 		}
 
 		bt := 0.0
@@ -1402,7 +1385,7 @@ func (ms ModelSpecs) ConsistancyCheck(X *[]float64) {
 		}
 		if tax+0.1 < bt || tax-0.1 > bt {
 			// TODO FIXME ERROR? WARN? Should not just print to stdout
-			fmt.Printf("Calc tax %6.2f should equal brackettax(bt)[]: %6.2f", tax, bt)
+			fmt.Printf("\nCalc tax %6.2f should equal brackettax(bt)[]: %6.2f\n", tax, bt)
 		}
 	}
 	fmt.Printf("\n")

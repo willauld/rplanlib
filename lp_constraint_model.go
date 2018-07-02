@@ -68,7 +68,8 @@ type ModelSpecs struct {
 	Errfile *os.File
 	Logfile *os.File
 
-	OneK float64
+	OneK          float64
+	DeveloperInfo bool
 }
 
 func intMax(a, b int) int {
@@ -306,6 +307,7 @@ func NewModelSpecs(vindx VectorVarIndex,
 	ip InputParams,
 	allowDeposits bool,
 	RoundToOneK bool,
+	developerInfo bool,
 	fourPercentRule bool,
 	errfile *os.File,
 	logfile *os.File,
@@ -324,7 +326,8 @@ func NewModelSpecs(vindx VectorVarIndex,
 		Logfile:                 logfile,
 		//csvfile:                 csvfile,
 		//tablefile:               tablefile,
-		OneK: 1000.0,
+		OneK:          1000.0,
+		DeveloperInfo: developerInfo,
 	}
 	if !RoundToOneK {
 		ms.OneK = 1.0
@@ -699,6 +702,7 @@ func (ms ModelSpecs) BuildModel() ([]float64, [][]float64, []float64, []ModelNot
 	//
 	// Add objective function tax bracket forcing function
 	//
+	/**/
 	for year := 0; year < ms.Ip.Numyr; year++ {
 		for k := 0; k < len(*ms.Ti.Taxtable); k++ {
 			// Multiplies the impact of higher brackets opposite to
@@ -707,6 +711,7 @@ func (ms ModelSpecs) BuildModel() ([]float64, [][]float64, []float64, []ModelNot
 			c[ms.Vindx.X(year, k)] = float64(k) / 10.0
 		}
 	}
+	/**/
 	//
 	// Add objective function shadow cap gains bracket forcing function
 	//

@@ -762,11 +762,13 @@ func (ms ModelSpecs) PrintCapGainsBrackets(xp *[]float64) {
 		}
 		//T, spendable, tax, rate, cgtax, earlytax, rothearly := ms.IncomeSummary(year, xp)
 		T, _, _, _, cgtax, _, _ := ms.IncomeSummary(year, xp)
+		var agestr string
 		if ms.Ip.MyKey2 != "" && ms.Ip.FilingStatus == Joint {
-			ms.Ao.Output(fmt.Sprintf("%3d/%3d:", age, age-ms.Ip.AgeDelta))
+			agestr = fmt.Sprintf("%3d/%3d:", age, age-ms.Ip.AgeDelta)
 		} else {
-			ms.Ao.Output(fmt.Sprintf(" %3d:", age))
+			agestr = fmt.Sprintf(" %3d:", age)
 		}
+		ms.Ao.Output(agestr)
 		str := fmt.Sprintf("&@%7.0f&@%7.0f&@%7.0f&@%7.0f&@%7.0f&@%7.0f",
 			atw, tas, f*100, att, T, cgtax)
 		ms.Ao.Output(str)
@@ -782,6 +784,18 @@ func (ms ModelSpecs) PrintCapGainsBrackets(xp *[]float64) {
 			bttax += ty * (*ms.Ti.Capgainstable)[l][2]
 		}
 		ms.Ao.Output(fmt.Sprintf("&@%6.0f\n", bt))
+		if ms.DeveloperInfo {
+			adjInf := math.Pow(ms.Ip.IRate, float64(ms.Ip.PrePlanYears+year))
+			initial_spaces := len(agestr) + len(str)
+			format := fmt.Sprintf("%s%ds", "%", initial_spaces-10)
+			ms.Ao.Output(fmt.Sprintf(format, " "))
+			ms.Ao.Output(fmt.Sprintf("0<-"))
+			for l := 0; l < len(*ms.Ti.Capgainstable)-1; l++ {
+				upperbound := (*ms.Ti.Capgainstable)[l][1] * adjInf // mcg[i,l] inflation adjusted
+				ms.Ao.Output(fmt.Sprintf(" %6.0f <-", upperbound))
+			}
+			ms.Ao.Output("infinity\n")
+		}
 		/*
 		   if args.verbosewga:
 		       print(" cg bracket ttax %6.0f " % bttax, end='')

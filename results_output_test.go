@@ -202,7 +202,7 @@ func TestActivitySummaryHeader(t *testing.T) {
 		logfile := os.Stdout
 		RoundToOneK := false
 		ms, err := NewModelSpecs(vindx, ti, *ip,
-			allowDeposits, RoundToOneK, false,
+			allowDeposits, RoundToOneK, false, false,
 			os.Stderr, logfile, csvfile, logfile, nil)
 		if err != nil {
 			t.Errorf("TestActivitySummaryHeader case %d: %s", i, err)
@@ -302,7 +302,7 @@ retiree1/retiree2
 		logfile := os.Stdout
 		RoundToOneK := false
 		ms, err := NewModelSpecs(vindx, ti, *ip,
-			allowDeposits, RoundToOneK, false,
+			allowDeposits, RoundToOneK, false, false,
 			os.Stderr, logfile, csvfile, logfile, nil)
 		if err != nil {
 			t.Errorf("TestActivitySummaryHeader case %d: %s", i, err)
@@ -842,7 +842,7 @@ retiree1
 		csvfile := (*os.File)(nil)
 		RoundToOneK := false
 		ms, err := NewModelSpecs(vindx, ti, *ip,
-			false, RoundToOneK, false,
+			false, RoundToOneK, false, false,
 			os.Stderr, logfile, csvfile, logfile, nil)
 		if err != nil {
 			t.Errorf("TestActivityAccountTrans case %d: %s", i, err)
@@ -1009,7 +1009,7 @@ retiree1
 		csvfile := (*os.File)(nil)
 		RoundToOneK := false
 		ms, err := NewModelSpecs(vindx, ti, *ip,
-			false, RoundToOneK, false,
+			false, RoundToOneK, false, false,
 			os.Stderr, logfile, csvfile, logfile, nil)
 		if err != nil {
 			t.Errorf("TestPrintTax case %d: %s", i, err)
@@ -1183,7 +1183,7 @@ retiree1
 		csvfile := (*os.File)(nil)
 		RoundToOneK := false
 		ms, err := NewModelSpecs(vindx, ti, *ip,
-			false, RoundToOneK, false,
+			false, RoundToOneK, false, false,
 			os.Stderr, logfile, csvfile, logfile, nil)
 		if err != nil {
 			t.Errorf("TestPrintTaxBrackets case %d: %s", i, err)
@@ -1356,7 +1356,7 @@ retiree1
 		csvfile := (*os.File)(nil)
 		RoundToOneK := false
 		ms, err := NewModelSpecs(vindx, ti, *ip,
-			false, RoundToOneK, false,
+			false, RoundToOneK, false, false,
 			os.Stderr, logfile, csvfile, logfile, nil)
 		if err != nil {
 			t.Errorf("TestPrintCapGainsBrackets case %d: %s", i, err)
@@ -1487,7 +1487,7 @@ func TestOrdinaryTaxable(t *testing.T) {
 		csvfile := (*os.File)(nil)
 		RoundToOneK := false
 		ms, err := NewModelSpecs(vindx, ti, *ip,
-			false, RoundToOneK, false, os.Stderr, logfile, csvfile, logfile, nil)
+			false, RoundToOneK, false, false, os.Stderr, logfile, csvfile, logfile, nil)
 		if err != nil {
 			t.Errorf("TestOrdinaryTaxable case %d: %s", i, err)
 			continue
@@ -1579,7 +1579,7 @@ Total spendable (after tax money): $490_153`,
 		csvfile := (*os.File)(nil)
 		RoundToOneK := false
 		ms, err := NewModelSpecs(vindx, ti, *ip,
-			false, RoundToOneK, false,
+			false, RoundToOneK, false, false,
 			os.Stderr, logfile, csvfile, logfile, nil)
 		if err != nil {
 			t.Errorf("TestPrintBaseConfig case %d: %s", i, err)
@@ -2011,7 +2011,7 @@ func TestResultsOutput(t *testing.T) {
 		}
 		RoundToOneK := false
 		ms, err := NewModelSpecs(vindx, ti, *ip,
-			elem.allowDeposits, RoundToOneK, false,
+			elem.allowDeposits, RoundToOneK, false, false,
 			os.Stderr, logfile, csvfile, logfile, nil)
 		if err != nil {
 			t.Errorf("TestResultsOutput case %d: %s", i, err)
@@ -2164,7 +2164,7 @@ func GenStockOutput(t *testing.T) {
 		}
 		RoundToOneK := false
 		ms, err := NewModelSpecs(vindx, ti, *ip,
-			elem.allowDeposits, RoundToOneK, false,
+			elem.allowDeposits, RoundToOneK, false, false,
 			os.Stderr, logfile, csvfile, logfile, nil)
 		if err != nil {
 			t.Errorf("TestResultsOutput case %d: %s", i, err)

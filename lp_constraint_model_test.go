@@ -474,7 +474,7 @@ func TestNewModelSpecs(t *testing.T) {
 		}
 		RoundToOneK := false
 		ms, err := NewModelSpecs(vindx, ti, *ip,
-			elem.allowDeposits, RoundToOneK, false,
+			elem.allowDeposits, RoundToOneK, false, false,
 			os.Stderr, os.Stdout, nil, nil, nil)
 		if err != nil {
 			t.Errorf("TestNewModelSpecs case %d: %s\n", i, err)
@@ -615,7 +615,7 @@ func TestBuildModel(t *testing.T) {
 		logfile, err := os.Create("ModelMatixPP.log")
 		RoundToOneK := false
 		ms, err := NewModelSpecs(vindx, ti, *ip,
-			elem.allowDeposits, RoundToOneK, false,
+			elem.allowDeposits, RoundToOneK, false, false,
 			os.Stderr, logfile, nil, nil, nil)
 		if err != nil {
 			t.Errorf("TestNewModelSpecs case %d: %s\n", i, err)

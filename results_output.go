@@ -642,7 +642,7 @@ func (ms ModelSpecs) PrintTaxBrackets(xp *[]float64) {
 	}
 	if ms.DeveloperInfo {
 		var agestr string
-		ms.Ao.Output("Yearly ordinary income bracket boundries:\n")
+		ms.Ao.Output("Yearly ordinary income bracket boundaries:\n")
 		for year := 0; year < ms.Ip.Numyr; year++ {
 			age := year + ms.Ip.StartPlan
 			if ms.Ip.MyKey2 != "" && ms.Ip.FilingStatus == Joint {
@@ -728,7 +728,7 @@ func (ms ModelSpecs) PrintShadowTaxBrackets(xp *[]float64) {
 	}
 	if ms.DeveloperInfo {
 		var agestr string
-		ms.Ao.Output("Yearly Shadow bracket boundries:\n")
+		ms.Ao.Output("Yearly Shadow bracket boundaries:\n")
 		for year := 0; year < ms.Ip.Numyr; year++ {
 			age := year + ms.Ip.StartPlan
 			if ms.Ip.MyKey2 != "" && ms.Ip.FilingStatus == Joint {
@@ -844,7 +844,7 @@ func (ms ModelSpecs) PrintCapGainsBrackets(xp *[]float64) {
 	}
 	if ms.DeveloperInfo {
 		var agestr string
-		ms.Ao.Output("Yearly Capital Gains bracket boundries:\n")
+		ms.Ao.Output("Yearly Capital Gains bracket boundaries:\n")
 		for year := 0; year < ms.Ip.Numyr; year++ {
 			age := year + ms.Ip.StartPlan
 			if ms.Ip.MyKey2 != "" && ms.Ip.FilingStatus == Joint {

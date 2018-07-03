@@ -1336,7 +1336,7 @@ func (ms ModelSpecs) ConsistencyCheck(f *os.File, X *[]float64) {
 			}
 			sumDiff := math.Abs(sg - s)
 			if sumDiff > 0.1 {
-				fmt.Fprintf(f, "\nSum of shadow brackets %6.2f should equal the sum of ordinary income brackets %6.2f but they do not (difference is: %6.2f\n", sg, s, sumDiff)
+				fmt.Fprintf(f, "\nYear (%d), Sum of shadow brackets %6.2f should equal the sum of ordinary income brackets %6.2f but they do not (difference is: %6.2f\n", year, sg, s, sumDiff)
 			}
 
 			//

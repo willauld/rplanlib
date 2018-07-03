@@ -607,6 +607,7 @@ func (ms ModelSpecs) PrintTaxBrackets(xp *[]float64) {
 	// For the bracket output don't do any rounding (ms.OneK)
 	ms.Ao.Output("\nOverall Tax Bracket Summary:\n")
 	ms.printHeaderTaxBrackets()
+	colstrlen := 0
 	for year := 0; year < ms.Ip.Numyr; year++ {
 		age := year + ms.Ip.StartPlan
 		iMul := math.Pow(ms.Ip.IRate, float64(ms.Ip.PrePlanYears+year))
@@ -631,12 +632,35 @@ func (ms ModelSpecs) PrintTaxBrackets(xp *[]float64) {
 			ms.Ti.SStaxable*AccessVector(ms.SS[0], year), // /ms.OneK,
 			ms.Ti.Stded*iMul /*/ms.OneK*/, T /*/ms.OneK*/, tax /*/ms.OneK*/)
 		ms.Ao.Output(str)
+		colstrlen = len(str)
 		bt := 0.0
 		for k := 0; k < len(*ms.Ti.Taxtable); k++ {
 			ms.Ao.Output(fmt.Sprintf("&@%6.0f", (*xp)[ms.Vindx.X(year, k)]))
 			bt += (*xp)[ms.Vindx.X(year, k)]
 		}
 		ms.Ao.Output(fmt.Sprintf("&@%6.0f\n", bt))
+	}
+	if ms.DeveloperInfo {
+		var agestr string
+		ms.Ao.Output("Yearly ordinary income bracket boundries:\n")
+		for year := 0; year < ms.Ip.Numyr; year++ {
+			age := year + ms.Ip.StartPlan
+			if ms.Ip.MyKey2 != "" && ms.Ip.FilingStatus == Joint {
+				agestr = fmt.Sprintf("%3d/%3d:", age, age-ms.Ip.AgeDelta)
+			} else {
+				agestr = fmt.Sprintf(" %3d:", age)
+			}
+			ms.Ao.Output(agestr)
+			adjInf := math.Pow(ms.Ip.IRate, float64(ms.Ip.PrePlanYears+year))
+			format := fmt.Sprintf("%s%ds", "%", colstrlen-10)
+			ms.Ao.Output(fmt.Sprintf(format, "@@@@@@"))
+			ms.Ao.Output(fmt.Sprintf("Bracket size:@&&"))
+			for k := 0; k < len(*ms.Ti.Taxtable)-1; k++ {
+				bsize := (*ms.Ti.Taxtable)[k][1] * adjInf // mcg[i,l] inflation adjusted
+				ms.Ao.Output(fmt.Sprintf("&&@%6.0f", bsize))
+			}
+			ms.Ao.Output("@&inf\n")
+		}
 	}
 	ms.printHeaderTaxBrackets()
 }
@@ -665,6 +689,7 @@ func (ms ModelSpecs) PrintShadowTaxBrackets(xp *[]float64) {
 	// For the bracket output don't do any rounding (ms.OneK)
 	ms.Ao.Output("\nOverall Shadow Tax Bracket Summary:\n")
 	ms.printHeaderShadowTaxBrackets()
+	colstrlen := 0
 	for year := 0; year < ms.Ip.Numyr; year++ {
 		age := year + ms.Ip.StartPlan
 		iMul := math.Pow(ms.Ip.IRate, float64(ms.Ip.PrePlanYears+year))
@@ -689,6 +714,7 @@ func (ms ModelSpecs) PrintShadowTaxBrackets(xp *[]float64) {
 			ms.Ti.SStaxable*AccessVector(ms.SS[0], year), // /ms.OneK,
 			ms.Ti.Stded*iMul /*/ms.OneK*/, T /*/ms.OneK*/, tax /*/ms.OneK*/)
 		ms.Ao.Output(str)
+		colstrlen = len(str)
 		bt := 0.0
 		for l := 0; l < len(*ms.Ti.Capgainstable); l++ {
 			sy := 0.0
@@ -699,6 +725,28 @@ func (ms ModelSpecs) PrintShadowTaxBrackets(xp *[]float64) {
 			bt += sy
 		}
 		ms.Ao.Output(fmt.Sprintf("&@%6.0f\n", bt))
+	}
+	if ms.DeveloperInfo {
+		var agestr string
+		ms.Ao.Output("Yearly Shadow bracket boundries:\n")
+		for year := 0; year < ms.Ip.Numyr; year++ {
+			age := year + ms.Ip.StartPlan
+			if ms.Ip.MyKey2 != "" && ms.Ip.FilingStatus == Joint {
+				agestr = fmt.Sprintf("%3d/%3d:", age, age-ms.Ip.AgeDelta)
+			} else {
+				agestr = fmt.Sprintf(" %3d:", age)
+			}
+			ms.Ao.Output(agestr)
+			adjInf := math.Pow(ms.Ip.IRate, float64(ms.Ip.PrePlanYears+year))
+			format := fmt.Sprintf("%s%ds", "%", colstrlen-10)
+			ms.Ao.Output(fmt.Sprintf(format, "@@@@@@"))
+			ms.Ao.Output(fmt.Sprintf("Bracket Size:@&"))
+			for l := 0; l < len(*ms.Ti.Capgainstable)-1; l++ {
+				bsize := (*ms.Ti.Capgainstable)[l][1] * adjInf // mcg[i,l] inflation adjusted
+				ms.Ao.Output(fmt.Sprintf("&&@%6.0f", bsize))
+			}
+			ms.Ao.Output("&@inf\n")
+		}
 	}
 	ms.printHeaderShadowTaxBrackets()
 }
@@ -739,6 +787,7 @@ func (ms ModelSpecs) PrintCapGainsBrackets(xp *[]float64) {
 	// For the bracket output don't do any rounding (ms.OneK)
 	ms.Ao.Output("\nOverall Capital Gains Bracket Summary:\n")
 	ms.printHeaderCapgainsBrackets()
+	colstrlen := 0
 	for year := 0; year < ms.Ip.Numyr; year++ {
 		age := year + ms.Ip.StartPlan
 		//iMul := math.Pow(ms.Ip.IRate, float64(ms.Ip.PrePlanYears+year))
@@ -772,6 +821,7 @@ func (ms ModelSpecs) PrintCapGainsBrackets(xp *[]float64) {
 		str := fmt.Sprintf("&@%7.0f&@%7.0f&@%7.0f&@%7.0f&@%7.0f&@%7.0f",
 			atw, tas, f*100, att, T, cgtax)
 		ms.Ao.Output(str)
+		colstrlen = len(str)
 		bt := 0.0
 		bttax := 0.0
 		for l := 0; l < len(*ms.Ti.Capgainstable); l++ {
@@ -784,18 +834,6 @@ func (ms ModelSpecs) PrintCapGainsBrackets(xp *[]float64) {
 			bttax += ty * (*ms.Ti.Capgainstable)[l][2]
 		}
 		ms.Ao.Output(fmt.Sprintf("&@%6.0f\n", bt))
-		if ms.DeveloperInfo {
-			adjInf := math.Pow(ms.Ip.IRate, float64(ms.Ip.PrePlanYears+year))
-			initial_spaces := len(agestr) + len(str)
-			format := fmt.Sprintf("%s%ds", "%", initial_spaces-10)
-			ms.Ao.Output(fmt.Sprintf(format, " "))
-			ms.Ao.Output(fmt.Sprintf("0<-"))
-			for l := 0; l < len(*ms.Ti.Capgainstable)-1; l++ {
-				upperbound := (*ms.Ti.Capgainstable)[l][1] * adjInf // mcg[i,l] inflation adjusted
-				ms.Ao.Output(fmt.Sprintf(" %6.0f <-", upperbound))
-			}
-			ms.Ao.Output("infinity\n")
-		}
 		/*
 		   if args.verbosewga:
 		       print(" cg bracket ttax %6.0f " % bttax, end='')
@@ -803,6 +841,28 @@ func (ms ModelSpecs) PrintCapGainsBrackets(xp *[]float64) {
 		       print("x->y[2]: %6.0f "% (res.x[vindx.x(year,2)]+ res.x[vindx.x(year,3)]+ res.x[vindx.x(year,4)]+res.x[vindx.x(year,5)]),end='')
 		       print("x->y[3]: %6.0f"% res.x[vindx.x(year,6)])
 		*/
+	}
+	if ms.DeveloperInfo {
+		var agestr string
+		ms.Ao.Output("Yearly Capital Gains bracket boundries:\n")
+		for year := 0; year < ms.Ip.Numyr; year++ {
+			age := year + ms.Ip.StartPlan
+			if ms.Ip.MyKey2 != "" && ms.Ip.FilingStatus == Joint {
+				agestr = fmt.Sprintf("%3d/%3d:", age, age-ms.Ip.AgeDelta)
+			} else {
+				agestr = fmt.Sprintf(" %3d:", age)
+			}
+			ms.Ao.Output(agestr)
+			adjInf := math.Pow(ms.Ip.IRate, float64(ms.Ip.PrePlanYears+year))
+			format := fmt.Sprintf("%s%ds", "%", colstrlen-10)
+			ms.Ao.Output(fmt.Sprintf(format, "@@@@@"))
+			ms.Ao.Output(fmt.Sprintf("Bracket Size:@&&"))
+			for l := 0; l < len(*ms.Ti.Capgainstable)-1; l++ {
+				bsize := (*ms.Ti.Capgainstable)[l][1] * adjInf // mcg[i,l] inflation adjusted
+				ms.Ao.Output(fmt.Sprintf("&&@%6.0f", bsize))
+			}
+			ms.Ao.Output("@&inf\n")
+		}
 	}
 	ms.printHeaderCapgainsBrackets()
 }

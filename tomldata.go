@@ -8,7 +8,6 @@ import (
 	"strings"
 
 	"github.com/pelletier/go-toml"
-	"github.com/willauld/rplanlib"
 )
 
 var iamKeys = []string{"primary", "age", "retire", "through", "definedContributionPlan"}
@@ -356,7 +355,7 @@ func GetInputStringsMapFromToml(filename string) (*map[string]string, error) {
 		return nil, e
 	}
 
-	ipsm := rplanlib.NewInputStringsMap()
+	ipsm := NewInputStringsMap()
 
 	// Need to ensure that ONE iam is primary if there are two
 
@@ -407,7 +406,7 @@ func GetInputStringsMapFromToml(filename string) (*map[string]string, error) {
 				continue
 			}
 			n := iamNames[indx-1]
-			err = setStringMapValueWithValue(&ipsm, rplanlib.InputStrDefs[i], n)
+			err = setStringMapValueWithValue(&ipsm, InputStrDefs[i], n)
 			if err != nil {
 				fmt.Printf("getInputStringsMapFromToml: %s\n", err)
 			}
@@ -415,7 +414,7 @@ func GetInputStringsMapFromToml(filename string) (*map[string]string, error) {
 		}
 		indxP := strings.Index(k, "%")
 		if indxP < 0 {
-			err = setStringMapValue(&ipsm, rplanlib.InputStrDefs[i], k, config)
+			err = setStringMapValue(&ipsm, InputStrDefs[i], k, config)
 			if err != nil {
 				fmt.Printf("getInputStringsMapFromToml: %s\n", err)
 			}
@@ -441,7 +440,7 @@ func GetInputStringsMapFromToml(filename string) (*map[string]string, error) {
 		}
 		//fmt.Printf("Will use path: %s\n", p)
 
-		err = setStringMapValue(&ipsm, rplanlib.InputStrDefs[i], p, config)
+		err = setStringMapValue(&ipsm, InputStrDefs[i], p, config)
 		if err != nil {
 			fmt.Printf("getInputStringsMapFromToml: %s\n", err)
 		}
@@ -451,10 +450,10 @@ func GetInputStringsMapFromToml(filename string) (*map[string]string, error) {
 	// Now we can work our way though setting values in InputStreamStrDefs
 	//
 	var names []string
-	for j := 1; j < rplanlib.MaxStreams+1; j++ {
+	for j := 1; j < MaxStreams+1; j++ {
 		for i, k := range TomlStreamStrDefs {
 			//fmt.Printf("InputStrDefs[%d]: '%s', TomlStreamStrDefs[%d]: '%s'\n", i, rplanlib.InputStreamStrDefs[i], i, k)
-			targetStr := fmt.Sprintf("%s%d", rplanlib.InputStreamStrDefs[i], j)
+			targetStr := fmt.Sprintf("%s%d", InputStreamStrDefs[i], j)
 			if k[0] == '@' {
 				switch k[1:] {
 				case "income":

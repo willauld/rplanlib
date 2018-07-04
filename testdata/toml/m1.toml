@@ -1,0 +1,35 @@
+title = "activeParams"
+retirement_type = 'joint'
+#maximize = "PlusEstate"
+[iam.joe]
+primary=true
+age = 60
+retire = 65
+through = 75
+
+[iam.spouse]
+#primary=true
+age = 61
+retire = 66
+through = 76
+
+[SocialSecurity.joe]
+amount = 20_000
+age = 67
+
+[SocialSecurity.spouse]
+amount = 0
+age = 67
+
+[IRA.joe]
+bal = 100_000
+
+[roth.joe]
+bal = 200_000
+
+[aftertax]
+bal = 5_000_000
+
+#[min.income]
+#[max.income]
+#amount = 10_000

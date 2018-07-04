@@ -1,0 +1,88 @@
+# This input file is meant as a starter for a joint plan
+
+# most fields are options and have reasonable defaults
+
+#retirement_type = 'joint' # defaults to joint, could be single, joint (married) or mseparate (married filing separately)
+
+returns = 6		# return rate of investments, defaults to 6%
+inflation = 2.5	# yearly inflation rate, defaults to 0%
+
+# what to optimize for? 'Spending' or spending 'PlusEstate', defaults to Spending
+maximize = "PlusEstate"
+
+[iam.Jim]  # iam (for each) is required in some joint cases (".xxx" use to match accounts IRA/roth)
+primary = true  # retiree to have age listed first in the output (must choose one)
+age = 64        # your current age
+retire = 65     # age you plan to retire
+through = 85    # age you want to plan through
+
+[iam.Eve]  # iam (for each) is required in some joint cases (".xxx" use to match accounts IRA/roth)
+age = 54        # your current age
+retire = 67     # age you plan to retire
+through = 85    # age you want to plan through
+definedContributionPlan = "54-66" # Years for a 401(k), 403(b), TSP
+
+[SocialSecurity.Jim]
+FRA = 66            # your full retirement age (FRA) according to the IRS
+amount =  30_000    # estimated yearly amount at Full Retirement Age (FRA); Assumes inflation, 85% taxed 
+			#66 is 2740, 70 is 3673
+age = "70-"         # period you expect to receive SS ("68-" indicates start at 68 and continue)
+
+[SocialSecurity.Eve]
+FRA = 67            # your full retirement age (FRA) according to the IRS
+amount = -1         # -1 for default spousal benefit amount, amount at Full Retirement Age (FRA); Assumes inflation, 85% taxed
+age = "67-"         # period you expect to receive SS ("68-" indicates start at 68 and continue)
+
+[income.Eve]
+amount = 60_000      # yearly amount
+age = "65-76"      # period you expect to receive it # WGA Change to primary age line.(jim's age)
+inflation = false  # not inflation adjusted
+tax = true        # not federally taxable
+
+
+[asset.home]
+value = 450_000                 # current value of the asset
+costAndImprovements = 300_000   # purchase price plus improvement cost
+ageToSell = 72                  # age at which to sell the asset
+owedAtAgeToSell = 200_000       # amount owed at time of sell (ageToSell)
+primaryResidence = true         # Primary residence gets tax break
+rate = 4                        # avg rate of return (defaults to global rate
+
+
+[min.income]   # used when maximize = "PlusEstate"
+amount = 120_000    # retirement first year income
+
+#[max.income]       # used when maximize = "Spendable" (default)
+#amount = 100_000   # retirement first year income
+
+# pre-tax IRA accounts (TDRA)
+[IRA.Jim]
+bal = 900_000       # current balance 
+#rate = 7.25        # defaults to global rate set above
+#contrib = 0        # Annual contribution you will make for period (below)
+#inflation = false  # Will the contribution rise with inflation?
+#period = '56-60'   # period you will be making the contributions
+
+[IRA.Eve]
+bal = 40_000      # current balance
+#rate = 7.25        # defaults to global rate set above
+contrib = 10_000       # Annual contribution you will make for period (below)
+#inflation = false  # Will the contribution rise with inflation?
+period = '54-66'   # period you will be making the contributions
+
+# roth IRA accounts (RothRA)
+[roth.Jim]
+bal = 14_000       # current balance
+#rate = 7.25        # defaults to global rate set above
+contrib = 0        # Annual contribution you will make for period (below)
+#inflation = false  # Will the contribution rise with inflation?
+#period = '56-60'   # period you will be making the contributions
+
+# after tax savings accounts (ATRSI)
+[aftertax]
+bal =   80_000    # current balance
+basis = 50_000	    # Contributions to total, for capital gains tax
+#rate = 7.25        # defaults to global rate set above
+contrib = 0        # Annual contribution you will make for period (below)
+#inflation = false  # Will the contribution rise with inflation?
+#period = '56-60'   # period you will be making the contributions

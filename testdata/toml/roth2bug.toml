@@ -1,0 +1,41 @@
+title = "activeParams"
+retirement_type = 'joint'
+#maximize = "PlusEstate"
+[iam.joe]
+primary=true
+age = 60
+retire = 65
+through = 75
+
+[iam.Eve]
+age = 54
+retire = 66
+through = 75
+definedContributionPlan = "55-66"
+
+[SocialSecurity.joe]
+amount = 20_000
+age = 67
+
+[IRA.joe]
+bal = 100_000
+
+[roth.joe]
+bal = 200_000
+
+[income]
+amount = 60_000
+age = "61-72"
+tax = true
+
+[roth.Eve]
+bal = 0              # current balance
+#rate = 7.25        # defaults to global rate set above
+contrib = 13_000   # Annual contribution you will make for period (below)
+#inflation = false  # Will the contribution rise with inflation?
+period = '55-66'   # period you will be making the contributions
+
+
+#[min.income]
+#[max.income]
+#amount = 10_000

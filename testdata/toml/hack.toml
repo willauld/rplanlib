@@ -1,0 +1,160 @@
+# This input file is meant as a starter for a joint plan
+
+# most fields are options and have reasonable defaults
+title = "hack.toml"
+retirement_type = 'joint' # defaults to joint, could be single, joint (married) or mseparate (married filing separately)
+
+returns = 6.0		# return rate of investments, defaults to 6%
+inflation = 2.5	# yearly inflation rate, defaults to 0%
+
+# what to optimize for? 'Spending' or spending 'PlusEstate', defaults to Spending
+#maximize = "PlusEstate"
+
+[iam]  # iam (for each) is required in some joint cases (".xxx" use to match accounts IRA/roth)
+primary = true  # retiree to have age listed first in the output (must choose one)
+age = 54        # your current age
+retire = 65     # age you plan to retire
+through = 75    # age you want to plan through
+
+[iam.retiree2]  # iam (for each) is required in some joint cases (".xxx" use to match accounts IRA/roth)
+age = 54        # your current age
+retire = 65     # age you plan to retire
+through = 75    # age you want to plan through
+
+[SocialSecurity.retiree1]
+FRA = 67            # your full retirement age (FRA) according to the IRS
+amount =  20_000    # estimated yearly amount at Full Retirement Age (FRA); Assumes inflation, 85% taxed
+age = "70-"         # period you expect to receive SS ("68-" indicates start at 68 and continue)
+
+[SocialSecurity.retiree2]
+FRA = 67            # your full retirement age (FRA) according to the IRS
+amount = -1         # -1 for default spousal benefit amount, amount at Full Retirement Age (FRA); Assumes inflation, 85% taxed
+age = "70-"         # period you expect to receive SS ("68-" indicates start at 68 and continue)
+
+[income.rental1]
+amount = 1000
+age = "63-67"
+inflation = true
+tax = true
+
+[income.rental2]
+amount = 2000
+age = "62-70"
+inflation = false
+tax = true
+
+[expense.exp1]
+amount = 1000
+age = "63-67"
+inflation = true
+tax = true
+
+[expense.exp2]
+amount = 2000
+age = "62-70"
+inflation = false
+tax = true
+
+[asset.ass1]
+value = 100_000                 # current value of the asset
+costAndImprovements = 20_000   # purchase price plus improvement cost
+ageToSell = 73                  # age at which to sell the asset
+owedAtAgeToSell = 10_000       # amount owed at time of sell (ageToSell)
+primaryResidence = true         # Primary residence gets tax break
+rate = 4.0                        # avg rate of return (defaults to global rate)
+brokerageRate = 4.0               # brokerage fee percentage (defaults to 4%)
+
+[asset.ass2]
+value = 100_000                 # current value of the asset
+costAndImprovements = 20_000   # purchase price plus improvement cost
+ageToSell = 73                  # age at which to sell the asset
+owedAtAgeToSell = 10_000       # amount owed at time of sell (ageToSell)
+primaryResidence = false         # Primary residence gets tax break
+#rate = 4.0                        # avg rate of return (defaults to global rate)
+#brokerageRate = 4.0               # brokerage fee percentage (defaults to 4%)
+
+#[income.taxfreeNoneInflationAdjustedAnuity]
+#amount = 3000      # yearly amount
+#age = "65-70"      # period you expect to receive it
+#inflation = false  # not inflation adjusted
+#tax = false        # not federally taxable
+
+#[income.InflationAdjustedAnuity]
+#amount = 3000      # yearly amount
+#age = "65-70"      # period you expect to receive it
+#inflation = true   # inflation adjusted
+#tax = true         # federally taxable
+
+#[income.reversemortgage]
+#amount = 12000      # yearly amount, 1000/mo
+#age = '70-'         # period to receive payments
+#inflation = false   # payment is not inflation adjusted
+#tax = false         # payment/loan is not taxable
+
+#[income.rental]
+#amount = 5_000     # yearly amount
+#age = "67-"        # period you expect to receive it
+#inflation = true   # inflation adjusted
+#tax = true         # federally taxable
+
+#[asset.home]
+#value = 550_000                 # current value of the asset
+#costAndImprovements = 300_000   # purchase price plus improvement cost
+#ageToSell = 72                  # age at which to sell the asset
+#owedAtAgeToSell = 100_000       # amount owed at time of sell (ageToSell)
+#primaryResidence = true         # Primary residence gets tax break
+#rate = 4.0                        # avg rate of return (defaults to global rate)
+#brokerageRate = 4.0               # brokerage fee percentage (defaults to 4%)
+
+#[asset.rental]
+#value = 250_000                 # current value of the asset
+#costAndImprovements = 150_000   # purchase price plus improvement cost
+#ageToSell = 72                  # age at which to sell the asset
+#owedAtAgeToSell = 100_000       # amount owed at time of sell (ageToSell)
+#primaryResidence = false        # Primary residence gets tax break
+#rate = 4.0                        # avg rate of return (defaults to global rate)
+
+#[min.income]   # used when maximize = "PlusEstate"
+#amount = 45_000    # retirement first year income
+
+#[max.income]       # used when maximize = "Spendable" (default)
+#amount = 100_000   # retirement first year income
+
+# pre-tax IRA accounts (TDRA)
+[IRA.retiree1]
+bal = 200_000       # current balance 
+#rate = 7.25        # defaults to global rate set above
+#contrib = 0        # Annual contribution you will make for period (below)
+inflation = true  # Will the contribution rise with inflation?
+#period = '56-60'   # period you will be making the contributions
+
+[IRA.retiree2]
+bal = 0 #100_000      # current balance
+#rate = 7.25        # defaults to global rate set above
+contrib = 5_000        # Annual contribution you will make for period (below)
+inflation = true  # Will the contribution rise with inflation?
+period = '63-64'   # period you will be making the contributions
+
+# roth IRA accounts (RothRA)
+[roth.retiree1]
+bal = 5_000       # current balance
+#rate = 7.25        # defaults to global rate set above
+#contrib = 0        # Annual contribution you will make for period (below)
+#inflation = false  # Will the contribution rise with inflation?
+#period = '56-60'   # period you will be making the contributions
+
+[roth.retiree2]
+bal = 20_000       # current balance
+#rate = 7.25        # defaults to global rate set above
+#contrib = 0        # Annual contribution you will make for period (below)
+#inflation = false  # Will the contribution rise with inflation?
+#period = '56-60'   # period you will be making the contributions
+
+# after tax savings accounts (ATRSI)
+[aftertax]
+bal =   60_000    # current balance
+#basis = 50_000	    # Contributions to total, for capital gains tax
+#rate = 7.25        # defaults to global rate set above
+contrib = 10_000        # Annual contribution you will make for period (below)
+inflation = true  # Will the contribution rise with inflation?
+period = '63-67'   # period you will be making the contributions

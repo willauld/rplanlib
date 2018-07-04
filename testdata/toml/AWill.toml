@@ -1,0 +1,114 @@
+# This Will's working input file for ARetirementPlanner.py
+
+# The format of this file will likely change in the future as
+# the program changes in the future.
+
+# most fields are options and have resonable defaults
+
+returns = 6		# return rate of investments
+inflation = 2.5		# yearly inflation rate
+
+# what to optimize for?
+#maximize = "PlusEstate"
+
+[iam.will]
+primary = true
+age = 56
+retire = 57
+through = 100
+
+[iam.yuli]
+age = 54
+retire = 62 
+through = 100
+#definedContributionPlan = "54-62" # Years for a 401(k), 403(b), TSP
+
+# assume Social Security will start paying $31k/yr at age FRA 
+# the SS payout is scaled by inflation
+[SocialSecurity.will]
+amount = 31_000 # SS estimate for Full Retirement Age (FRA) 67
+FRA = 67
+age = "70-" 
+
+[SocialSecurity.yuli]
+amount = -1 # SS estimate for Full Retirement Age (FRA) 67
+FRA = 67
+age = "68-" 
+
+#[min.income]
+#amount = 90000    # want $120,000 per year
+
+#[max.income]
+#amount = 100000
+
+## extra payments required not to be included in the yearly spendable
+## mortgage at $3800/mo for 4 years or 46,600 yearly
+[expense.mortgage]
+#amount = 46_600
+amount = 37_131 ### model becomes unbounded at 37_132 with NO OTHER Expense (add college is ok???)
+age = "56-61"
+
+[expense.college]
+amount = 30_000
+age = "56-59"
+inflation = false
+
+[income.rental_Fessenden]
+amount = 36_000     # 3,000 per month now
+age = "57-75"       # upper age is the planned age for sell
+inflation = true
+tax = true          # count this as income tax
+
+[income.rental_VanHoutin]
+amount = 24_000 # 2,000 per month NOT SURE I HAVE THE START YEAR CORRECT
+age = "67-80"       # upper age is the planned age for sell
+inflation = true
+tax = true          # count this as income tax
+
+[asset.home]
+value = 550_000                 # current value of the asset
+costAndImprovements = 300_000   # purchase price plus improvment cost
+ageToSell = 0                   # age at which to sell the asset
+owedAtAgeToSell = 0             # amount owed at time of sell (ageToSell)
+primaryResidence = true         # Primary residence gets tax break
+rate = 4                        # avg rate of return (defaults to global rate)
+
+[asset.rental_Fessenden]
+value = 900_000                 # current value of the asset
+costAndImprovements = 450_000   # purchase price plus improvment cost
+ageToSell = 75                  # age at which to sell the asset
+owedAtAgeToSell = 0             # amount owed at time of sell (ageToSell)
+primaryResidence = false        # Primary residence gets tax break
+rate = 4                        # avg rate of return (defaults to global rate)
+
+[asset.rental_VanHoutin]
+value = 700_000                 # current value of the asset
+costAndImprovements = 425_000   # purchase price plus improvment cost
+ageToSell = 80                  # age at which to sell the asset
+owedAtAgeToSell = 0             # amount owed at time of sell (ageToSell)
+primaryResidence = false        # Primary residence gets tax break
+rate = 4                        # avg rate of return (defaults to global rate)
+
+# after tax savings accounts
+[aftertax]
+bal =   700_000
+basis = 400_000		# for capital gains tax
+
+# pre-tax IRA accounts
+[IRA.will]
+bal = 1_400_000
+#rate = 7.25
+contrib = 00
+
+# roth IRA accounts
+[IRA.yuli]
+bal = 18_000
+#contrib = 1_000
+#period = '54-62'
+#period = '54-72'
+
+[roth.will]
+bal = 0
+#
+[roth.yuli]
+bal = 0

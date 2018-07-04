@@ -3,6 +3,7 @@ package rplanlib_test
 import (
 	"fmt"
 	"os"
+	"strings"
 	//"regexp"
 	//"strings"
 	"path/filepath"
@@ -81,8 +82,13 @@ func TestE2E(t *testing.T) {
 		t.Errorf("TestE2E Error: %s", err)
 	}
 	for i, ifile := range paramfiles {
-		if i == 1 {
-			fmt.Printf("Testing input files, i: %d, ifile: %s\n", i, ifile)
+		ifilecore := strings.TrimSuffix(filepath.Base(ifile), filepath.Ext(ifile))
+		ifileext := filepath.Ext(ifile)
+		//ifiledirpath := strings.TrimSuffix(ifile, filepath.Base(ifile))
+		if i == -1 {
+			//fmt.Printf("Testing input files, i: %d, ifile: %s\n", i, ifile)
+			//fmt.Printf("core: %s\n", ifilecore)
+			//fmt.Printf("dirpath: %s\n", ifiledirpath)
 			break
 		}
 		fmt.Printf("======== CASE %d - %s ========\n", i, ifile)
@@ -113,13 +119,15 @@ func TestE2E(t *testing.T) {
 			t.Errorf("TestE2E case %d: %s", i, err)
 			continue
 		}
-		logfile, err := os.Create("ModelMatixPP.log")
+		logname := "./testdata/" + ifileext[1:] + "_test_output/" + ifilecore + ".log"
+		logfile, err := os.Create(logname)
 		if err != nil {
 			t.Errorf("TestE2E case %d: %s", i, err)
 			continue
 		}
 		//csvfile := (*os.File)(nil)
-		csvfile, err := os.Create("ModelOutput.csv")
+		csvname := "./testdata/" + ifileext[1:] + "_test_output/" + ifilecore + ".csv"
+		csvfile, err := os.Create(csvname)
 		if err != nil {
 			t.Errorf("TestE2E case %d: %s", i, err)
 			continue
@@ -141,7 +149,7 @@ func TestE2E(t *testing.T) {
 		aprime, bprime, oinfo := ms.OptimizeLPModel(&a, &b)
 		Optelapsed := time.Since(Optstart)
 
-		ms.PrintModelMatrix(c, a, b, notes, nil, false, oinfo)
+		ms.PrintModelMatrix(c, a, b, notes, nil, false, oinfo) // TODO FIXME need to make this print somewhere else for examining the optimized model
 
 		tol := 1.0e-7
 
@@ -157,7 +165,7 @@ func TestE2E(t *testing.T) {
 		elapsed := time.Since(start)
 
 		Ostart := time.Now()
-		res = lpsimplex.LPSimplex(c, *aprime, *bprime, nil, nil, nil, callback, disp, maxiter, tol, bland)
+		resPrime := lpsimplex.LPSimplex(c, *aprime, *bprime, nil, nil, nil, callback, disp, maxiter, tol, bland)
 		Oelapsed := time.Since(Ostart)
 		/*
 			err = BinDumpModel(c, a, b, res.X, "./RPlanModelgo.datX")
@@ -171,34 +179,31 @@ func TestE2E(t *testing.T) {
 		//fmt.Printf("Res: %#v\n", res)
 		str := fmt.Sprintf("Message: %v\n", res.Message)
 		fmt.Printf(str)
+		str = fmt.Sprintf("Message ResPrime: %v\n", resPrime.Message)
+		fmt.Printf(str)
 		str = fmt.Sprintf("Time: LPSimplex() took %s\n", elapsed)
 		fmt.Printf(str)
 		str = fmt.Sprintf("Time: Opt took %s, LPSimplex() took %s\n", Optelapsed, Oelapsed)
 		fmt.Printf(str)
 		fmt.Printf("Called LPSimplex() for m:%d x n:%d model\n", len(a), len(a[0]))
-
 		if res.Success {
-			ms.ConsistencyCheck(os.Stdout, &res.X)
+			//OK := ms.ConsistencyCheck(os.Stdout, &res.X)
+			OK := ms.ConsistencyCheck(logfile, &res.X)
+			if !OK {
+				t.Errorf("TestE2E case %d: ConsistencyCheck() found issues with %s", i, ifilecore+ifileext)
+			}
 
 			ms.PrintActivitySummary(&res.X)
 			ms.PrintIncomeExpenseDetails()
 			ms.PrintAccountTrans(&res.X)
 			ms.PrintTax(&res.X)
 			ms.PrintTaxBrackets(&res.X)
+			ms.PrintShadowTaxBrackets(&res.X)
 			ms.PrintCapGainsBrackets(&res.X)
-			/*
-				//ms.print_model_results(res.x)
-					        if args.verboseincome:
-					            print_income_expense_details()
-					        if args.verboseaccounttrans:
-					            print_account_trans(res)
-					        if args.verbosetax:
-					            print_tax(res)
-					        if args.verbosetaxbrackets:
-					            print_tax_brackets(res)
-								print_cap_gains_brackets(res)
-			*/
+			ms.PrintAssetSummary()
 			ms.PrintBaseConfig(&res.X)
+
+			ms.PrintAccountWithdrawals(&res.X) // TESTING TESTING TESTING FIXME TODO
 		}
 		//createDefX(&res.X)
 	}

@@ -29,7 +29,7 @@ func GetInputStrStrMapFromFile(f string) (*map[string]string, error) {
 		line := scanner.Text()
 		//fmt.Printf("Line: %s\n", line)
 		if line != "" && line[0] == '#' {
-			fmt.Printf("Skipping Line: %s\n", line)
+			//fmt.Printf("Skipping Line: %s\n", line)
 			continue
 		}
 		tokens := strings.SplitAfter(line, "'")

@@ -1,5 +1,10 @@
 package rplanlib
 
+import (
+	"fmt"
+	"os"
+)
+
 type WarnErrorList struct {
 	warnList  *[]string
 	errorList *[]string
@@ -62,4 +67,26 @@ func (s *WarnErrorList) ClearWarnings() {
 
 func (s *WarnErrorList) ClearErrors() {
 	s.errorList = &[]string{}
+}
+
+func PrintAndClearMsg(f *os.File, msgList *WarnErrorList) {
+	// FIXME TODO
+	ec := msgList.GetErrorCount()
+	if ec > 0 {
+		fmt.Fprintf(f, "%d Error(s) found:\n", ec)
+		for i := 0; i < ec; i++ {
+			fmt.Fprintf(f, "%s\n", msgList.GetError(i))
+		}
+	}
+	msgList.ClearErrors()
+	//
+
+	wc := msgList.GetWarningCount()
+	if wc > 0 {
+		fmt.Fprintf(f, "%d Warning(s) found:\n", wc)
+		for i := 0; i < wc; i++ {
+			fmt.Fprintf(f, "%s\n", msgList.GetWarning(i))
+		}
+	}
+	msgList.ClearWarnings()
 }

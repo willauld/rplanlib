@@ -339,7 +339,10 @@ func setStringMapValue(ipsm *map[string]string,
 		if Hval > 0 {
 			svals := strings.Split(v, "-")
 			v = svals[Hval-1]
-			//fmt.Printf("DOES HAVE and will use: %s\n", v)
+			if v == "" { // Second value from String like: "65-"
+				v = "-1"
+			}
+			//fmt.Printf("DOES HAVE and will use: %s from %v\n", v, svals)
 		}
 		(*ipsm)[s] = v
 	} /*else {

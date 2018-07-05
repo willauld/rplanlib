@@ -15,85 +15,23 @@ import (
 )
 
 func TestE2E(t *testing.T) {
-	/*
-		tests := []struct {
-			ip            map[string]string
-			verbose       bool
-			allowDeposits bool
-			iRate         float64
-		}{
-			{ // Case 3 // case to match mobile.toml
-				ip: map[string]string{
-					"setName":                    "activeParams",
-					"filingStatus":               "single",
-					"key1":                       "retiree1",
-					"key2":                       "",
-					"eT_Age1":                    "54",
-					"eT_Age2":                    "",
-					"eT_RetireAge1":              "65",
-					"eT_RetireAge2":              "",
-					"eT_PlanThroughAge1":         "75",
-					"eT_PlanThroughAge2":         "",
-					"eT_PIA1":                    "",
-					"eT_PIA2":                    "",
-					"eT_SS_Start1":               "",
-					"eT_SS_Start2":               "",
-					"eT_TDRA1":                   "200", // 200k
-					"eT_TDRA2":                   "",
-					"eT_TDRA_Rate1":              "",
-					"eT_TDRA_Rate2":              "",
-					"eT_TDRA_Contrib1":           "",
-					"eT_TDRA_Contrib2":           "",
-					"eT_TDRA_ContribStartAge1":   "",
-					"eT_TDRA_ContribStartAge2":   "",
-					"eT_TDRA_ContribEndAge1":     "",
-					"eT_TDRA_ContribEndAge2":     "",
-					"eT_Roth1":                   "",
-					"eT_Roth2":                   "",
-					"eT_Roth_Rate1":              "",
-					"eT_Roth_Rate2":              "",
-					"eT_Roth_Contrib1":           "",
-					"eT_Roth_Contrib2":           "",
-					"eT_Roth_ContribStartAge1":   "",
-					"eT_Roth_ContribStartAge2":   "",
-					"eT_Roth_ContribEndAge1":     "",
-					"eT_Roth_ContribEndAge2":     "",
-					"eT_Aftatax":                 "",
-					"eT_Aftatax_Rate":            "",
-					"eT_Aftatax_Contrib":         "",
-					"eT_Aftatax_ContribStartAge": "",
-					"eT_Aftatax_ContribEndAge":   "",
-
-					"eT_iRatePercent": "2.5",
-					"eT_rRatePercent": "6",
-					"eT_maximize":     "Spending", // or "PlusEstate"
-				},
-				verbose:       true,
-				allowDeposits: false,
-				iRate:         1.025,
-			},
-		}
-	*/
 	if !(testing.Short() && testing.Verbose()) { //Skip unless set "-v -short"
 		t.Skip("TestResultsOutput() (full runs): skipping unless set '-v -short'")
 	}
-	paramfiles, err := filepath.Glob("./testdata/strmap/*.strmap")
+	//paramfiles, err := filepath.Glob("./testdata/strmap/*.strmap")
+	paramfiles, err := filepath.Glob("./testdata/toml/*.toml")
 	if err != nil {
 		t.Errorf("TestE2E Error: %s", err)
 	}
 	for i, ifile := range paramfiles {
 		ifilecore := strings.TrimSuffix(filepath.Base(ifile), filepath.Ext(ifile))
 		ifileext := filepath.Ext(ifile)
-		//ifiledirpath := strings.TrimSuffix(ifile, filepath.Base(ifile))
 		if i == -1 {
-			//fmt.Printf("Testing input files, i: %d, ifile: %s\n", i, ifile)
-			//fmt.Printf("core: %s\n", ifilecore)
-			//fmt.Printf("dirpath: %s\n", ifiledirpath)
 			break
 		}
 		fmt.Printf("======== CASE %d - %s ========\n", i, ifile)
 		var ipsmp *map[string]string
-
+		msgList := rplanlib.NewWarnErrorList()
 		// ifile can be .toml or .strmap, Toml file is assumed
 		if filepath.Ext(ifile) == ".strmap" {
 			ipsmp, err = rplanlib.GetInputStrStrMapFromFile(ifile)
@@ -102,15 +40,18 @@ func TestE2E(t *testing.T) {
 		}
 		if err != nil {
 			t.Errorf("reading file (%s): %s", ifile, err)
-			//printMsgAndExit(msgList, e)
+			rplanlib.PrintAndClearMsg(os.Stdout, msgList)
+			continue
 		}
-		ip, err := rplanlib.NewInputParams(*ipsmp, nil)
+		ip, err := rplanlib.NewInputParams(*ipsmp, msgList)
 		if err != nil {
 			t.Errorf("TestE2E case %d: %s", i, err)
+			rplanlib.PrintAndClearMsg(os.Stdout, msgList)
 			continue
 		}
 		//fmt.Printf("InputParams: %#v\n", ip)
-		ti := rplanlib.NewTaxInfo(ip.FilingStatus, 2017)
+		taxYear := 2018
+		ti := rplanlib.NewTaxInfo(ip.FilingStatus, taxYear)
 		taxbins := len(*ti.Taxtable)
 		cgbins := len(*ti.Capgainstable)
 		vindx, err := rplanlib.NewVectorVarIndex(ip.Numyr, taxbins,
@@ -134,22 +75,26 @@ func TestE2E(t *testing.T) {
 		}
 		RoundToOneK := false
 		allowDeposits := false
+		developerInfo := true
+		fourPercentRule := false
 		ms, err := rplanlib.NewModelSpecs(vindx, ti, *ip,
-			allowDeposits, RoundToOneK, false, false,
-			os.Stderr, logfile, csvfile, logfile, nil)
+			allowDeposits, RoundToOneK, developerInfo, fourPercentRule,
+			os.Stderr, logfile, csvfile, logfile, msgList)
 		if err != nil {
 			t.Errorf("TestE2E case %d: %s", i, err)
+			rplanlib.PrintAndClearMsg(logfile, msgList)
 			continue
 		}
 		//fmt.Printf("ModelSpecs: %#v\n", ms)
 
-		c, a, b, notes := ms.BuildModel()
+		//c, a, b, notes := ms.BuildModel()
+		c, a, b, _ := ms.BuildModel()
 
-		Optstart := time.Now()
-		aprime, bprime, oinfo := ms.OptimizeLPModel(&a, &b)
-		Optelapsed := time.Since(Optstart)
+		//Optstart := time.Now()
+		//aprime, bprime, oinfo := ms.OptimizeLPModel(&a, &b)
+		//Optelapsed := time.Since(Optstart)
 
-		ms.PrintModelMatrix(c, a, b, notes, nil, false, oinfo) // TODO FIXME need to make this print somewhere else for examining the optimized model
+		//ms.PrintModelMatrix(c, a, b, notes, nil, false, oinfo) // TODO FIXME need to make this print somewhere else for examining the optimized model
 
 		tol := 1.0e-7
 
@@ -164,9 +109,11 @@ func TestE2E(t *testing.T) {
 		res := lpsimplex.LPSimplex(c, a, b, nil, nil, nil, callback, disp, maxiter, tol, bland)
 		elapsed := time.Since(start)
 
-		Ostart := time.Now()
-		resPrime := lpsimplex.LPSimplex(c, *aprime, *bprime, nil, nil, nil, callback, disp, maxiter, tol, bland)
-		Oelapsed := time.Since(Ostart)
+		/*
+			Ostart := time.Now()
+			resPrime := lpsimplex.LPSimplex(c, *aprime, *bprime, nil, nil, nil, callback, disp, maxiter, tol, bland)
+			Oelapsed := time.Since(Ostart)
+		*/
 		/*
 			err = BinDumpModel(c, a, b, res.X, "./RPlanModelgo.datX")
 			if err != nil {
@@ -179,12 +126,16 @@ func TestE2E(t *testing.T) {
 		//fmt.Printf("Res: %#v\n", res)
 		str := fmt.Sprintf("Message: %v\n", res.Message)
 		fmt.Printf(str)
-		str = fmt.Sprintf("Message ResPrime: %v\n", resPrime.Message)
-		fmt.Printf(str)
+		/*
+			str = fmt.Sprintf("Message ResPrime: %v\n", resPrime.Message)
+			fmt.Printf(str)
+		*/
 		str = fmt.Sprintf("Time: LPSimplex() took %s\n", elapsed)
 		fmt.Printf(str)
-		str = fmt.Sprintf("Time: Opt took %s, LPSimplex() took %s\n", Optelapsed, Oelapsed)
-		fmt.Printf(str)
+		/*
+			str = fmt.Sprintf("Time: Opt took %s, LPSimplex() took %s\n", Optelapsed, Oelapsed)
+			fmt.Printf(str)
+		*/
 		fmt.Printf("Called LPSimplex() for m:%d x n:%d model\n", len(a), len(a[0]))
 		if res.Success {
 			//OK := ms.ConsistencyCheck(os.Stdout, &res.X)

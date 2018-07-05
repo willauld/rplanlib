@@ -1,0 +1,5 @@
+Error Code,Error String,Custom String
+0,no error,
+1,check spenable and no aftertax accounts,
+2,check spenable with aftertax accounts,
+3,configuration input error,checkNames: name

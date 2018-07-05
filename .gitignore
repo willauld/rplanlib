@@ -1,6 +1,7 @@
 *.py 
 *.log
 *.csv
+!testdata/*.csv
 *.txt
 *.dat
 *.datX

@@ -124,7 +124,7 @@ func mergeVectors(v1, v2 []float64) ([]float64, error) {
 // genContrib generates the starting balance/basis as well as a vector
 // of 'iRate' adjusted 'yearly' contributions
 // iRate = 1.0 implies no inflation of contributions
-// All age values must be consistant, ie, in turms of retiree 1 or 2 but
+// All age values must be consistent, ie, in turms of retiree 1 or 2 but
 // not mixed
 func genContrib(yearly int,
 	startAge int,
@@ -720,7 +720,7 @@ func (ms ModelSpecs) BuildModel() ([]float64, [][]float64, []float64, []ModelNot
 	}
 	/ **/
 	//
-	// Add objective function shadow cap gains bracket forcing function
+	// Add objective function shadow cap gains (Sy) bracket forcing function
 	//
 	if ms.Ip.Accmap[Aftertax] > 0 {
 		for year := 0; year < ms.Ip.Numyr; year++ {
@@ -728,7 +728,8 @@ func (ms ModelSpecs) BuildModel() ([]float64, [][]float64, []float64, []ModelNot
 				// Multiplies the impact of higher brackets opposite to
 				// optimization. The intent here is to pressure higher
 				// brackets more and pack the lower brackets
-				c[ms.Vindx.Sy(year, k)] = float64(k)
+				val := float64(k + 1)
+				c[ms.Vindx.Sy(year, k)] = math.Pow(val, 3) / 10.0
 			}
 		}
 	}
@@ -1292,10 +1293,10 @@ func (ms ModelSpecs) PrecheckConsistency() bool {
 }
 
 // TODO FIXME should use ms.logfile by default and f is not nil as a second output path
-func (ms ModelSpecs) ConsistencyCheck(f *os.File, X *[]float64) (OK bool) {
+func (ms ModelSpecs) ConsistencyCheckBrackets(f *os.File, X *[]float64) (OK bool) {
 	// check to see if the ordinary tax brackets are filled in properly
 	OK = true
-	fmt.Fprintf(f, "\n\nConsistency Checking:\n\n")
+	fmt.Fprintf(f, "\n\nConsistency Checking Brackets:\n\n")
 
 	for year := 0; year < ms.Ip.Numyr; year++ {
 		//
@@ -1378,6 +1379,21 @@ func (ms ModelSpecs) ConsistencyCheck(f *os.File, X *[]float64) (OK bool) {
 			fmt.Fprintf(f, "\nError: Expected (age:%d) Taxable Ordinary income %6.2f doesn't match bracket sum %6.2f\n",
 				year+ms.Ip.StartPlan, TaxableOrdinary, s)
 		}
+	}
+	if OK {
+		fmt.Fprintf(f, "\nconsistencyCheckBrackets() NO issues found\n")
+	} else {
+		fmt.Fprintf(f, "\nconsistencyCheckBrackets() issues found\n")
+	}
+	return OK
+}
+
+func (ms ModelSpecs) ConsistencyCheckSpendable(f *os.File, X *[]float64) (OK bool) {
+	// check to see if spendable is adding up properly
+	OK = true
+	fmt.Fprintf(f, "\n\nConsistency Checking Spendable:\n\n")
+
+	for year := 0; year < ms.Ip.Numyr; year++ {
 		for j := 0; j < len(ms.Accounttable); j++ {
 			a := (*X)[ms.Vindx.B(year+1, j)] - ((*X)[ms.Vindx.B(year, j)]-(*X)[ms.Vindx.W(year, j)]+ms.depositAmount(X, year, j))*ms.Accounttable[j].RRate
 			if a > 1 {
@@ -1412,9 +1428,9 @@ func (ms ModelSpecs) ConsistencyCheck(f *os.File, X *[]float64) (OK bool) {
 		}
 	}
 	if OK {
-		fmt.Fprintf(f, "consistencyCheck() NO issues found\n")
+		fmt.Fprintf(f, "\nconsistencyCheckSpendable() NO issues found\n")
 	} else {
-		fmt.Fprintf(f, "consistencyCheck() issues found\n")
+		fmt.Fprintf(f, "\nconsistencyCheckSpendable() issues found\n")
 	}
 	return OK
 }

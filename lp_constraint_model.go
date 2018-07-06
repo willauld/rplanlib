@@ -722,14 +722,16 @@ func (ms ModelSpecs) BuildModel() ([]float64, [][]float64, []float64, []ModelNot
 	//
 	// Add objective function shadow cap gains (Sy) bracket forcing function
 	//
+	//SyCosts := []float64{0.1, 0.8, 2.7} //equal to: math.Pow(val, 3) / 10.0
+	//SyCosts := []float64{0.2, 1.25, 2.5}
+	SyCosts := []float64{0.2, 1.75, 2.5}
 	if ms.Ip.Accmap[Aftertax] > 0 {
 		for year := 0; year < ms.Ip.Numyr; year++ {
 			for k := 0; k < len(*ms.Ti.Capgainstable); k++ {
 				// Multiplies the impact of higher brackets opposite to
 				// optimization. The intent here is to pressure higher
 				// brackets more and pack the lower brackets
-				val := float64(k + 1)
-				c[ms.Vindx.Sy(year, k)] = math.Pow(val, 3) / 10.0
+				c[ms.Vindx.Sy(year, k)] = SyCosts[k]
 			}
 		}
 	}

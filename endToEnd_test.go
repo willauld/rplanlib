@@ -289,6 +289,19 @@ func TestE2E(t *testing.T) {
 			ms.PrintBaseConfig(&res.X)
 
 			ms.PrintAccountWithdrawals(&res.X) // TESTING TESTING TESTING FIXME TODO
+			ModelAllBinding := true
+			if ModelAllBinding {
+				var bindingOnly bool
+				slack := []float64(nil)
+				if res.Success {
+					slack = res.Slack
+				}
+				//bindingOnly = true
+				//if !res.Success {
+				bindingOnly = false
+				//}
+				ms.PrintModelMatrix(c, a, b, notes, slack, bindingOnly, nil)
+			}
 		}
 		//createDefX(&res.X)
 	}

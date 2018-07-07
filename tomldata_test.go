@@ -1,4 +1,4 @@
-package main
+package rplanlib_test
 
 import (
 	"fmt"
@@ -733,7 +733,7 @@ bal = 200_000
 		if err != nil {
 			t.Errorf("TestGetTomlData case %d: %s", i, err)
 		}
-		ms, err := getInputStringsMapFromToml(tfile)
+		ms, err := rplanlib.GetInputStringsMapFromToml(tfile)
 		if err != nil {
 			t.Errorf("TestGetTomlData case %d: ms is nil: %s", i, err)
 			continue

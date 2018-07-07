@@ -573,6 +573,8 @@ func NewModelSpecs(vindx VectorVarIndex,
 		}
 		brokerageRate := ip.Assets[i].BrokeragePercent / 100.0
 		if brokerageRate == 0 {
+			// 7-7-2018 Looks like this is not happening but leave this code
+			// in case I break it in the future
 			brokerageRate = 0.04 // default to 4% // TODO FIXME defaults should be set in NewInputParams
 			e := fmt.Errorf("Default (non-zero) value for BrokeragePercent should be set prior to this in NewInputSpecs()")
 			panic(e)

@@ -256,7 +256,7 @@ func PrintInputParamsStrMapToBuffer(m map[string]string) string {
 	writer.Write([]byte("InputParamsStrMap:\n"))
 	for i, v := range InputStrDefs {
 		if m[v] != "" {
-			writer.Write([]byte(fmt.Sprintf("%3d&@'%32s'&@'%s'\n", i, v, m[v])))
+			writer.Write([]byte(fmt.Sprintf("%3d&@'%32s':&@'%s'\n", i, v, m[v])))
 		}
 	}
 	for j := 1; j < MaxStreams+1; j++ {
@@ -265,7 +265,7 @@ func PrintInputParamsStrMapToBuffer(m map[string]string) string {
 				(j-1)*len(InputStreamStrDefs)
 			k := fmt.Sprintf("%s%d", v, j)
 			if m[k] != "" {
-				writer.Write([]byte(fmt.Sprintf("%3d&@'%32s'&@'%s'\n", lineno, k, m[k])))
+				writer.Write([]byte(fmt.Sprintf("%3d&@'%32s':&@'%s'\n", lineno, k, m[k])))
 			}
 		}
 	}

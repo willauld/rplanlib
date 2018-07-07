@@ -245,11 +245,11 @@ func TestE2E(t *testing.T) {
 		}
 		if res.Success {
 			//OK := ms.ConsistencyCheck(os.Stdout, &res.X)
-			OK := ms.ConsistencyCheckBrackets(logfile, &res.X)
+			OK := ms.ConsistencyCheckBrackets(&res.X)
 			if !OK {
 				t.Errorf("TestE2E case %d: Check Brackets found issues with %s", i, curCase.Testfile)
 			}
-			OK = ms.ConsistencyCheckSpendable(logfile, &res.X)
+			OK = ms.ConsistencyCheckSpendable(&res.X)
 			if !(OK || curCase.ErrorType != 0) {
 				if !OK {
 					if ms.Ip.Accmap[rplanlib.Aftertax] > 0 {

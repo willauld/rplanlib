@@ -2062,8 +2062,8 @@ func TestResultsOutput(t *testing.T) {
 		fmt.Printf("Called LPSimplex() for m:%d x n:%d model\n", len(a), len(a[0]))
 
 		if res.Success {
-			ms.ConsistencyCheckBrackets(os.Stdout, &res.X)
-			ms.ConsistencyCheckSpendable(os.Stdout, &res.X)
+			ms.ConsistencyCheckBrackets(&res.X)
+			ms.ConsistencyCheckSpendable(&res.X)
 
 			ms.PrintActivitySummary(&res.X)
 			ms.PrintIncomeExpenseDetails()

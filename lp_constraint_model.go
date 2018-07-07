@@ -1295,10 +1295,10 @@ func (ms ModelSpecs) PrecheckConsistency() bool {
 }
 
 // TODO FIXME should use ms.logfile by default and f is not nil as a second output path
-func (ms ModelSpecs) ConsistencyCheckBrackets(f *os.File, X *[]float64) (OK bool) {
+func (ms ModelSpecs) ConsistencyCheckBrackets(X *[]float64) (OK bool) {
 	// check to see if the ordinary tax brackets are filled in properly
 	OK = true
-	fmt.Fprintf(f, "\n\nConsistency Checking Brackets:\n\n")
+	ms.Ao.Output("\n\nConsistency Checking Brackets:\n\n")
 
 	for year := 0; year < ms.Ip.Numyr; year++ {
 		//
@@ -1314,7 +1314,7 @@ func (ms ModelSpecs) ConsistencyCheckBrackets(f *os.File, X *[]float64) (OK bool
 			s += (*X)[ms.Vindx.X(year, k)]
 			if fnf && (*X)[ms.Vindx.X(year, k)] > 0 {
 				OK = false
-				fmt.Fprintf(f, "\nImproperly packed brackets in year %d, bracket %d not empty while previous bracket not full (short by %6.0f)", year, k, gap)
+				ms.Ao.Output(fmt.Sprintf("\nImproperly packed brackets in year %d, bracket %d not empty while previous bracket not full (short by %6.0f)", year, k, gap))
 			}
 			gap = math.Abs(size - (*X)[ms.Vindx.X(year, k)])
 			fnf = false
@@ -1338,7 +1338,7 @@ func (ms ModelSpecs) ConsistencyCheckBrackets(f *os.File, X *[]float64) (OK bool
 				sg += (*X)[ms.Vindx.Sy(year, l)]
 				if fnf && (*X)[ms.Vindx.Sy(year, l)] > 0 {
 					OK = false
-					fmt.Fprintf(f, "\nImproperly packed shadow brackets in year %d, bracket %d not empty while previous bracket not full (short by %6.0f)", year, l, gap)
+					ms.Ao.Output(fmt.Sprintf("\nImproperly packed shadow brackets in year %d, bracket %d not empty while previous bracket not full (short by %6.0f)", year, l, gap))
 				}
 				gap = math.Abs(size - (*X)[ms.Vindx.Sy(year, l)])
 				fnf = false
@@ -1349,7 +1349,7 @@ func (ms ModelSpecs) ConsistencyCheckBrackets(f *os.File, X *[]float64) (OK bool
 			sumDiff := math.Abs(sg - s)
 			if sumDiff > 0.1 {
 				OK = false
-				fmt.Fprintf(f, "\nYear (%d), Sum of shadow brackets %6.2f should equal the sum of ordinary income brackets %6.2f but they do not (difference is: %6.2f\n", year, sg, s, sumDiff)
+				ms.Ao.Output(fmt.Sprintf("\nYear (%d), Sum of shadow brackets %6.2f should equal the sum of ordinary income brackets %6.2f but they do not (difference is: %6.2f\n", year, sg, s, sumDiff))
 			}
 
 			//
@@ -1366,7 +1366,7 @@ func (ms ModelSpecs) ConsistencyCheckBrackets(f *os.File, X *[]float64) (OK bool
 				bamount += (*X)[ms.Vindx.Sy(year, l)]
 				if fnf && bamount > 0 {
 					OK = false
-					fmt.Fprintf(f, "\nImproper packed CG brackets in year %d, bracket %d not empty while previous bracket not full (short by: %6.2f)\n", year, l, gap)
+					ms.Ao.Output(fmt.Sprintf("\nImproper packed CG brackets in year %d, bracket %d not empty while previous bracket not full (short by: %6.2f)\n", year, l, gap))
 				}
 				gap = math.Abs(size - bamount)
 				fnf = false
@@ -1378,22 +1378,22 @@ func (ms ModelSpecs) ConsistencyCheckBrackets(f *os.File, X *[]float64) (OK bool
 		TaxableOrdinary := ms.ordinaryTaxable(year, X)
 		if (TaxableOrdinary+0.1 < s) || (TaxableOrdinary-0.1 > s) {
 			OK = false
-			fmt.Fprintf(f, "\nError: Expected (age:%d) Taxable Ordinary income %6.2f doesn't match bracket sum %6.2f\n",
-				year+ms.Ip.StartPlan, TaxableOrdinary, s)
+			ms.Ao.Output(fmt.Sprintf("\nError: Expected (age:%d) Taxable Ordinary income %6.2f doesn't match bracket sum %6.2f\n",
+				year+ms.Ip.StartPlan, TaxableOrdinary, s))
 		}
 	}
 	if OK {
-		fmt.Fprintf(f, "\nconsistencyCheckBrackets() NO issues found\n")
+		ms.Ao.Output("\nconsistencyCheckBrackets() NO issues found\n")
 	} else {
-		fmt.Fprintf(f, "\nconsistencyCheckBrackets() issues found\n")
+		ms.Ao.Output("\nconsistencyCheckBrackets() issues found\n")
 	}
 	return OK
 }
 
-func (ms ModelSpecs) ConsistencyCheckSpendable(f *os.File, X *[]float64) (OK bool) {
+func (ms ModelSpecs) ConsistencyCheckSpendable(X *[]float64) (OK bool) {
 	// check to see if spendable is adding up properly
 	OK = true
-	fmt.Fprintf(f, "\n\nConsistency Checking Spendable:\n\n")
+	ms.Ao.Output("\n\nConsistency Checking Spendable:\n\n")
 
 	for year := 0; year < ms.Ip.Numyr; year++ {
 		for j := 0; j < len(ms.Accounttable); j++ {
@@ -1401,9 +1401,9 @@ func (ms ModelSpecs) ConsistencyCheckSpendable(f *os.File, X *[]float64) (OK boo
 			if a > 1 {
 				OK = false
 				v := ms.Accounttable[j]
-				fmt.Fprintf(f, "\naccount[%d], type '%s', owner '%s'\n", j, v.acctype.String(), v.mykey)
-				fmt.Fprintf(f, "\tyear to year balance NOT OK years %d to %d\n", year, year+1)
-				fmt.Fprintf(f, "\tdifference is %v\n", a)
+				ms.Ao.Output(fmt.Sprintf("\naccount[%d], type '%s', owner '%s'\n", j, v.acctype.String(), v.mykey))
+				ms.Ao.Output(fmt.Sprintf("\tyear to year balance NOT OK years %d to %d\n", year, year+1))
+				ms.Ao.Output(fmt.Sprintf("\tdifference is %v\n", a))
 			}
 		}
 
@@ -1411,13 +1411,13 @@ func (ms ModelSpecs) ConsistencyCheckSpendable(f *os.File, X *[]float64) (OK boo
 		if spendable+0.1 < (*X)[ms.Vindx.S(year)] || spendable-0.1 > (*X)[ms.Vindx.S(year)] {
 			OK = false
 			diff := math.Abs(spendable - (*X)[ms.Vindx.S(year)])
-			fmt.Fprintf(f, "\nCalc Spendable %6.2f should equal s(year:%d) %6.2f but differ by: %6.2f\n", spendable, year, (*X)[ms.Vindx.S(year)], diff)
-			fmt.Fprintf(f, "\t")
+			ms.Ao.Output(fmt.Sprintf("\nCalc Spendable %6.2f should equal s(year:%d) %6.2f but differ by: %6.2f\n", spendable, year, (*X)[ms.Vindx.S(year)], diff))
+			ms.Ao.Output("\t")
 			for j := 0; j < len(ms.Accounttable); j++ {
-				fmt.Fprintf(f, " +w[%d,%d]: %6.0f", year, j, (*X)[ms.Vindx.W(year, j)])
-				fmt.Fprintf(f, " -D[%d,%d]: %6.0f", year, j, ms.depositAmount(X, year, j))
+				ms.Ao.Output(fmt.Sprintf(" +w[%d,%d]: %6.0f", year, j, (*X)[ms.Vindx.W(year, j)]))
+				ms.Ao.Output(fmt.Sprintf(" -D[%d,%d]: %6.0f", year, j, ms.depositAmount(X, year, j)))
 			}
-			fmt.Fprintf(f, " +o[%d]: %6.0f +SS[%d]: %6.0f -e[%d]: %6.0f -tax: %6.0f -cg_tax: %6.0f\n", year, AccessVector(ms.Income[0], year), year, AccessVector(ms.SS[0], year), year, AccessVector(ms.Expenses[0], year), tax, cgTax)
+			ms.Ao.Output(fmt.Sprintf(" +o[%d]: %6.0f +SS[%d]: %6.0f -e[%d]: %6.0f -tax: %6.0f -cg_tax: %6.0f\n", year, AccessVector(ms.Income[0], year), year, AccessVector(ms.SS[0], year), year, AccessVector(ms.Expenses[0], year), tax, cgTax))
 		}
 
 		bt := 0.0
@@ -1426,13 +1426,13 @@ func (ms ModelSpecs) ConsistencyCheckSpendable(f *os.File, X *[]float64) (OK boo
 		}
 		if tax+0.1 < bt || tax-0.1 > bt {
 			OK = false
-			fmt.Fprintf(f, "\nCalc tax %6.2f should equal brackettax(bt)[]: %6.2f\n", tax, bt)
+			ms.Ao.Output(fmt.Sprintf("\nCalc tax %6.2f should equal brackettax(bt)[]: %6.2f\n", tax, bt))
 		}
 	}
 	if OK {
-		fmt.Fprintf(f, "\nconsistencyCheckSpendable() NO issues found\n")
+		ms.Ao.Output("\nconsistencyCheckSpendable() NO issues found\n")
 	} else {
-		fmt.Fprintf(f, "\nconsistencyCheckSpendable() issues found\n")
+		ms.Ao.Output("\nconsistencyCheckSpendable() issues found\n")
 	}
 	return OK
 }

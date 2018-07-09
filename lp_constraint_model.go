@@ -1723,3 +1723,105 @@ func (ms ModelSpecs) printModelRow(row []float64, suppressNewline bool) {
 		fmt.Fprintf(ms.Logfile, "\n")
 	}
 }
+
+func (ms ModelSpecs) PrintObjectFunctionSolution(c []float64, row []float64) {
+	if ms.Ip.Numacc < 0 || ms.Ip.Numacc > 5 {
+		e := fmt.Errorf("PrintObjectFunc: number of accounts is out of bounds, should be between [0, 5] but is %d", ms.Ip.Numacc)
+		fmt.Fprintf(ms.Logfile, "%s\n", e)
+		return
+	}
+	localSum := 0.0
+	globalSum := 0.0
+	for i := 0; i < ms.Ip.Numyr; i++ { // x[]
+		for k := 0; k < len(*ms.Ti.Taxtable); k++ {
+			cIndx := ms.Vindx.X(i, k)
+			if c[cIndx] != 0 {
+				cXrow := c[cIndx] * row[cIndx]
+				localSum += cXrow
+				fmt.Fprintf(ms.Logfile, "C[%d]=%6.3f * x[%d,%d]=%6.3f == %6.3f\n", cIndx, c[cIndx], i, k, row[cIndx], cXrow)
+			}
+		}
+	}
+	fmt.Fprintf(ms.Logfile, "\tSum Ci*Xi == %6.3f\n", localSum)
+	globalSum += localSum
+	localSum = 0.0
+	if ms.Ip.Accmap[Aftertax] > 0 {
+		for i := 0; i < ms.Ip.Numyr; i++ { // sy[]
+			for l := 0; l < len(*ms.Ti.Capgainstable); l++ {
+				cIndx := ms.Vindx.Sy(i, l)
+				if c[cIndx] != 0 {
+					cXrow := c[cIndx] * row[cIndx]
+					localSum += cXrow
+					fmt.Fprintf(ms.Logfile, "C[%d]=%6.3f * Sy[%d,%d]=%6.3f == %6.3f\n", cIndx, c[cIndx], i, l, row[cIndx], cXrow)
+				}
+			}
+		}
+		fmt.Fprintf(ms.Logfile, "\tSum Ci*Syi == %6.3f\n", localSum)
+		globalSum += localSum
+		localSum = 0.0
+		for i := 0; i < ms.Ip.Numyr; i++ { // y[]
+			for l := 0; l < len(*ms.Ti.Capgainstable); l++ {
+				cIndx := ms.Vindx.Y(i, l)
+				if c[cIndx] != 0 {
+					cXrow := c[cIndx] * row[cIndx]
+					localSum += cXrow
+					fmt.Fprintf(ms.Logfile, "C[%d]=%6.3f * Y[%d,%d]=%6.3f == %6.3f\n", cIndx, c[cIndx], i, l, row[cIndx], cXrow)
+				}
+			}
+		}
+		fmt.Fprintf(ms.Logfile, "\tSum Ci*Yi == %6.3f\n", localSum)
+		globalSum += localSum
+		localSum = 0.0
+	}
+	for i := 0; i < ms.Ip.Numyr; i++ { // w[]
+		for j := 0; j < ms.Ip.Numacc; j++ {
+			cIndx := ms.Vindx.W(i, j)
+			if c[cIndx] != 0 {
+				cXrow := c[cIndx] * row[cIndx]
+				localSum += cXrow
+				fmt.Fprintf(ms.Logfile, "C[%d]=%6.3f * w[%d,%d]=%6.3f == %6.3f\n", cIndx, c[cIndx], i, j, row[cIndx], cXrow)
+			}
+		}
+	}
+	fmt.Fprintf(ms.Logfile, "\tSum Ci*wi == %6.3f\n", localSum)
+	globalSum += localSum
+	localSum = 0.0
+	for i := 0; i < ms.Ip.Numyr+1; i++ { // b[] has an extra year
+		for j := 0; j < ms.Ip.Numacc; j++ {
+			cIndx := ms.Vindx.B(i, j)
+			if c[cIndx] != 0 {
+				cXrow := c[cIndx] * row[cIndx]
+				localSum += cXrow
+				fmt.Fprintf(ms.Logfile, "C[%d]=%6.3f * b[%d,%d]=%6.3f == %6.3f\n", cIndx, c[cIndx], i, j, row[cIndx], cXrow)
+			}
+		}
+	}
+	fmt.Fprintf(ms.Logfile, "\tSum Ci*bi == %6.3f\n", localSum)
+	globalSum += localSum
+	localSum = 0.0
+	for i := 0; i < ms.Ip.Numyr; i++ { // s[]
+		cIndx := ms.Vindx.S(i)
+		if c[cIndx] != 0 {
+			cXrow := c[cIndx] * row[cIndx]
+			localSum += cXrow
+			fmt.Fprintf(ms.Logfile, "C[%d]=%6.3f * S[%d]=%6.3f == %6.3f\n", cIndx, c[cIndx], i, row[cIndx], cXrow)
+		}
+	}
+	fmt.Fprintf(ms.Logfile, "\tSum Ci*Si == %6.3f\n", localSum)
+	globalSum += localSum
+	localSum = 0.0
+	for i := 0; i < ms.Ip.Numyr; i++ { // D[]
+		for j := 0; j < ms.Ip.Numacc; j++ {
+			cIndx := ms.Vindx.D(i, j)
+			if c[cIndx] != 0 {
+				cXrow := c[cIndx] * row[cIndx]
+				localSum += cXrow
+				fmt.Fprintf(ms.Logfile, "C[%d]=%6.3f * D[%d,%d]=%6.3f == %6.3f\n", cIndx, c[cIndx], i, j, row[cIndx], cXrow)
+			}
+		}
+	}
+	fmt.Fprintf(ms.Logfile, "\tSum Ci*Di == %6.3f\n", localSum)
+	globalSum += localSum
+	fmt.Fprintf(ms.Logfile, "\t\tSum overall == %6.3f\n", globalSum)
+	localSum = 0.0
+}

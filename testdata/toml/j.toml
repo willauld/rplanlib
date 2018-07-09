@@ -22,7 +22,7 @@
 
 
 
-[iam.Jim]  # iam (for each) is required in some joint cases (".xxx" use to match accounts IRA/roth)
+[iam.Tim]  # iam (for each) is required in some joint cases (".xxx" use to match accounts IRA/roth)
 
 primary = true  # retiree to have age listed first in the output (must choose one)
 
@@ -34,7 +34,7 @@ through = 85    # age you want to plan through
 
 
 
-[iam.Eve]  
+[iam.Ruth]  
 # iam (for each) is required in some joint cases (".xxx" use to match accounts IRA/roth)
 
 age = 54        # your current age
@@ -48,7 +48,7 @@ definedContributionPlan = "54-65" # Years for a 401(k), 403(b), TSP
 
 
 
-[SocialSecurity.Jim]
+[SocialSecurity.Tim]
 
 FRA = 66        # your full retirement age (FRA) according to the IRS
 
@@ -60,7 +60,7 @@ age = "70-"     # period you expect to receive SS ("68-" indicates start at 68 a
 
 
 
-[SocialSecurity.Eve]
+[SocialSecurity.Ruth]
 
 FRA = 67        # your full retirement age (FRA) according to the IRS
 
@@ -71,10 +71,10 @@ age = "67-"     # period you expect to receive SS ("68-" indicates start at 68 a
 
 
 
-[income.Eve]
+[income.Ruth]
 
 amount = 68_000      # yearly amount
-age = "65-76"      # period you expect to receive it (in Jim's Age)
+age = "65-76"      # period you expect to receive it (in Tim's Age)
 
 inflation = true  # not inflation adjusted
 
@@ -95,7 +95,7 @@ tax = true        # not federally taxable
 
 # pre-tax IRA accounts (TDRA)
 
-[IRA.Jim]
+[IRA.Tim]
 
 bal = 930_000       # current balance 
 
@@ -110,7 +110,7 @@ contrib = 0        # Annual contribution you will make for period (below)
 
 
 
-[IRA.Eve]
+[IRA.Ruth]
 
 bal = 57_000      # current balance
 
@@ -126,7 +126,7 @@ period = '54-65'   # period you will be making the contributions
 
 # roth IRA accounts (RothRA)
 
-[roth.Jim]
+[roth.Tim]
 
 bal = 14_000        # current balance
 
@@ -138,7 +138,7 @@ contrib = 0         # Annual contribution you will make for period (below)
 
 #period = '65-60'   # period you will be making the contributions
  
-#[roth.Eve]
+#[roth.Ruth]
 
 #bal = 0    	    # current balance
 

@@ -1,4 +1,3 @@
-# This Will's working input file for ARetirementPlanner.py
 
 # The format of this file will likely change in the future as
 # the program changes in the future.
@@ -11,13 +10,13 @@ inflation = 2.5		# yearly inflation rate
 # what to optimize for?
 #maximize = "PlusEstate"
 
-[iam.will]
+[iam.bk]
 primary = true
 age = 56
 retire = 57
 through = 100
 
-[iam.yuli]
+[iam.bkgirl]
 age = 54
 retire = 62 
 through = 100
@@ -25,12 +24,12 @@ through = 100
 
 # assume Social Security will start paying $31k/yr at age FRA 
 # the SS payout is scaled by inflation
-[SocialSecurity.will]
+[SocialSecurity.bk]
 amount = 31_000 # SS estimate for Full Retirement Age (FRA) 67
 FRA = 67
 age = "70-" 
 
-[SocialSecurity.yuli]
+[SocialSecurity.bkgirl]
 amount = -1 # SS estimate for Full Retirement Age (FRA) 67
 FRA = 67
 age = "68-" 
@@ -95,20 +94,20 @@ bal =   700_000
 basis = 400_000		# for capital gains tax
 
 # pre-tax IRA accounts
-[IRA.will]
+[IRA.bk]
 bal = 1_400_000
 #rate = 7.25
 contrib = 00
 
 # roth IRA accounts
-[IRA.yuli]
+[IRA.bkgirl]
 bal = 18_000
 #contrib = 1_000
 #period = '54-62'
 #period = '54-72'
 
-[roth.will]
+[roth.bk]
 bal = 0
 #
-[roth.yuli]
+[roth.bkgirl]
 bal = 0

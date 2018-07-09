@@ -1,8 +1,8 @@
 Testfile,Error Type,Spendable At Least
-testdata\toml\AWill.toml,0,161759
-testdata\toml\Jim12_07_17.toml,0,99994
-testdata\toml\Jim2.toml,0,99994
-testdata\toml\Jim3.toml,0,119995
+testdata\toml\aw.toml,0,161759
+testdata\toml\tim12_07_17.toml,0,99994
+testdata\toml\tim2.toml,0,99994
+testdata\toml\tim3.toml,0,119995
 testdata\toml\ROJointExample.toml,0,85795
 testdata\toml\ROSingleExample.toml,0,106381
 testdata\toml\ROStartHere.toml,0,39679
@@ -29,3 +29,5 @@ testdata\strmap\orp_2.strmap,0,100486
 testdata\strmap\orp_3.strmap,0,130339
 testdata\strmap\orp_3plus.strmap,0,39995
 testdata\strmap\test.strmap,0,77661
+testdata\toml\zeroSpendable.toml,0,0
+testdata\strmap\m900w.strmap,0,0

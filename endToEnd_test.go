@@ -63,40 +63,43 @@ func TestE2E(t *testing.T) {
 			t.Skip("TestResultsOutput() (full runs): skipping unless set '-v -short'")
 		}
 	*/
-	/*
-		//
-		// Bring this back in to make sure all configuration files are
-		// accounted for. Need to code this up
-		//
-		strmapfiles, err := filepath.Glob("./testdata/strmap/*.strmap")
-		if err != nil {
-			t.Errorf("TestE2E Error: %s", err)
-		}
-		tomlfiles, err := filepath.Glob("./testdata/toml/*.toml")
-		if err != nil {
-			t.Errorf("TestE2E Error: %s", err)
-		}
-		paramfiles := append(tomlfiles, strmapfiles...)
-	*/
+	//
+	// Bring this back in to make sure all configuration files are
+	// accounted for. Need to code this up
+	//
+	strmapfiles, err := filepath.Glob("./testdata/strmap/*.strmap")
+	if err != nil {
+		t.Errorf("TestE2E Error: %s", err)
+	}
+	tomlfiles, err := filepath.Glob("./testdata/toml/*.toml")
+	if err != nil {
+		t.Errorf("TestE2E Error: %s", err)
+	}
+	paramfiles := append(tomlfiles, strmapfiles...)
 
 	cases := []acase{}
-	err := csvtag.Load(csvtag.Config{ // Load your csv with configuration
+	err = csvtag.Load(csvtag.Config{ // Load your csv with configuration
 		Path: "testdata/expect.csv", // Path of the csv file
 		Dest: &cases,                // A pointer to the create slice
 	})
-	/*
-				for _, ifile := range paramfiles {
-					c := acase{
-						testfile:         ifile,
-						errorType:        0,
-						spendableAtLeast: 0,
-					}
-					cases = append(cases, c)
-				}
-				err = csvtag.DumpToFile(cases, "testdata/expect.csv")
-				return
-		//return
-	*/
+	for _, ifile := range paramfiles {
+		match := false
+		for _, thiscase := range cases {
+			if ifile == thiscase.Testfile {
+				match = true
+				continue
+			}
+		}
+		if match == false {
+			c := acase{
+				Testfile:         ifile,
+				ErrorType:        0,
+				SpendableAtLeast: 0,
+			}
+			cases = append(cases, c)
+			err = csvtag.DumpToFile(cases, "testdata/expect.csv")
+		}
+	}
 	//createErrorTypeCSV() // Uncomment to update errortypes.csv
 	errorTypeTable := []errorType{}
 	err = csvtag.Load(csvtag.Config{ // Load your csv with configuration
@@ -289,6 +292,8 @@ func TestE2E(t *testing.T) {
 			ms.PrintBaseConfig(&res.X)
 
 			ms.PrintAccountWithdrawals(&res.X) // TESTING TESTING TESTING FIXME TODO
+			ms.PrintObjectFunctionSolution(c, res.X)
+
 			ModelAllBinding := true
 			if ModelAllBinding {
 				var bindingOnly bool

@@ -278,7 +278,7 @@ func TestE2E(t *testing.T) {
 				curCase.SpendableAtLeast = newVal
 			}
 			if s < float64(curCase.SpendableAtLeast) {
-				t.Errorf("TestE2E case %d: first year spendable (%6.0f) is less than expected (%d) for file %s", i, s, curCase.SpendableAtLeast, curCase.Testfile)
+				t.Errorf("TestE2E case %d: first year spendable (%6.0f) is less than expected (%d diff of %6.0f) for file %s", i, s, curCase.SpendableAtLeast, float64(curCase.SpendableAtLeast)-s, curCase.Testfile)
 			}
 
 			ms.PrintActivitySummary(&res.X)

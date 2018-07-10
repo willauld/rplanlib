@@ -56,7 +56,6 @@ func createErrorTypeCSV() {
 }
 
 func TestE2E(t *testing.T) {
-	var updateExpectFile bool
 
 	/*
 		if !(testing.Short() && testing.Verbose()) { //Skip unless set "-v -short"
@@ -68,7 +67,8 @@ func TestE2E(t *testing.T) {
 	//
 	DisplayOutputAndTiming := false  //true
 	DoModelOptimizationTest := false //true //false
-	updateExpectFile = false         // true
+	updateExpectFile := false        // true
+	ExecuteOnlyCase := 30            //-1            // -1 for all cases OR specific case number
 	//
 	// Bring this back in to make sure all configuration files are
 	// accounted for. Need to code this up
@@ -114,9 +114,9 @@ func TestE2E(t *testing.T) {
 	})
 
 	for i, curCase := range cases {
-		//if i != 23 {
-		//	continue
-		//}
+		if ExecuteOnlyCase >= 0 && i != ExecuteOnlyCase {
+			continue
+		}
 		ifilecore := strings.TrimSuffix(filepath.Base(curCase.Testfile), filepath.Ext(curCase.Testfile))
 		ifileext := filepath.Ext(curCase.Testfile)
 
@@ -310,6 +310,9 @@ func TestE2E(t *testing.T) {
 				//}
 				ms.PrintModelMatrix(c, a, b, notes, slack, bindingOnly, nil)
 			}
+		} else {
+			ms.Ao.Output("LPSimplex failed\n")
+			fmt.Printf("LPSimplex failed\n")
 		}
 		//createDefX(&res.X)
 	}

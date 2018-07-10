@@ -817,12 +817,13 @@ func (ms ModelSpecs) BuildModel() ([]float64, [][]float64, []float64, []ModelNot
 	//
 	notes = append(notes, ModelNote{len(A), "Constraints 4':"})
 	if ms.Ip.Min != 0 {
-		for year := 0; year < 1; year++ { // Only needs setting at the beginning
-			row := make([]float64, nvars)
-			row[ms.Vindx.S(year)] = -1
-			A = append(A, row)
-			b = append(b, float64(-ms.Ip.Min)) // [- d_i]
-		}
+		//for year := 0; year < 1; year++ { // Only needs setting at the beginning
+		year := 0
+		row := make([]float64, nvars)
+		row[ms.Vindx.S(year)] = -1
+		A = append(A, row)
+		b = append(b, float64(-ms.Ip.Min)) // [- d_i]
+		//}
 	}
 
 	//
@@ -831,12 +832,13 @@ func (ms ModelSpecs) BuildModel() ([]float64, [][]float64, []float64, []ModelNot
 	//
 	notes = append(notes, ModelNote{len(A), "Constraints 5':"})
 	if ms.Ip.Max != 0 {
-		for year := 0; year < 1; year++ { // Only needs to be set at the beginning
-			row := make([]float64, nvars)
-			row[ms.Vindx.S(year)] = 1
-			A = append(A, row)
-			b = append(b, float64(ms.Ip.Max)) // [ dm_i]
-		}
+		//for year := 0; year < 1; year++ { // Only needs to be set at the beginning
+		year := 0
+		row := make([]float64, nvars)
+		row[ms.Vindx.S(year)] = 1
+		A = append(A, row)
+		b = append(b, float64(ms.Ip.Max)) // [ dm_i]
+		//}
 	}
 
 	//

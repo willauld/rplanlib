@@ -922,18 +922,23 @@ func (ms ModelSpecs) BuildModel() ([]float64, [][]float64, []float64, []ModelNot
 	//
 	notes = append(notes, ModelNote{len(A), "Constraints 9':"})
 	for year := 0; year < ms.Ip.Numyr; year++ {
+		row := make([]float64, nvars)
+		rowActive := false
 		for j := 0; j < intMin(2, len(ms.Accounttable)); j++ {
 			// at most the first two accounts are type IRA w/
 			// RMD requirement
 			if ms.Accounttable[j].acctype == IRA {
 				ownerAge := ms.accountOwnerAge(year, ms.Accounttable[j])
 				if ownerAge >= int(ms.Ti.Contribspecs["TDRANOCONTRIBAGE"]) {
-					row := make([]float64, nvars)
+					// set both accounts if both retirees are over 70
 					row[ms.Vindx.D(year, j)] = 1
-					A = append(A, row)
-					b = append(b, 0)
+					rowActive = true
 				}
 			}
+		}
+		if rowActive {
+			A = append(A, row)
+			b = append(b, 0)
 		}
 	}
 	//
@@ -946,20 +951,47 @@ func (ms ModelSpecs) BuildModel() ([]float64, [][]float64, []float64, []ModelNot
 				// Deposits to tax favored accounts are only allowed when
 				// there is taxable income.
 				// when there is none (6') constrains will cover (N')
+				tot := 0.0
 				for j := 0; j < len(ms.Accounttable); j++ {
-					ownerAge := ms.accountOwnerAge(year, ms.Accounttable[j])
-					t := ms.Accounttable[j].acctype
-					//fmt.Printf("888:: account type: %v, ownerAge: %d, maxage: %d\n", t.String(), ownerAge, int(ms.Ti.Contribspecs["TDRANOCONTRIBAGE"]))
-					if t != Aftertax && (t != IRA || ownerAge < int(ms.Ti.Contribspecs["TDRANOCONTRIBAGE"])) { // IRA over age 70 handled by 9'
-						v := ms.Accounttable[j].Contributions
-						max := 0.0
-						if v != nil {
-							max = v[year]
+					v := ms.Accounttable[j].Contributions
+					if v != nil {
+						tot += v[year]
+					}
+				}
+				if tot > 0.0 {
+					// need a row for each account to set it's own contribution
+					for j := 0; j < len(ms.Accounttable); j++ {
+						ownerAge := ms.accountOwnerAge(year, ms.Accounttable[j])
+						t := ms.Accounttable[j].acctype
+						//fmt.Printf("888:: account type: %v, ownerAge: %d, maxage: %d\n", t.String(), ownerAge, int(ms.Ti.Contribspecs["TDRANOCONTRIBAGE"]))
+						if t != Aftertax && (t != IRA || ownerAge < int(ms.Ti.Contribspecs["TDRANOCONTRIBAGE"])) { // IRA over age 70 handled by 9'
+							v := ms.Accounttable[j].Contributions
+							max := 0.0
+							if v != nil {
+								max = v[year]
+							}
+							row := make([]float64, nvars)
+							row[ms.Vindx.D(year, j)] = 1
+							A = append(A, row)
+							b = append(b, max)
 						}
-						row := make([]float64, nvars)
-						row[ms.Vindx.D(year, j)] = 1
+					}
+				} else {
+					// use just one row for all accounts, no contribution
+					row := make([]float64, nvars)
+					rowActive := false
+					for j := 0; j < len(ms.Accounttable); j++ {
+						ownerAge := ms.accountOwnerAge(year, ms.Accounttable[j])
+						t := ms.Accounttable[j].acctype
+						//fmt.Printf("888:: account type: %v, ownerAge: %d, maxage: %d\n", t.String(), ownerAge, int(ms.Ti.Contribspecs["TDRANOCONTRIBAGE"]))
+						if t != Aftertax && (t != IRA || ownerAge < int(ms.Ti.Contribspecs["TDRANOCONTRIBAGE"])) { // IRA over age 70 handled by 9'
+							row[ms.Vindx.D(year, j)] = 1
+							rowActive = true
+						}
+					}
+					if rowActive {
 						A = append(A, row)
-						b = append(b, max)
+						b = append(b, 0)
 					}
 				}
 			}

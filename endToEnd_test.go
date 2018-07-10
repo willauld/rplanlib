@@ -64,6 +64,12 @@ func TestE2E(t *testing.T) {
 		}
 	*/
 	//
+	// Define the local Testing options
+	//
+	DisplayOutputAndTiming := false  //true
+	DoModelOptimizationTest := false //true //false
+	updateExpectFile = false         // true
+	//
 	// Bring this back in to make sure all configuration files are
 	// accounted for. Need to code this up
 	//
@@ -106,7 +112,6 @@ func TestE2E(t *testing.T) {
 		Path: "testdata/errortypes.csv", // Path of the csv file
 		Dest: &errorTypeTable,           // A pointer to the create slice
 	})
-	//updateExpectFile = true
 
 	for i, curCase := range cases {
 		//if i != 23 {
@@ -184,7 +189,6 @@ func TestE2E(t *testing.T) {
 		var aprime *[][]float64
 		var bprime *[]float64
 		var Optelapsed time.Duration
-		DoModelOptimizationTest := false //true //false
 		if DoModelOptimizationTest {
 			Optstart := time.Now()
 			var oinfo *[]rplanlib.OptInfo
@@ -224,7 +228,6 @@ func TestE2E(t *testing.T) {
 			BinCheckModelFiles("./RPlanModelgo.datX", "./RPlanModelpython.datX", &vindx)
 		*/
 
-		DisplayOutputAndTiming := false //true
 		if DisplayOutputAndTiming || DoModelOptimizationTest {
 			//fmt.Printf("Res: %#v\n", res)
 			str := fmt.Sprintf("Message: %v\n", res.Message)

@@ -266,7 +266,9 @@ func expandYears(numyr, ageAtStart, agestr) ([]float64) {
 // TODO: FIXME NEED UNIT TEST FOR THIS FUNCTION
 // maxContributions returns the max allowable contributions for one or all retirees
 func (ti Taxinfo) maxContribution(year int, yearsToInflateBy int, retirees []retiree, retireekey string, iRate float64) float64 {
-	//FIXME: not currently handling 401K max contributions TODO
+	// while a person over 70 years old can no longer contribute to their
+	// traditional IRA, 401(k)... they may still contribute to Roth accounts
+	// with the same individual maximum amount.
 	max := 0.0
 	for _, v := range retirees {
 		if retireekey == "" || v.mykey == retireekey { // if "", Sum all retiree

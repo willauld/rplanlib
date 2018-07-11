@@ -848,6 +848,7 @@ func (ms ModelSpecs) BuildModel() ([]float64, [][]float64, []float64, []ModelNot
 	for year := 0; year < ms.Ip.Numyr; year++ {
 		row := make([]float64, nvars)
 		atleastone := false
+		totContrib := 0.0
 		for j := 0; j < len(ms.Accounttable); j++ {
 			t := ms.Accounttable[j].acctype
 			if t != Aftertax {
@@ -855,6 +856,7 @@ func (ms ModelSpecs) BuildModel() ([]float64, [][]float64, []float64, []ModelNot
 				//fmt.Printf("888:: 6' account type: %v, ownerAge: %d\n", t.String(), ownerAge)
 				if t != IRA || ownerAge < int(ms.Ti.Contribspecs["TDRANOCONTRIBAGE"]) {
 					row[ms.Vindx.D(year, j)] = 1 // TODO if this is not executed, DONT register this constrain, DONT add to A and b
+					totContrib += AccessVector(ms.Accounttable[j].Contributions, year)
 					atleastone = true
 				}
 			}
@@ -866,7 +868,12 @@ func (ms ModelSpecs) BuildModel() ([]float64, [][]float64, []float64, []ModelNot
 			// include non-taxed anueities that don't count.
 			None := ""
 			infyears := ms.Ip.PrePlanYears + year
-			b = append(b, math.Min(AccessVector(ms.Taxed, year), ms.Ti.maxContribution(year, infyears, ms.Retirees, None, ms.Ip.IRate)))
+			bmax := ms.Ti.maxContribution(year, infyears, ms.Retirees, None, ms.Ip.IRate)
+			if !ms.AllowTdraRothraDeposits {
+				//merging the Eq N' into 6' and 7'
+				bmax = math.Min(totContrib, bmax)
+			}
+			b = append(b, math.Min(AccessVector(ms.Taxed, year), bmax))
 		}
 	}
 	//
@@ -875,12 +882,13 @@ func (ms ModelSpecs) BuildModel() ([]float64, [][]float64, []float64, []ModelNot
 	notes = append(notes, ModelNote{len(A), "Constraints 7':"})
 	for year := 0; year < ms.Ip.Numyr; year++ {
 		for _, v := range ms.Retirees {
-			if AccessVector(ms.Taxed, year) <= 0.0 {
+			if AccessVector(ms.Taxed, year) > 0.0 {
 				// No deposits to tax favored accounts are allow when
-				// there is no taxable income.
-				// In this case (6') constrains will cover (7')
+				// there is no taxable income. So those cases (I<=0)
+				// are covered by case (6') constrains
 				atleastone := false
 				row := make([]float64, nvars)
+				totContrib := 0.0
 				for j := 0; j < len(ms.Accounttable); j++ {
 					if v.mykey == ms.Accounttable[j].mykey {
 						t := ms.Accounttable[j].acctype
@@ -890,6 +898,7 @@ func (ms ModelSpecs) BuildModel() ([]float64, [][]float64, []float64, []ModelNot
 							// (this will either break or just not match - we
 							// will see)
 							row[ms.Vindx.D(year, j)] = 1 // TODO if this is not executed, DONT register this constraint, DONT add to A and b
+							totContrib += AccessVector(ms.Accounttable[j].Contributions, year)
 							atleastone = true
 						}
 					}
@@ -897,7 +906,12 @@ func (ms ModelSpecs) BuildModel() ([]float64, [][]float64, []float64, []ModelNot
 				if atleastone {
 					A = append(A, row)
 					infyears := ms.Ip.PrePlanYears + year
-					b = append(b, math.Min(AccessVector(ms.Taxed, year), ms.Ti.maxContribution(year, infyears, ms.Retirees, v.mykey, ms.Ip.IRate)))
+					bmax := ms.Ti.maxContribution(year, infyears, ms.Retirees, v.mykey, ms.Ip.IRate)
+					if !ms.AllowTdraRothraDeposits {
+						//merging the Eq N' into 6' and 7'
+						bmax = math.Min(totContrib, bmax)
+					}
+					b = append(b, math.Min(AccessVector(ms.Taxed, year), bmax))
 				}
 			}
 		}
@@ -943,6 +957,7 @@ func (ms ModelSpecs) BuildModel() ([]float64, [][]float64, []float64, []ModelNot
 			b = append(b, 0)
 		}
 	}
+	/* Incorportated into 6' and 7'
 	//
 	// Add constaints for (N') rows
 	//
@@ -998,7 +1013,9 @@ func (ms ModelSpecs) BuildModel() ([]float64, [][]float64, []float64, []ModelNot
 				}
 			}
 		}
+
 	}
+	*/
 	//
 	// Add constaints for (10') rows
 	//
@@ -1272,6 +1289,7 @@ func (ms ModelSpecs) matchRetiree(retireekey string, year int, livingOnly bool) 
 
 // TODO unit test me :-)
 // convertAge converts an age for key1 to an age in the primary timeline
+
 func (ms ModelSpecs) convertAge(age int, key string) int {
 	index := -1
 	for i, v := range ms.Retirees {

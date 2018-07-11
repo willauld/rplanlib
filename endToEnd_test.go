@@ -21,6 +21,9 @@ type acase struct {
 	Testfile         string    `csv:"Testfile"`
 	ErrorType        errorCode `csv:"Error Type"`
 	SpendableAtLeast int       `csv:"Spendable At Least"`
+	ModelM           int       `csv:"Model M"`
+	ModelN           int       `csv:"Model N"`
+	Iterations       int       `csv:"Iterations"`
 }
 
 type errorType struct {
@@ -67,8 +70,8 @@ func TestE2E(t *testing.T) {
 	//
 	DisplayOutputAndTiming := false  //true
 	DoModelOptimizationTest := false //true //false
-	updateExpectFile := false        // true
-	ExecuteOnlyCase := 30            //-1            // -1 for all cases OR specific case number
+	updateExpectFile := false
+	ExecuteOnlyCase := -1 // -1 for all cases OR specific case number
 	//
 	// Bring this back in to make sure all configuration files are
 	// accounted for. Need to code this up
@@ -243,6 +246,7 @@ func TestE2E(t *testing.T) {
 			}
 			str = fmt.Sprintf("Time: LPSimplex() took %s\n", elapsed)
 			fmt.Printf(str)
+			fmt.Printf("\tIterations: %d\n", res.Nitr)
 			if DoModelOptimizationTest {
 				str = fmt.Sprintf("Time: Opt took %s, LPSimplex() took %s\n", Optelapsed, Oelapsed)
 				fmt.Printf(str)
@@ -271,9 +275,12 @@ func TestE2E(t *testing.T) {
 						}
 					}
 				} else {
-					t.Errorf("TestE2E case %d: did not generate expected error for file %s", curCase.Testfile)
+					t.Errorf("TestE2E case %d: did not generate expected error for file %s", i, curCase.Testfile)
 				}
 			}
+			//
+			// Check expected Spendable
+			//
 			s := res.X[ms.Vindx.S(0)]
 			if updateExpectFile {
 				newVal := int(s - 5.0)
@@ -282,6 +289,31 @@ func TestE2E(t *testing.T) {
 			}
 			if s < float64(curCase.SpendableAtLeast) {
 				t.Errorf("TestE2E case %d: first year spendable (%6.0f) is less than expected (%d diff of %6.0f) for file %s", i, s, curCase.SpendableAtLeast, float64(curCase.SpendableAtLeast)-s, curCase.Testfile)
+			}
+			//
+			// Check expected model size
+			//
+			m := len(a)
+			n := len(a[0])
+			if updateExpectFile {
+				cases[i].ModelM = m
+				curCase.ModelM = m
+				cases[i].ModelN = n
+				curCase.ModelN = n
+			}
+			if m != curCase.ModelM || n != curCase.ModelN {
+				t.Errorf("TestE2E case %d: Expected m x n model of %d x %d but found %d x %d", i, curCase.ModelM, curCase.ModelN, m, n)
+			}
+			//
+			// Check expected iteration count
+			//
+			nitr := res.Nitr
+			if updateExpectFile {
+				cases[i].Iterations = nitr
+				curCase.Iterations = nitr
+			}
+			if nitr != curCase.Iterations {
+				t.Errorf("TestE2E case %d: Expected %d Iterations but found %d", i, curCase.Iterations, nitr)
 			}
 
 			ms.PrintActivitySummary(&res.X)

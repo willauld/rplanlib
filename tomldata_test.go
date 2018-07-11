@@ -723,7 +723,6 @@ bal = 200_000
 			t.Errorf("TestGetTomlData case %d: %s", i, err)
 		}
 		tfile := f.Name()
-		defer os.Remove(tfile) // clean up
 
 		_, err = f.Write(elem.toml)
 		if err != nil {
@@ -743,20 +742,73 @@ bal = 200_000
 			t.Errorf("TestGetTomlData case %d: ms is nil: %s", i, "err is empty :: ms should never be nil unless err has something!!!")
 			continue
 		}
+
+		os.Remove(tfile) // clean up
 		//ipsm is just a subset of the values in ms to compare
 		//if len(elem.ipsm) != len(*ms) {
 		//	t.Errorf("TestGetTomlData case %d: len(ms): %d != len(ipms): %d",
 		//		i, len(*ms), len(elem.ipsm))
 		//}
-		for k, v := range *ms {
+		// find mappings for eT_Assets, eT_Income, eT_Expense
+
+		specialMap := make(map[string]string, 0)
+		if elem.ipsm["eT_Asset1"] != (*ms)["eT_Asset1"] {
+			specialMap["eT_Asset1"] = "eT_Asset2"
+			specialMap["eT_Asset2"] = "eT_Asset1"
+			specialMap["eT_AssetValue1"] = "eT_AssetValue2"
+			specialMap["eT_AssetValue2"] = "eT_AssetValue1"
+			specialMap["eT_AssetAgeToSell1"] = "eT_AssetAgeToSell2"
+			specialMap["eT_AssetAgeToSell2"] = "eT_AssetAgeToSell1"
+			specialMap["eT_AssetCostAndImprovements1"] = "eT_AssetCostAndImprovements2"
+			specialMap["eT_AssetCostAndImprovements2"] = "eT_AssetCostAndImprovements1"
+			specialMap["eT_AssetOwedAtAgeToSell1"] = "eT_AssetOwedAtAgeToSell2"
+			specialMap["eT_AssetOwedAtAgeToSell2"] = "eT_AssetOwedAtAgeToSell1"
+			specialMap["eT_AssetPrimaryResidence1"] = "eT_AssetPrimaryResidence2"
+			specialMap["eT_AssetPrimaryResidence2"] = "eT_AssetPrimaryResidence1"
+			specialMap["eT_AssetRRatePercent1"] = "eT_AssetRRatePercent2"
+			specialMap["eT_AssetRRatePercent2"] = "eT_AssetRRatePercent1"
+			specialMap["eT_AssetBrokeragePercent1"] = "eT_AssetBrokeragePercent2"
+			specialMap["eT_AssetBrokeragePercent2"] = "eT_AssetBrokeragePercent1"
+		}
+		if elem.ipsm["eT_Income1"] != (*ms)["eT_Income1"] {
+			specialMap["eT_Income1"] = "eT_Income2"
+			specialMap["eT_Income2"] = "eT_Income1"
+			specialMap["eT_IncomeAmount1"] = "eT_IncomeAmount2"
+			specialMap["eT_IncomeAmount2"] = "eT_IncomeAmount1"
+			specialMap["eT_IncomeStartAge1"] = "eT_IncomeStartAge2"
+			specialMap["eT_IncomeStartAge2"] = "eT_IncomeStartAge1"
+			specialMap["eT_IncomeEndAge1"] = "eT_IncomeEndAge2"
+			specialMap["eT_IncomeEndAge2"] = "eT_IncomeEndAge1"
+			specialMap["eT_IncomeInflate1"] = "eT_IncomeInflate2"
+			specialMap["eT_IncomeInflate2"] = "eT_IncomeInflate1"
+			specialMap["eT_IncomeTax1"] = "eT_IncomeTax2"
+			specialMap["eT_IncomeTax2"] = "eT_IncomeTax1"
+		}
+		if elem.ipsm["eT_Expense1"] != (*ms)["eT_Expense1"] {
+			specialMap["eT_Expense1"] = "eT_Expense2"
+			specialMap["eT_Expense2"] = "eT_Expense1"
+			specialMap["eT_ExpenseAmount1"] = "eT_ExpenseAmount2"
+			specialMap["eT_ExpenseAmount2"] = "eT_ExpenseAmount1"
+			specialMap["eT_ExpenseStartAge1"] = "eT_ExpenseStartAge2"
+			specialMap["eT_ExpenseEndAge2"] = "eT_ExpenseEndAge1"
+			specialMap["eT_ExpenseInflate1"] = "eT_ExpenseInflate2"
+			specialMap["eT_ExpenseTax2"] = "eT_ExpenseTax1"
+		}
+		for k1, v := range *ms {
 			foundIssue := false
-			if elem.ipsm[k] != (*ms)[k] {
-				t.Errorf("TestGetTomlData case %d: For '%s', expected: '%s', but found: '%s'", i, k, elem.ipsm[k], v)
+			k2 := k1
+			q, ok := specialMap[k1]
+			if ok {
+				k2 = q
+				//fmt.Printf("\nk1: %s, k2: %s\n", k1, k2)
+			}
+			if elem.ipsm[k1] != (*ms)[k2] {
+				t.Errorf("TestGetTomlData case %d: For '%s', expected: '%s', but found: '%s'", i, k1, elem.ipsm[k1], v)
 				foundIssue = true
 			}
 			if foundIssue && onlyOnce < 1 {
 				onlyOnce++
-				fmt.Printf("TestGetTomlData fails sometimes because of the somewhere random ordering of Map access (and TomlTree access) so these failures are sometimes false positives. If you run the tests a few times and the go away in some of the runs its OK. Need to improve this test checking to eliminate this false positive issue.")
+				fmt.Printf("TestGetTomlData fails sometimes because of the somewhere random ordering of Map access (and TomlTree access) so these failures are sometimes false positives. If you run the tests a few times and the go away in some of the runs its OK. Need to improve this test checking to eliminate this false positive issue.\n*** this should no longer happen ***\n")
 			}
 		}
 		for _, v := range rplanlib.InputStrDefs {

@@ -899,6 +899,7 @@ func (ms ModelSpecs) PrintAssetSummary() {
 						tag := ms.Assettags[indx]
 						value, brate, assetRR, basis, owed, prime := ms.AssetByTag(tag)
 						price := value * math.Pow(assetRR, float64(age-ms.Ip.Age1))
+						fmt.Printf("calc price: %6.2f, vector price: %6.2f\n", price, ms.AssetSale[indx][year])
 						bfee := price * brate
 						net := price*(1-brate) - owed
 						if net < 0.0 {
@@ -930,6 +931,7 @@ func (ms ModelSpecs) PrintAssetSummary() {
 	}
 }
 
+// TODO FixMe this function should be place somewhere more appropriete
 func (ms ModelSpecs) AssetByTag(name string) (value, brate, assetRR, basis, owed, prime float64) {
 	for i := 0; i < len(ms.Ip.Assets); i++ {
 		if ms.Ip.Assets[i].Tag == name {
@@ -946,6 +948,74 @@ func (ms ModelSpecs) AssetByTag(name string) (value, brate, assetRR, basis, owed
 		}
 	}
 	return 0.0, 0.0, 0.0, 0.0, 0.0, 0.0
+}
+
+// TODO FixMe this function should be place somewhere more appropriete
+func (ms ModelSpecs) AssetByTagAndField(tag, field string) float64 {
+	for i := 0; i < len(ms.Ip.Assets); i++ {
+		var val float64
+		if ms.Ip.Assets[i].Tag == tag {
+			switch field {
+			case "Value":
+				val = float64(ms.Ip.Assets[i].Value)
+			case "BrokeragePercent":
+				val = ms.Ip.Assets[i].BrokeragePercent
+			case "BroderFee":
+				age := ms.Ip.Assets[i].AgeToSell
+				assetRR := ms.Ip.Assets[i].AssetRRate
+				value := float64(ms.Ip.Assets[i].Value)
+				price := value * math.Pow(assetRR, float64(age-ms.Ip.Age1))
+				brate := ms.Ip.Assets[i].BrokeragePercent / 100.0
+				val = price * brate
+			case "Taxable":
+				age := ms.Ip.Assets[i].AgeToSell
+				assetRR := ms.Ip.Assets[i].AssetRRate
+				value := float64(ms.Ip.Assets[i].Value)
+				price := value * math.Pow(assetRR, float64(age-ms.Ip.Age1))
+				brate := ms.Ip.Assets[i].BrokeragePercent / 100.0
+				//bfee := price * brate
+				basis := float64(ms.Ip.Assets[i].CostAndImprovements)
+				taxable := price*(1-brate) - basis
+				if ms.Ip.Assets[i].PrimaryResidence {
+					taxable -= ms.Ti.Primeresidence *
+						math.Pow(ms.Ip.IRate, float64(age-ms.Ip.Age1))
+				}
+				if taxable < 0.0 {
+					taxable = 0.0
+				}
+				val = taxable
+			case "AssetRRate":
+				val = ms.Ip.Assets[i].AssetRRate
+			case "CostAndImprovements":
+				val = float64(ms.Ip.Assets[i].CostAndImprovements)
+			case "OwedAtAgeToSell":
+				val = float64(ms.Ip.Assets[i].OwedAtAgeToSell)
+			case "AgeToSell":
+				val = float64(ms.Ip.Assets[i].AgeToSell)
+			case "SellPrice":
+				age := ms.Ip.Assets[i].AgeToSell
+				assetRR := ms.Ip.Assets[i].AssetRRate
+				value := float64(ms.Ip.Assets[i].Value)
+				val = value * math.Pow(assetRR, float64(age-ms.Ip.Age1))
+			case "SellNet":
+				indx := 0
+				for j := 0; j < len(ms.Assettags); j++ {
+					if tag == ms.Assettags[j] {
+						indx = j
+						break
+					}
+				}
+				val = AccessVector(ms.AssetSale[indx], ms.Ip.Assets[i].AgeToSell-ms.Ip.StartPlan)
+			case "PrimaryResidence":
+				val = 0.0
+				if ms.Ip.Assets[i].PrimaryResidence {
+					val = 1.0
+				}
+			}
+			return val
+		}
+	}
+	return 0.0
 }
 
 func (ms ModelSpecs) depositAmount(xp *[]float64, year int, index int) float64 {

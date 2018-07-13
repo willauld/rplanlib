@@ -1611,6 +1611,501 @@ Total spendable (after tax money): $490_153`,
 func TestVerifyInputs(t *testing.T) {
 	fmt.Printf("TestVerifyInputs() Not Yet Implemented\n")
 }
+func TestAssetByTagAndField(t *testing.T) {
+	tests := []struct {
+		ip            map[string]string
+		verbose       bool
+		allowDeposits bool
+		iRate         float64
+		CheckAsset    struct {
+			Value            float64
+			BrokeragePercent float64
+		}
+	}{
+		{ // case 0 // driver generated from AWill.toml
+			ip: map[string]string{
+				"key1":                         "will",
+				"key2":                         "yuli",
+				"eT_Age1":                      "56",
+				"eT_Age2":                      "54",
+				"eT_RetireAge1":                "57",
+				"eT_RetireAge2":                "62",
+				"eT_PlanThroughAge1":           "100",
+				"eT_PlanThroughAge2":           "100",
+				"eT_PIA1":                      "31000",
+				"eT_PIA2":                      "-1",
+				"eT_SS_Start1":                 "70",
+				"eT_SS_Start2":                 "68",
+				"eT_TDRA1":                     "1400000",
+				"eT_TDRA2":                     "18000",
+				"eT_TDRA_Contrib1":             "0",
+				"eT_Roth1":                     "0",
+				"eT_Roth2":                     "0",
+				"eT_Aftatax":                   "700000",
+				"eT_Aftatax_Basis":             "400000",
+				"eT_iRatePercent":              "2.5",
+				"eT_rRatePercent":              "6",
+				"dollarsInThousands":           "false",
+				"eT_Income1":                   "rental_Fessenden",
+				"eT_IncomeAmount1":             "36000",
+				"eT_IncomeStartAge1":           "57",
+				"eT_IncomeEndAge1":             "75",
+				"eT_IncomeInflate1":            "true",
+				"eT_IncomeTax1":                "true",
+				"eT_Expense1":                  "mortgage",
+				"eT_ExpenseAmount1":            "37131",
+				"eT_ExpenseStartAge1":          "56",
+				"eT_ExpenseEndAge1":            "61",
+				"eT_Asset1":                    "rental_VanHoutin",
+				"eT_AssetValue1":               "700000",
+				"eT_AssetAgeToSell1":           "80",
+				"eT_AssetCostAndImprovements1": "425000",
+				"eT_AssetOwedAtAgeToSell1":     "0",
+				"eT_AssetPrimaryResidence1":    "false",
+				"eT_AssetRRatePercent1":        "4",
+				"eT_Income2":                   "rental_VanHoutin",
+				"eT_IncomeAmount2":             "24000",
+				"eT_IncomeStartAge2":           "67",
+				"eT_IncomeEndAge2":             "80",
+				"eT_IncomeInflate2":            "true",
+				"eT_IncomeTax2":                "true",
+				"eT_Expense2":                  "college",
+				"eT_ExpenseAmount2":            "30000",
+				"eT_ExpenseStartAge2":          "56",
+				"eT_ExpenseEndAge2":            "59",
+				"eT_ExpenseInflate2":           "false",
+				"eT_Asset2":                    "home",
+				"eT_AssetValue2":               "550000",
+				"eT_AssetAgeToSell2":           "0",
+				"eT_AssetCostAndImprovements2": "300000",
+				"eT_AssetOwedAtAgeToSell2":     "0",
+				"eT_AssetPrimaryResidence2":    "true",
+				"eT_AssetRRatePercent2":        "4",
+				"eT_Asset3":                    "rental_Fessenden",
+				"eT_AssetValue3":               "900000",
+				"eT_AssetAgeToSell3":           "75",
+				"eT_AssetCostAndImprovements3": "450000",
+				"eT_AssetOwedAtAgeToSell3":     "0",
+				"eT_AssetPrimaryResidence3":    "false",
+				"eT_AssetRRatePercent3":        "4",
+				//Added
+				"filingStatus": "joint",
+				"eT_maximize":  "Spending", // or "PlusEstate"
+			},
+			verbose:       true,
+			allowDeposits: false,
+			iRate:         1.025,
+		},
+		{ // Case 1  // case to match AWill.toml Hand coded
+			ip: map[string]string{
+				"setName":                    "AWill.toml",
+				"filingStatus":               "joint",
+				"key1":                       "will",
+				"key2":                       "yuli",
+				"eT_Age1":                    "56",
+				"eT_Age2":                    "54",
+				"eT_RetireAge1":              "57",
+				"eT_RetireAge2":              "62",
+				"eT_PlanThroughAge1":         "100",
+				"eT_PlanThroughAge2":         "100",
+				"eT_PIA1":                    "31000", //31K
+				"eT_PIA2":                    "-1",
+				"eT_SS_Start1":               "70",
+				"eT_SS_Start2":               "68",
+				"eT_TDRA1":                   "1400000", //1.4M
+				"eT_TDRA2":                   "18000",   //18K
+				"eT_TDRA_Rate1":              "",
+				"eT_TDRA_Rate2":              "",
+				"eT_TDRA_Contrib1":           "",
+				"eT_TDRA_Contrib2":           "", // contribute 5k per year
+				"eT_TDRA_ContribStartAge1":   "",
+				"eT_TDRA_ContribStartAge2":   "",
+				"eT_TDRA_ContribEndAge1":     "",
+				"eT_TDRA_ContribEndAge2":     "",
+				"eT_Roth1":                   "0",
+				"eT_Roth2":                   "0",
+				"eT_Roth_Rate1":              "",
+				"eT_Roth_Rate2":              "",
+				"eT_Roth_Contrib1":           "",
+				"eT_Roth_Contrib2":           "",
+				"eT_Roth_ContribStartAge1":   "",
+				"eT_Roth_ContribStartAge2":   "",
+				"eT_Roth_ContribEndAge1":     "",
+				"eT_Roth_ContribEndAge2":     "",
+				"eT_Aftatax":                 "700000", //700k
+				"eT_Aftatax_Basis":           "400000", //400k
+				"eT_Aftatax_Rate":            "",
+				"eT_Aftatax_Contrib":         "",
+				"eT_Aftatax_ContribStartAge": "",
+				"eT_Aftatax_ContribEndAge":   "",
+
+				"eT_iRatePercent":    "2.5",
+				"eT_rRatePercent":    "6",
+				"eT_maximize":        "Spending", // or "PlusEstate"
+				"dollarsInThousands": "false",
+
+				"eT_Income1":         "rental_fessinden",
+				"eT_IncomeAmount1":   "36000",
+				"eT_IncomeStartAge1": "57",
+				"eT_IncomeEndAge1":   "75",
+				"eT_IncomeInflate1":  "true",
+				"eT_IncomeTax1":      "true",
+
+				//prototype entries below
+				"eT_Income2":         "rental_Van_Houten",
+				"eT_IncomeAmount2":   "24000",
+				"eT_IncomeStartAge2": "67",
+				"eT_IncomeEndAge2":   "80",
+				"eT_IncomeInflate2":  "true",
+				"eT_IncomeTax2":      "true",
+
+				//prototype entries below
+				"eT_Expense1":         "morgage",
+				"eT_ExpenseAmount1":   "37131",
+				"eT_ExpenseStartAge1": "56",
+				"eT_ExpenseEndAge1":   "61",
+				"eT_ExpenseInflate1":  "",
+				"eT_ExpenseTax1":      "", //ignored, or should be
+
+				//prototype entries below
+				"eT_Expense2":         "college",
+				"eT_ExpenseAmount2":   "30000",
+				"eT_ExpenseStartAge2": "56",
+				"eT_ExpenseEndAge2":   "59",
+				"eT_ExpenseInflate2":  "false",
+				"eT_ExpenseTax2":      "", //ignored, or should be
+
+				//prototype entries below
+				"eT_Asset1":                    "rental_fessenden",
+				"eT_AssetValue1":               "900000",
+				"eT_AssetAgeToSell1":           "75",
+				"eT_AssetCostAndImprovements1": "450000",
+				"eT_AssetOwedAtAgeToSell1":     "0",
+				"eT_AssetPrimaryResidence1":    "false",
+				"eT_AssetRRatePercent1":        "4",
+				"eT_AssetBrokeragePercent1":    "",
+
+				"eT_Asset2":                    "rental_van_houten",
+				"eT_AssetValue2":               "700000",
+				"eT_AssetAgeToSell2":           "80",
+				"eT_AssetCostAndImprovements2": "425000",
+				"eT_AssetOwedAtAgeToSell2":     "0",
+				"eT_AssetPrimaryResidence2":    "false",
+				"eT_AssetRRatePercent2":        "4", // python defaults to global rate
+				"eT_AssetBrokeragePercent2":    "",
+
+				"eT_Asset3":                    "home",
+				"eT_AssetValue3":               "550000",
+				"eT_AssetAgeToSell3":           "0",
+				"eT_AssetCostAndImprovements3": "300000",
+				"eT_AssetOwedAtAgeToSell3":     "0",
+				"eT_AssetPrimaryResidence3":    "true",
+				"eT_AssetRRatePercent3":        "4", // python defaults to global rate
+				"eT_AssetBrokeragePercent3":    "",
+			},
+			verbose:       true,
+			allowDeposits: false,
+			iRate:         1.025,
+		},
+		{ // Case 2 // case to match mobile.toml
+			ip: map[string]string{
+				"setName":                    "activeParams",
+				"filingStatus":               "joint",
+				"key1":                       "retiree1",
+				"key2":                       "retiree2",
+				"eT_Age1":                    "54",
+				"eT_Age2":                    "54",
+				"eT_RetireAge1":              "65",
+				"eT_RetireAge2":              "65",
+				"eT_PlanThroughAge1":         "75",
+				"eT_PlanThroughAge2":         "75",
+				"eT_PIA1":                    "20", //20K
+				"eT_PIA2":                    "-1",
+				"eT_SS_Start1":               "70",
+				"eT_SS_Start2":               "70",
+				"eT_TDRA1":                   "200", // 200k
+				"eT_TDRA2":                   "",
+				"eT_TDRA_Rate1":              "",
+				"eT_TDRA_Rate2":              "",
+				"eT_TDRA_Contrib1":           "",
+				"eT_TDRA_Contrib2":           "5", // contribute 5k per year
+				"eT_TDRA_ContribStartAge1":   "",
+				"eT_TDRA_ContribStartAge2":   "63",
+				"eT_TDRA_ContribEndAge1":     "",
+				"eT_TDRA_ContribEndAge2":     "64",
+				"eT_Roth1":                   "5",
+				"eT_Roth2":                   "20", //20k
+				"eT_Roth_Rate1":              "",
+				"eT_Roth_Rate2":              "",
+				"eT_Roth_Contrib1":           "",
+				"eT_Roth_Contrib2":           "",
+				"eT_Roth_ContribStartAge1":   "",
+				"eT_Roth_ContribStartAge2":   "",
+				"eT_Roth_ContribEndAge1":     "",
+				"eT_Roth_ContribEndAge2":     "",
+				"eT_Aftatax":                 "60", //60k
+				"eT_Aftatax_Rate":            "",
+				"eT_Aftatax_Contrib":         "10", //10K
+				"eT_Aftatax_ContribStartAge": "63",
+				"eT_Aftatax_ContribEndAge":   "67",
+
+				"eT_iRatePercent": "2.5",
+				"eT_rRatePercent": "6",
+				"eT_maximize":     "Spending", // or "PlusEstate"
+
+				//prototype entries below
+				"eT_Income1":         "rental1",
+				"eT_IncomeAmount1":   "1",
+				"eT_IncomeStartAge1": "63",
+				"eT_IncomeEndAge1":   "67",
+				"eT_IncomeInflate1":  "true",
+				"eT_IncomeTax1":      "true",
+
+				//prototype entries below
+				"eT_Income2":         "rental2",
+				"eT_IncomeAmount2":   "2",
+				"eT_IncomeStartAge2": "62",
+				"eT_IncomeEndAge2":   "70",
+				"eT_IncomeInflate2":  "false",
+				"eT_IncomeTax2":      "true",
+
+				//prototype entries below
+				"eT_Expense1":         "exp1",
+				"eT_ExpenseAmount1":   "1",
+				"eT_ExpenseStartAge1": "63",
+				"eT_ExpenseEndAge1":   "67",
+				"eT_ExpenseInflate1":  "true",
+				"eT_ExpenseTax1":      "true", //ignored, or should be
+
+				//prototype entries below
+				"eT_Expense2":         "exp2",
+				"eT_ExpenseAmount2":   "2",
+				"eT_ExpenseStartAge2": "62",
+				"eT_ExpenseEndAge2":   "70",
+				"eT_ExpenseInflate2":  "false",
+				"eT_ExpenseTax2":      "true", //ignored, or should be
+
+				//prototype entries below
+				"eT_Asset1":                    "ass1",
+				"eT_AssetValue1":               "100",
+				"eT_AssetAgeToSell1":           "73",
+				"eT_AssetCostAndImprovements1": "20",
+				"eT_AssetOwedAtAgeToSell1":     "10",
+				"eT_AssetPrimaryResidence1":    "True",
+				"eT_AssetRRatePercent1":        "4",
+				"eT_AssetBrokeragePercent1":    "4",
+
+				//prototype entries below
+				"eT_Asset2":                    "ass2",
+				"eT_AssetValue2":               "100",
+				"eT_AssetAgeToSell2":           "73",
+				"eT_AssetCostAndImprovements2": "20",
+				"eT_AssetOwedAtAgeToSell2":     "10",
+				"eT_AssetPrimaryResidence2":    "false",
+				"eT_AssetRRatePercent2":        "6", // python defaults to global rate
+				"eT_AssetBrokeragePercent2":    "",
+			},
+			verbose:       true,
+			allowDeposits: false,
+			iRate:         1.025,
+		},
+		{ // Case 3 // case to match mobile.toml
+			ip: map[string]string{
+				"setName":                    "activeParams",
+				"filingStatus":               "single",
+				"key1":                       "retiree1",
+				"key2":                       "",
+				"eT_Age1":                    "54",
+				"eT_Age2":                    "",
+				"eT_RetireAge1":              "65",
+				"eT_RetireAge2":              "",
+				"eT_PlanThroughAge1":         "75",
+				"eT_PlanThroughAge2":         "",
+				"eT_PIA1":                    "",
+				"eT_PIA2":                    "",
+				"eT_SS_Start1":               "",
+				"eT_SS_Start2":               "",
+				"eT_TDRA1":                   "200", // 200k
+				"eT_TDRA2":                   "",
+				"eT_TDRA_Rate1":              "",
+				"eT_TDRA_Rate2":              "",
+				"eT_TDRA_Contrib1":           "",
+				"eT_TDRA_Contrib2":           "",
+				"eT_TDRA_ContribStartAge1":   "",
+				"eT_TDRA_ContribStartAge2":   "",
+				"eT_TDRA_ContribEndAge1":     "",
+				"eT_TDRA_ContribEndAge2":     "",
+				"eT_Roth1":                   "",
+				"eT_Roth2":                   "",
+				"eT_Roth_Rate1":              "",
+				"eT_Roth_Rate2":              "",
+				"eT_Roth_Contrib1":           "",
+				"eT_Roth_Contrib2":           "",
+				"eT_Roth_ContribStartAge1":   "",
+				"eT_Roth_ContribStartAge2":   "",
+				"eT_Roth_ContribEndAge1":     "",
+				"eT_Roth_ContribEndAge2":     "",
+				"eT_Aftatax":                 "",
+				"eT_Aftatax_Rate":            "",
+				"eT_Aftatax_Contrib":         "",
+				"eT_Aftatax_ContribStartAge": "",
+				"eT_Aftatax_ContribEndAge":   "",
+
+				"eT_iRatePercent": "2.5",
+				"eT_rRatePercent": "6",
+				"eT_maximize":     "Spending", // or "PlusEstate"
+			},
+			verbose:       true,
+			allowDeposits: false,
+			iRate:         1.025,
+		},
+	}
+	if testing.Short() { //Skip if set "-short"
+		t.Skip("TestAssetByTagAndField() (full runs): skipping when set '-short'")
+	}
+	for i, elem := range tests {
+		if i != 1 {
+			continue
+		}
+		fmt.Printf("======== CASE %d ========\n", i)
+		ip, err := NewInputParams(elem.ip, nil)
+		if err != nil {
+			t.Errorf("TestResultsOutput case %d: %s", i, err)
+			continue
+		}
+		//fmt.Printf("InputParams: %#v\n", ip)
+		ti := NewTaxInfo(ip.FilingStatus, 2017)
+		taxbins := len(*ti.Taxtable)
+		cgbins := len(*ti.Capgainstable)
+		vindx, err := NewVectorVarIndex(ip.Numyr, taxbins,
+			cgbins, ip.Accmap, os.Stdout)
+		if err != nil {
+			t.Errorf("TestResultsOutput case %d: %s", i, err)
+			continue
+		}
+		logfile, err := os.Create("ModelMatixPP.log")
+		if err != nil {
+			t.Errorf("TestResultsOutput case %d: %s", i, err)
+			continue
+		}
+		//csvfile := (*os.File)(nil)
+		csvfile, err := os.Create("ModelOutput.csv")
+		if err != nil {
+			t.Errorf("TestResultsOutput case %d: %s", i, err)
+			continue
+		}
+		RoundToOneK := false
+		ms, err := NewModelSpecs(vindx, ti, *ip,
+			elem.allowDeposits, RoundToOneK, false, false,
+			os.Stderr, logfile, csvfile, logfile, nil)
+		if err != nil {
+			t.Errorf("TestResultsOutput case %d: %s", i, err)
+			continue
+		}
+		//fmt.Printf("ModelSpecs: %#v\n", ms)
+
+		c, a, b, _ /*notes*/ := ms.BuildModel()
+
+		tol := 1.0e-7
+		bland := false
+		maxiter := 4000
+		callback := lpsimplex.Callbackfunc(nil)
+		//callback := lpsimplex.LPSimplexVerboseCallback
+		//callback := lpsimplex.LPSimplexTerseCallback
+		disp := true // false //true
+		start := time.Now()
+		res := lpsimplex.LPSimplex(c, a, b, nil, nil, nil, callback, disp, maxiter, tol, bland)
+		elapsed := time.Since(start)
+
+		/*
+			err = BinDumpModel(c, a, b, res.X, "./RPlanModelgo.datX")
+			if err != nil {
+				t.Errorf("TestResultsOutput case %d: %s", i, err)
+				continue
+			}
+			BinCheckModelFiles("./RPlanModelgo.datX", "./RPlanModelpython.datX", &vindx)
+		*/
+
+		//fmt.Printf("Res: %#v\n", res)
+		str := fmt.Sprintf("Message: %v\n", res.Message)
+		fmt.Printf(str)
+		str = fmt.Sprintf("Time: LPSimplex() took %s\n", elapsed)
+		fmt.Printf(str)
+		fmt.Printf("Called LPSimplex() for m:%d x n:%d model\n", len(a), len(a[0]))
+
+		if res.Success {
+
+			for i, asset := range ms.Ip.Assets {
+				ipTag := asset.Tag
+				fmt.Printf(" ====== Asset %d %s ======== \n", i, ipTag)
+				rvalue := ms.AssetByTagAndField(ipTag, "Value")
+				if asset.Value != int(rvalue) {
+					t.Errorf("TestAssetByTagAndField case %d: Asset %s Value Expect: %d, found: %d\n", i, ipTag, asset.Value, int(rvalue))
+				}
+				rvalue = ms.AssetByTagAndField(ipTag, "CostAndImprovements")
+				if asset.CostAndImprovements != int(rvalue) {
+					t.Errorf("TestAssetByTagAndField case %d: Asset %s CostAndImprovements Expect: %d, found: %d\n", i, ipTag, asset.CostAndImprovements, int(rvalue))
+				}
+				rvalue = ms.AssetByTagAndField(ipTag, "AgeToSell")
+				if asset.AgeToSell != int(rvalue) {
+					t.Errorf("TestAssetByTagAndField case %d: Asset %s AgeToSell Expect: %d, found: %d\n", i, ipTag, asset.AgeToSell, int(rvalue))
+				}
+				rvalue = ms.AssetByTagAndField(ipTag, "OwedAtAgeToSell")
+				if asset.OwedAtAgeToSell != int(rvalue) {
+					t.Errorf("TestAssetByTagAndField case %d: Asset %s OwedAtAgeToSell Expect: %d, found: %d\n", i, ipTag, asset.OwedAtAgeToSell, int(rvalue))
+				}
+				rvalue = ms.AssetByTagAndField(ipTag, "PrimaryResidence")
+				if asset.PrimaryResidence != (rvalue == 1.0) {
+					t.Errorf("TestAssetByTagAndField case %d: Asset %s PrimaryResidence Expect: %v, found: %v\n", i, ipTag, asset.PrimaryResidence, rvalue == 1.0)
+				}
+				rvalue = ms.AssetByTagAndField(ipTag, "AssetRRate")
+				if asset.AssetRRate != rvalue {
+					t.Errorf("TestAssetByTagAndField case %d: Asset %s AssetRRate Expect: %6.2f, found: %6.2f\n", i, ipTag, asset.AssetRRate, rvalue)
+				}
+				rvalue = ms.AssetByTagAndField(ipTag, "BrokeragePercent")
+				if asset.BrokeragePercent != rvalue {
+					t.Errorf("TestAssetByTagAndField case %d: Asset %s BrokeragePercent Expect: %6.2f, found: %6.2f\n", i, ipTag, asset.BrokeragePercent, rvalue)
+				}
+				//if ms.Ip.PlanStart <= asset.AgeToSell && ms.Ip.PlanEnd >= asset.AgeToSell {
+				rvalue = ms.AssetByTagAndField(ipTag, "SellNet")
+				if 0.0 != rvalue {
+					t.Errorf("TestAssetByTagAndField case %d: Asset %s BrokeragePercent Expect: %6.2f, found: %6.2f\n", i, ipTag, 0.0, rvalue)
+				}
+
+				//}
+
+				//fmt.Printf("Asset %s Value: %6.2f\n", ms.Assettags[1], ms.AssetByTagAndField(ms.Assettags[1], "Value"))
+			}
+
+			NoOutput := false // true // will want to turn this off later
+			if !NoOutput {
+				ms.ConsistencyCheckBrackets(&res.X)
+				ms.ConsistencyCheckSpendable(&res.X)
+
+				ms.PrintActivitySummary(&res.X)
+				ms.PrintIncomeExpenseDetails()
+				ms.PrintAccountTrans(&res.X)
+				ms.PrintTax(&res.X)
+				ms.PrintTaxBrackets(&res.X)
+				ms.PrintCapGainsBrackets(&res.X)
+				/*
+					//ms.print_model_results(res.x)
+						        if args.verboseincome:
+						            print_income_expense_details()
+						        if args.verboseaccounttrans:
+						            print_account_trans(res)
+						        if args.verbosetax:
+						            print_tax(res)
+						        if args.verbosetaxbrackets:
+						            print_tax_brackets(res)
+									print_cap_gains_brackets(res)
+				*/
+				ms.PrintBaseConfig(&res.X)
+			}
+		}
+		//createDefX(&res.X)
+	}
+}
 
 func TestResultsOutput(t *testing.T) {
 	tests := []struct {

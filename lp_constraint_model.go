@@ -92,7 +92,7 @@ func checkStrconvError(e error) { // TODO: should I remove this?
 }
 
 func AccessVector(v []float64, index int) float64 {
-	if v != nil {
+	if v != nil && len(v) > index && index >= 0 {
 		return v[index]
 	}
 	return 0.0
@@ -572,13 +572,16 @@ func NewModelSpecs(vindx VectorVarIndex,
 			noSell = true
 		}
 		brokerageRate := ip.Assets[i].BrokeragePercent / 100.0
-		if brokerageRate == 0 {
-			// 7-7-2018 Looks like this is not happening but leave this code
-			// in case I break it in the future
-			brokerageRate = 0.04 // default to 4% // TODO FIXME defaults should be set in NewInputParams
-			e := fmt.Errorf("Default (non-zero) value for BrokeragePercent should be set prior to this in NewInputSpecs()")
-			panic(e)
-		}
+		/*
+			if brokerageRate == 0 {
+				// 7-12-2018 OK just triggered this for a "boat" I wanted 0 brokerage and zero rate of return (may even want negitive rate of return) hmm
+				// 7-7-2018 Looks like this is not happening but leave this code
+				// in case I break it in the future
+				brokerageRate = 0.04 // default to 4% // TODO FIXME defaults should be set in NewInputParams
+				e := fmt.Errorf("Default (non-zero) value for BrokeragePercent should be set prior to this in NewInputSpecs()")
+				panic(e)
+			}
+		*/
 		assetRRate := ip.Assets[i].AssetRRate
 		costAndImprovements := float64(ip.Assets[i].CostAndImprovements)
 		owedAtAgeToSell := float64(ip.Assets[i].OwedAtAgeToSell)

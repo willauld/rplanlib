@@ -2,6 +2,7 @@ package rplanlib
 
 import (
 	"fmt"
+	"math"
 	"os"
 	//"regexp"
 	"strings"
@@ -2067,11 +2068,42 @@ func TestAssetByTagAndField(t *testing.T) {
 					t.Errorf("TestAssetByTagAndField case %d: Asset %s BrokeragePercent Expect: %6.2f, found: %6.2f\n", i, ipTag, asset.BrokeragePercent, rvalue)
 				}
 				//if ms.Ip.PlanStart <= asset.AgeToSell && ms.Ip.PlanEnd >= asset.AgeToSell {
-				rvalue = ms.AssetByTagAndField(ipTag, "SellNet")
-				if 0.0 != rvalue {
-					t.Errorf("TestAssetByTagAndField case %d: Asset %s BrokeragePercent Expect: %6.2f, found: %6.2f\n", i, ipTag, 0.0, rvalue)
+				value, brate, assetRR, basis, owed, prime, age := ms.AssetByTag(ipTag)
+				ageToSell := int(age)
+				year := ageToSell - ms.Ip.StartPlan
+				if year < 0 {
+					year = 0
 				}
-
+				price := value * math.Pow(assetRR, float64(ageToSell-ms.Ip.Age1))
+				bfee := price * brate
+				net := price*(1-brate) - owed
+				if net < 0.0 || ageToSell < ms.Ip.StartPlan  || ageToSell > ms.Ip.EndPlan{
+					net = 0.0
+				}
+				taxable := price*(1-brate) - basis
+				if prime == 1.0 {
+					taxable -= ms.Ti.Primeresidence *
+						math.Pow(ms.Ip.IRate, float64(ageToSell-ms.Ip.Age1))
+				}
+				if taxable < 0.0 {
+					taxable = 0.0
+				}
+				rvalue = ms.AssetByTagAndField(ipTag, "SellNet")
+				if net != rvalue {
+					t.Errorf("TestAssetByTagAndField case %d: Asset %s SellNet Expect: %6.2f, found: %6.2f\n", i, ipTag, net, rvalue)
+				}
+				rvalue = ms.AssetByTagAndField(ipTag, "SellPrice")
+				if price != rvalue {
+					t.Errorf("TestAssetByTagAndField case %d: Asset %s SellPrice Expect: %6.2f, found: %6.2f\n", i, ipTag, price, rvalue)
+				}
+				rvalue = ms.AssetByTagAndField(ipTag, "BroderFee")
+				if bfee != rvalue {
+					t.Errorf("TestAssetByTagAndField case %d: Asset %s BroderFee Expect: %6.2f, found: %6.2f\n", i, ipTag, bfee, rvalue)
+				}
+				rvalue = ms.AssetByTagAndField(ipTag, "Taxable")
+				if taxable != rvalue {
+					t.Errorf("TestAssetByTagAndField case %d: Asset %s Taxable Expect: %6.2f, found: %6.2f\n", i, ipTag, taxable, rvalue)
+				}
 				//}
 
 				//fmt.Printf("Asset %s Value: %6.2f\n", ms.Assettags[1], ms.AssetByTagAndField(ms.Assettags[1], "Value"))

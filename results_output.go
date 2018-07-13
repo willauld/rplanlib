@@ -897,9 +897,8 @@ func (ms ModelSpecs) PrintAssetSummary() {
 				for indx := 1; indx < len(ms.AssetSale); indx++ {
 					if ms.AssetSale[indx][year] != 0.0 {
 						tag := ms.Assettags[indx]
-						value, brate, assetRR, basis, owed, prime := ms.AssetByTag(tag)
+						value, brate, assetRR, basis, owed, prime, _ := ms.AssetByTag(tag)
 						price := value * math.Pow(assetRR, float64(age-ms.Ip.Age1))
-						fmt.Printf("calc price: %6.2f, vector price: %6.2f\n", price, ms.AssetSale[indx][year])
 						bfee := price * brate
 						net := price*(1-brate) - owed
 						if net < 0.0 {
@@ -932,7 +931,7 @@ func (ms ModelSpecs) PrintAssetSummary() {
 }
 
 // TODO FixMe this function should be place somewhere more appropriete
-func (ms ModelSpecs) AssetByTag(name string) (value, brate, assetRR, basis, owed, prime float64) {
+func (ms ModelSpecs) AssetByTag(name string) (value, brate, assetRR, basis, owed, prime, ageToSell float64) {
 	for i := 0; i < len(ms.Ip.Assets); i++ {
 		if ms.Ip.Assets[i].Tag == name {
 			value = float64(ms.Ip.Assets[i].Value)
@@ -944,10 +943,11 @@ func (ms ModelSpecs) AssetByTag(name string) (value, brate, assetRR, basis, owed
 			if ms.Ip.Assets[i].PrimaryResidence {
 				prime = 1.0
 			}
+			ageToSell = float64(ms.Ip.Assets[i].AgeToSell)
 			return
 		}
 	}
-	return 0.0, 0.0, 0.0, 0.0, 0.0, 0.0
+	return 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0
 }
 
 // TODO FixMe this function should be place somewhere more appropriete

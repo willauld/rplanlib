@@ -984,6 +984,25 @@ func (ms ModelSpecs) AssetByTagAndField(tag, field string) float64 {
 					taxable = 0.0
 				}
 				val = taxable
+			case "MaxTaxableExclution":
+				if !ms.Ip.Assets[i].PrimaryResidence {
+					val = 0.0
+					break
+				}
+				age := ms.Ip.Assets[i].AgeToSell
+				assetRR := ms.Ip.Assets[i].AssetRRate
+				value := float64(ms.Ip.Assets[i].Value)
+				price := value * math.Pow(assetRR, float64(age-ms.Ip.Age1))
+				brate := ms.Ip.Assets[i].BrokeragePercent / 100.0
+				//bfee := price * brate
+				basis := float64(ms.Ip.Assets[i].CostAndImprovements)
+				taxable := price*(1-brate) - basis
+				taxableExclusion := ms.Ti.Primeresidence * math.Pow(ms.Ip.IRate, float64(age-ms.Ip.Age1))
+				if taxableExclusion >= taxable {
+					val = taxable
+				} else {
+					val = taxableExclusion
+				}
 			case "AssetRRate":
 				val = ms.Ip.Assets[i].AssetRRate
 			case "CostAndImprovements":

@@ -2080,10 +2080,14 @@ func TestAssetByTagAndField(t *testing.T) {
 				if net < 0.0 || ageToSell < ms.Ip.StartPlan  || ageToSell > ms.Ip.EndPlan{
 					net = 0.0
 				}
+				exclude := 0.0
 				taxable := price*(1-brate) - basis
 				if prime == 1.0 {
-					taxable -= ms.Ti.Primeresidence *
-						math.Pow(ms.Ip.IRate, float64(ageToSell-ms.Ip.Age1))
+					exclude = ms.Ti.Primeresidence * math.Pow(ms.Ip.IRate, float64(ageToSell-ms.Ip.Age1))
+					if exclude > taxable {
+							exclude = taxable
+					}
+					taxable -= exclude
 				}
 				if taxable < 0.0 {
 					taxable = 0.0
@@ -2103,6 +2107,10 @@ func TestAssetByTagAndField(t *testing.T) {
 				rvalue = ms.AssetByTagAndField(ipTag, "Taxable")
 				if taxable != rvalue {
 					t.Errorf("TestAssetByTagAndField case %d: Asset %s Taxable Expect: %6.2f, found: %6.2f\n", i, ipTag, taxable, rvalue)
+				}
+				rvalue = ms.AssetByTagAndField(ipTag, "MaxTaxableExclution")
+				if exclude != rvalue {
+					t.Errorf("TestAssetByTagAndField case %d: Asset %s MaxTaxableExclution Expect: %6.2f, found: %6.2f\n", i, ipTag, exclude, rvalue)
 				}
 				//}
 

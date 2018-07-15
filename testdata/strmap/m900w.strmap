@@ -1,3 +1,7 @@
+# Looks like this is very likely an LPSimplex BUG. 
+# Lp_solve with -piv0 solves this model as expected. However, -piv1, -piv2
+# nor -piv3 are able to solve it.
+ 
 InputParamsStrMap:
   0::'                         setName': 'activeParams'
   1::'                    filingStatus': 'joint'

@@ -1,6 +1,7 @@
 # This configuration file demonstraits a BUG most likely in LPSimplex
 # Have generated an lp format version of the model and run with lp_solve
 # with results in line with expectations. Need to debug and correct. 
+# lp_solve requires -piv1 (danzig) to solve this model
 
 [iam.jill]
 age = 58

@@ -1,0 +1,15 @@
+# This configuration file demonstraits a BUG most likely in LPSimplex
+# Have generated an lp format version of the model and run with lp_solve
+# with results in line with expectations. Need to debug and correct. 
+
+[iam.jill]
+age = 58
+retire = 61
+through = 75
+
+[aftertax]
+bal =   900_000 #899_999
+basis = 400_000
+
+[IRA.jill]
+bal = 1_400_000

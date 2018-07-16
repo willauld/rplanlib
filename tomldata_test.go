@@ -790,8 +790,12 @@ bal = 200_000
 			specialMap["eT_ExpenseAmount1"] = "eT_ExpenseAmount2"
 			specialMap["eT_ExpenseAmount2"] = "eT_ExpenseAmount1"
 			specialMap["eT_ExpenseStartAge1"] = "eT_ExpenseStartAge2"
+			specialMap["eT_ExpenseStartAge2"] = "eT_ExpenseStartAge1"
+			specialMap["eT_ExpenseEndAge1"] = "eT_ExpenseEndAge2"
 			specialMap["eT_ExpenseEndAge2"] = "eT_ExpenseEndAge1"
 			specialMap["eT_ExpenseInflate1"] = "eT_ExpenseInflate2"
+			specialMap["eT_ExpenseInflate2"] = "eT_ExpenseInflate1"
+			specialMap["eT_ExpenseTax1"] = "eT_ExpenseTax2"
 			specialMap["eT_ExpenseTax2"] = "eT_ExpenseTax1"
 		}
 		for k1, v := range *ms {

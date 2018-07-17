@@ -31,3 +31,4 @@ testdata\strmap\orp_3plus.strmap,0,39995,698,562,401
 testdata\strmap\test.strmap,0,77585,313,256,140
 testdata\toml\zeroSpendable.toml,0,-4,1340,1061,749
 testdata\strmap\m900w.strmap,0,90754,1322,1061,664
+testdata\toml\zeroSpendableShortTime.toml,0,99410,368,302,214

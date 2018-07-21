@@ -395,7 +395,7 @@ func TestProcessSS(t *testing.T) {
 			t.Errorf("RedirectStdout: %s\n", err)
 			return // should this be continue?
 		}
-		ss, ss1, ss2, tags := processSS(ip, wel)
+		ss, ss1, ss2, tags, _ := processSS(ip, wel)
 		for j := 0; j < wel.GetWarningCount(); j++ {
 			fmt.Printf("%s\n", wel.GetWarning(j))
 		}

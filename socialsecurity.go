@@ -81,13 +81,12 @@ type ssI struct {
 	bucket     []float64
 }
 
-func processSS(ip *InputParams, warnList *WarnErrorList) (SS, SS1, SS2 []float64, tags []string) {
-
+func processSS(ip *InputParams, warnList *WarnErrorList) (SS, SS1, SS2 []float64, tags []string, ssi []ssI) {
 	//fmt.Printf("PIA1: %d, PIA2: %d\n", ip.PIA1, ip.PIA2)
-	ssi := make([]ssI, 2)
+	ssi = make([]ssI, 2)
 	if ip.PIA1 <= 0 && ip.PIA2 <= 0 {
 		//e := fmt.Errorf("processSS: both PIA1: %d and PIA2: %d non-positive", ip.PIA1, ip.PIA2)
-		return nil, nil, nil, nil
+		return nil, nil, nil, nil, nil
 	}
 	SS = make([]float64, ip.Numyr) // = [0] * self.numyr
 	tags = make([]string, 2)
@@ -106,7 +105,7 @@ func processSS(ip *InputParams, warnList *WarnErrorList) (SS, SS1, SS2 []float64
 		currAge:    ip.Age1,
 	}
 	if dt.fraamount <= 0 && ip.FilingStatus != Joint {
-		return nil, nil, nil, nil
+		return nil, nil, nil, nil, nil
 	}
 	if dt.fraamount <= 0 { // place default spousal support in second slot
 		ssi[1] = dt
@@ -246,5 +245,5 @@ func processSS(ip *InputParams, warnList *WarnErrorList) (SS, SS1, SS2 []float64
 		SS1 = ssi[1].bucket
 		SS2 = ssi[0].bucket
 	}
-	return SS, SS1, SS2, tags
+	return SS, SS1, SS2, tags, ssi
 }

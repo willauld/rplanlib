@@ -55,6 +55,7 @@ type ModelSpecs struct {
 
 	SS          [][]float64 // SS[0] is combined, SS[1] for retiree1 ...
 	SStags      []string    // ...
+	SSspecs     []ssI       // ss specs for each retiree: pia, fra, ...
 	Income      [][]float64 // income[0] is combined, income[1] first income stream...
 	Incometags  []string    // ...
 	AssetSale   [][]float64 // assetSale[0] combined, assetSale[1] first asset
@@ -494,11 +495,12 @@ func NewModelSpecs(vindx VectorVarIndex,
 	}
 
 	ms.SS = make([][]float64, 0)
-	SS, SS1, SS2, tags := processSS(&ip, wel)
+	SS, SS1, SS2, tags, ssi := processSS(&ip, wel)
 	ms.SS = append(ms.SS, SS)
 	ms.SS = append(ms.SS, SS1)
 	ms.SS = append(ms.SS, SS2)
 	ms.SStags = tags
+	ms.SSspecs = ssi
 
 	//fmt.Printf("SS1: %v\n", ms.SS1)
 	//fmt.Printf("SS2: %v\n", ms.SS2)

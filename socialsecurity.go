@@ -71,14 +71,15 @@ func invAdjPIA(amount float64, fra int, startAge int, curAge int, irate float64)
 }
 
 type ssI struct {
-	fraamount  int
-	fraage     int
-	startSSAge int
-	endAge     int
-	key        string
-	ageAtStart int
-	currAge    int
-	bucket     []float64
+	FraAmount        int
+	Fraage           int
+	StartSSAge       int
+	StartSSAgeAmount float64
+	endAge           int
+	Key              string
+	ageAtStart       int
+	currAge          int
+	bucket           []float64
 }
 
 func processSS(ip *InputParams, warnList *WarnErrorList) (SS, SS1, SS2 []float64, tags []string, ssi []ssI) {
@@ -96,18 +97,18 @@ func processSS(ip *InputParams, warnList *WarnErrorList) (SS, SS1, SS2 []float64
 	index := 0
 	sections := 1
 	dt := ssI{
-		fraamount:  ip.PIA1,            // fraamount := v["amount"]
-		fraage:     fra(ip.Age1),       // fraage := v["FRA"]
-		startSSAge: ip.SSStart1,        // agestr := v["age"]
+		FraAmount:  ip.PIA1,            // fraamount := v["amount"]
+		Fraage:     fra(ip.Age1),       // fraage := v["FRA"]
+		StartSSAge: ip.SSStart1,        // agestr := v["age"]
 		endAge:     ip.PlanThroughAge1, // agestr := v["age"]
-		key:        ip.MyKey1,
+		Key:        ip.MyKey1,
 		ageAtStart: ip.Age1 + ip.PrePlanYears,
 		currAge:    ip.Age1,
 	}
-	if dt.fraamount <= 0 && ip.FilingStatus != Joint {
+	if dt.FraAmount <= 0 && ip.FilingStatus != Joint {
 		return nil, nil, nil, nil, nil
 	}
-	if dt.fraamount <= 0 { // place default spousal support in second slot
+	if dt.FraAmount <= 0 { // place default spousal support in second slot
 		ssi[1] = dt
 	} else {
 		ssi[index] = dt
@@ -116,11 +117,11 @@ func processSS(ip *InputParams, warnList *WarnErrorList) (SS, SS1, SS2 []float64
 	if ip.FilingStatus == Joint && ip.Age2 != 0 && ip.SSStart2 > 0 {
 		sections = 2
 		dt = ssI{
-			fraamount:  ip.PIA2,            // fraamount := v["amount"]
-			fraage:     fra(ip.Age2),       // fraage := v["FRA"]
-			startSSAge: ip.SSStart2,        // agestr := v["age"]
+			FraAmount:  ip.PIA2,            // fraamount := v["amount"]
+			Fraage:     fra(ip.Age2),       // fraage := v["FRA"]
+			StartSSAge: ip.SSStart2,        // agestr := v["age"]
 			endAge:     ip.PlanThroughAge2, // agestr := v["age"]
-			key:        ip.MyKey2,
+			Key:        ip.MyKey2,
 			ageAtStart: ip.Age2 + ip.PrePlanYears,
 			currAge:    ip.Age2,
 		}
@@ -132,39 +133,39 @@ func processSS(ip *InputParams, warnList *WarnErrorList) (SS, SS1, SS2 []float64
 	//
 	// spousal benefit can not start before SS primary starts taking SS
 	//
-	firstdisperseyear := ssi[0].startSSAge - ssi[0].ageAtStart
+	firstdisperseyear := ssi[0].StartSSAge - ssi[0].ageAtStart
 	//fmt.Printf("firstdispersyear: %d\n", firstdisperseyear)
 
-	var amount float64
+	//var amount float64
 	for i := 0; i < sections; i++ {
-		disperseage := ssi[i].startSSAge
+		disperseage := ssi[i].StartSSAge
 		//fraage := ssi[i].fraage
 		//fmt.Printf("FRA age[%d]: %d\n", i, ssi[i].fraage)
 		//fraamount := ssi[i].fraamount
 		//ageAtStart := ssi[i].ageAtStart
 		//currAge := ssi[i].currAge
-		if ssi[i].fraamount > 0 { // TODO check if this needs to be able to equal zero ; FIXME maybe explicitly check for zero and return nils
+		if ssi[i].FraAmount > 0 { // TODO check if this needs to be able to equal zero ; FIXME maybe explicitly check for zero and return nils
 			// alter amount for start age vs fra (minus if before fra and + is after)
-			amount = adjPIA(float64(ssi[i].fraamount), ssi[i].fraage, disperseage)
+			ssi[i].StartSSAgeAmount = adjPIA(float64(ssi[i].FraAmount), ssi[i].Fraage, disperseage)
 			if ssi[i].ageAtStart > disperseage {
 				// here, Social Security has already begun so amount should
 				// already be actual amount recieved, no adjustment required
-				amount = float64(ssi[i].fraamount)
+				ssi[i].StartSSAgeAmount = float64(ssi[i].FraAmount)
 			}
 		} else {
 			if i != 1 {
 				e := fmt.Errorf("Error: Assert i == 1 failed (1212121)")
 				panic(e)
 			}
-			name := ssi[i].key
-			if firstdisperseyear > ssi[i].startSSAge-ssi[i].ageAtStart {
+			name := ssi[i].Key
+			if firstdisperseyear > ssi[i].StartSSAge-ssi[i].ageAtStart {
 				disperseage = firstdisperseyear + ssi[i].ageAtStart
 				str := fmt.Sprintf("Warning - Social Security spousal benefit can only be claimed\n\tafter the spouse claims benefits.\n\tPlease correct %s's SS age in the configuration to '%d'.", name, disperseage)
 				warnList.AppendWarning(str)
-			} else if ssi[i].startSSAge > ssi[i].fraage && firstdisperseyear != ssi[i].startSSAge-ssi[i].ageAtStart {
-				if firstdisperseyear <= ssi[i].fraage-ssi[i].ageAtStart {
-					disperseage = ssi[i].fraage
-					str := fmt.Sprintf("Warning - Social Security spousal benefits do not increase after FRA,\n\tresetting benefits start to FRA.\n\tPlease correct %s's SS age in the configuration to '%d'.", name, ssi[i].fraage)
+			} else if ssi[i].StartSSAge > ssi[i].Fraage && firstdisperseyear != ssi[i].StartSSAge-ssi[i].ageAtStart {
+				if firstdisperseyear <= ssi[i].Fraage-ssi[i].ageAtStart {
+					disperseage = ssi[i].Fraage
+					str := fmt.Sprintf("Warning - Social Security spousal benefits do not increase after FRA,\n\tresetting benefits start to FRA.\n\tPlease correct %s's SS age in the configuration to '%d'.", name, ssi[i].Fraage)
 					warnList.AppendWarning(str)
 				} else {
 					disperseage = firstdisperseyear + ssi[i].ageAtStart
@@ -176,15 +177,15 @@ func processSS(ip *InputParams, warnList *WarnErrorList) (SS, SS1, SS2 []float64
 			// 1/2 spouses at spouses FRA
 			// alter amount for start age before receiver's fra (no increase
 			// after fra for spousal benefit)
-			benPIA := float64(ssi[0].fraamount)
+			benPIA := float64(ssi[0].FraAmount)
 			//fmt.Printf("benPIA1: %v\n", benPIA)
-			if ssi[0].currAge > ssi[0].startSSAge {
+			if ssi[0].currAge > ssi[0].StartSSAge {
 				// Need to find original PIA from current amount received
-				benPIA = invAdjPIA(benPIA, ssi[0].fraage,
-					ssi[0].startSSAge, ssi[0].currAge, ip.IRate)
+				benPIA = invAdjPIA(benPIA, ssi[0].Fraage,
+					ssi[0].StartSSAge, ssi[0].currAge, ip.IRate)
 				//fmt.Printf("benPIA2: %v\n", benPIA)
 			}
-			amount = adjPIA(benPIA/2.0, ssi[i].fraage, intMin(disperseage, ssi[i].fraage))
+			ssi[i].StartSSAgeAmount = adjPIA(benPIA/2.0, ssi[i].Fraage, intMin(disperseage, ssi[i].Fraage))
 			//fmt.Printf("amount: %v\n", amount)
 		}
 		ssi[i].bucket = make([]float64, ip.Numyr) // = [0] * self.numyr
@@ -196,7 +197,7 @@ func processSS(ip *InputParams, warnList *WarnErrorList) (SS, SS1, SS2 []float64
 			if year < 0 {
 				// ERROR if ever happens
 				fmt.Printf("ERROR - this should never happen. local code 11111\n")
-				fmt.Printf("age: %d, year: %d, endage: %d, ageAtStart: %d, name: %s\n", age, year, endage, ssi[i].ageAtStart, ssi[i].key)
+				fmt.Printf("age: %d, year: %d, endage: %d, ageAtStart: %d, name: %s\n", age, year, endage, ssi[i].ageAtStart, ssi[i].Key)
 				fmt.Printf("ssi[%d]: %#v\n", i, ssi[i])
 				break
 			} else if year >= ip.Numyr {
@@ -204,13 +205,13 @@ func processSS(ip *InputParams, warnList *WarnErrorList) (SS, SS1, SS2 []float64
 				fmt.Printf("ERROR - this should never happen. local code 22222\n\tage: %d, year: %d, ip.numyr: %d, endPlan: %d, startPlan: %d\n", age, year, ip.Numyr, ip.EndPlan, ip.StartPlan)
 				break
 			} else {
-				adjAmount := amount * math.Pow(ip.IRate, float64(age-ssi[i].currAge)) //year
+				adjAmount := ssi[i].StartSSAgeAmount * math.Pow(ip.IRate, float64(age-ssi[i].currAge)) //year
 				//print("age %d, year %d, SS: %6.0f += amount %6.0f" %(age, year, SS[year], adj_amount))
 				SS[year] += adjAmount
 				ssi[i].bucket[year] = adjAmount
 			}
 		}
-		if ssi[i].key == ip.MyKey1 {
+		if ssi[i].Key == ip.MyKey1 {
 			ip.SSStart1 = disperseage
 		} else {
 			ip.SSStart2 = disperseage
@@ -241,7 +242,7 @@ func processSS(ip *InputParams, warnList *WarnErrorList) (SS, SS1, SS2 []float64
 	//fmt.Printf("ssi[1]: %#v\n", ssi[1])
 	SS1 = ssi[0].bucket
 	SS2 = ssi[1].bucket
-	if ssi[0].key != ip.MyKey1 {
+	if ssi[0].Key != ip.MyKey1 {
 		SS1 = ssi[1].bucket
 		SS2 = ssi[0].bucket
 	}

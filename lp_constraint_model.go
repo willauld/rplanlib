@@ -1866,7 +1866,7 @@ func (ms ModelSpecs) PrintModelMatrix(c []float64, A [][]float64, b []float64, n
 
 func (ms ModelSpecs) printConstraint(row []float64, b float64) {
 	ms.printModelRow(row, true)
-	fmt.Fprintf(ms.Logfile, "<= b[]: %6.3f\n", b)
+	fmt.Fprintf(ms.Logfile, "<= b[]: %6.2f\n", b)
 }
 
 func (ms ModelSpecs) printModelRow(row []float64, suppressNewline bool) {

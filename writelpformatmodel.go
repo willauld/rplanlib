@@ -14,12 +14,13 @@ import (
 // TODO: FIXME: Create UNIT tests: last two parameters need s vector (s is output from simplex run)
 
 // PrintModelMatrix prints to object function (cx) and constraint matrix (Ax<=b)
-func (ms ModelSpecs) WriteLPFormatModel(c []float64, A [][]float64, b []float64, notes []ModelNote, filename string, row []float64) error {
+func (ms ModelSpecs) WriteLPFormatModel(c []float64, A [][]float64, b []float64, notes []ModelNote, filename string, row []float64, cmdline string) error {
 	modelfile, err := os.Create(filename)
 	if err != nil {
 		e := fmt.Errorf("Could not create new model file %s", filename)
 		return e
 	}
+	fmt.Fprintf(modelfile, "\n// %s \n", cmdline)
 	note := ""
 	notesIndex := 0
 	nextModelIndex := len(A) + 1 // beyond the end of A
@@ -78,7 +79,7 @@ func (ms ModelSpecs) writeModelRow(row []float64, suppressNewline bool, modelfil
 	for i := 0; i < ms.Ip.Numyr; i++ { // x[]
 		for k := 0; k < len(*ms.Ti.Taxtable); k++ {
 			if row[ms.Vindx.X(i, k)] != 0 {
-				fmt.Fprintf(modelfile, "+ %10.4f x%d.%d ", row[ms.Vindx.X(i, k)], i, k)
+				fmt.Fprintf(modelfile, "+ %10.4f x.%d.%d ", row[ms.Vindx.X(i, k)], i, k)
 			}
 		}
 	}
@@ -86,14 +87,14 @@ func (ms ModelSpecs) writeModelRow(row []float64, suppressNewline bool, modelfil
 		for i := 0; i < ms.Ip.Numyr; i++ { // sy[]
 			for l := 0; l < len(*ms.Ti.Capgainstable); l++ {
 				if row[ms.Vindx.Sy(i, l)] != 0 {
-					fmt.Fprintf(modelfile, "+ %10.4f sy%d.%d ", row[ms.Vindx.Sy(i, l)], i, l)
+					fmt.Fprintf(modelfile, "+ %10.4f sy.%d.%d ", row[ms.Vindx.Sy(i, l)], i, l)
 				}
 			}
 		}
 		for i := 0; i < ms.Ip.Numyr; i++ { // y[]
 			for l := 0; l < len(*ms.Ti.Capgainstable); l++ {
 				if row[ms.Vindx.Y(i, l)] != 0 {
-					fmt.Fprintf(modelfile, "+ %10.4f y%d.%d ", row[ms.Vindx.Y(i, l)], i, l)
+					fmt.Fprintf(modelfile, "+ %10.4f y.%d.%d ", row[ms.Vindx.Y(i, l)], i, l)
 				}
 			}
 		}
@@ -101,26 +102,26 @@ func (ms ModelSpecs) writeModelRow(row []float64, suppressNewline bool, modelfil
 	for i := 0; i < ms.Ip.Numyr; i++ { // w[]
 		for j := 0; j < ms.Ip.Numacc; j++ {
 			if row[ms.Vindx.W(i, j)] != 0 {
-				fmt.Fprintf(modelfile, "+ %10.4f w%d.%d ", row[ms.Vindx.W(i, j)], i, j)
+				fmt.Fprintf(modelfile, "+ %10.4f w.%d.%d ", row[ms.Vindx.W(i, j)], i, j)
 			}
 		}
 	}
 	for i := 0; i < ms.Ip.Numyr+1; i++ { // b[] has an extra year
 		for j := 0; j < ms.Ip.Numacc; j++ {
 			if row[ms.Vindx.B(i, j)] != 0 {
-				fmt.Fprintf(modelfile, "+ %10.4f b%d.%d ", row[ms.Vindx.B(i, j)], i, j)
+				fmt.Fprintf(modelfile, "+ %10.4f b.%d.%d ", row[ms.Vindx.B(i, j)], i, j)
 			}
 		}
 	}
 	for i := 0; i < ms.Ip.Numyr; i++ { // s[]
 		if row[ms.Vindx.S(i)] != 0 {
-			fmt.Fprintf(modelfile, "+ %10.4f s%d ", row[ms.Vindx.S(i)], i)
+			fmt.Fprintf(modelfile, "+ %10.4f s.%d ", row[ms.Vindx.S(i)], i)
 		}
 	}
 	for i := 0; i < ms.Ip.Numyr; i++ { // D[]
 		for j := 0; j < ms.Ip.Numacc; j++ {
 			if row[ms.Vindx.D(i, j)] != 0 {
-				fmt.Fprintf(modelfile, "+ %10.4f D%d.%d ", row[ms.Vindx.D(i, j)], i, j)
+				fmt.Fprintf(modelfile, "+ %10.4f D.%d.%d ", row[ms.Vindx.D(i, j)], i, j)
 			}
 		}
 	}

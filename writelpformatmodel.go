@@ -14,12 +14,13 @@ import (
 // TODO: FIXME: Create UNIT tests: last two parameters need s vector (s is output from simplex run)
 
 // PrintModelMatrix prints to object function (cx) and constraint matrix (Ax<=b)
-func (ms ModelSpecs) WriteLPFormatModel(c []float64, A [][]float64, b []float64, notes []ModelNote, filename string, row []float64) error {
+func (ms ModelSpecs) WriteLPFormatModel(c []float64, A [][]float64, b []float64, notes []ModelNote, filename string, row []float64, cmdline string) error {
 	modelfile, err := os.Create(filename)
 	if err != nil {
 		e := fmt.Errorf("Could not create new model file %s", filename)
 		return e
 	}
+	fmt.Fprintf(modelfile, "\n// %s \n", cmdline)
 	note := ""
 	notesIndex := 0
 	nextModelIndex := len(A) + 1 // beyond the end of A

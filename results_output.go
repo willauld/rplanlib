@@ -77,12 +77,14 @@ func (ms ModelSpecs) PrintActivitySummary(xp *[]float64) {
 		//T, spendable, tax, rate, cgtax, earlytax, rothearly := ms.IncomeSummary(year, xp)
 		_, spendable, tax, _, cgtax, earlytax, _ := ms.IncomeSummary(year, xp)
 
-		// piecewise tax changes
-		tax = (*xp)[ms.Vindx.X(year, 2)]
-		if ms.Accounttable[len(ms.Accounttable)-1].acctype == Aftertax {
-			cgtax = (*xp)[ms.Vindx.Y(year, 2)]
+		if ms.UsePieceWiseMethod {
+			// piecewise tax changes
+			tax = (*xp)[ms.Vindx.X(year, 2)]
+			if ms.Accounttable[len(ms.Accounttable)-1].acctype == Aftertax {
+				cgtax = (*xp)[ms.Vindx.Y(year, 2)]
+			}
+			spendable = (*xp)[ms.Vindx.S(year)]
 		}
-		spendable = (*xp)[ms.Vindx.S(year)]
 
 		rmdref := 0.0
 		for j := 0; j < intMin(2, len(ms.Accounttable)); j++ { // at most the first two accounts are type IRA w/ RMD requirement

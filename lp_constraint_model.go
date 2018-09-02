@@ -69,8 +69,9 @@ type ModelSpecs struct {
 	Errfile *os.File
 	Logfile *os.File
 
-	OneK          float64
-	DeveloperInfo bool
+	OneK               float64
+	DeveloperInfo      bool
+	UsePieceWiseMethod bool
 }
 
 func intMax(a, b int) int {
@@ -334,8 +335,9 @@ func NewModelSpecs(vindx VectorVarIndex,
 		Logfile:                 logfile,
 		//csvfile:                 csvfile,
 		//tablefile:               tablefile,
-		OneK:          1000.0,
-		DeveloperInfo: developerInfo,
+		OneK:               1000.0,
+		DeveloperInfo:      developerInfo,
+		UsePieceWiseMethod: false,
 	}
 	if !RoundToOneK {
 		ms.OneK = 1.0
@@ -696,7 +698,6 @@ type ModelNote struct {
 // all vars positive
 func (ms ModelSpecs) BuildModel() ([]float64, [][]float64, []float64, []ModelNote) {
 
-	UsePieceWiseMethod := true
 	nvars := ms.Vindx.Vsize
 	A := make([][]float64, 0)
 	b := make([]float64, 0)
@@ -732,7 +733,7 @@ func (ms ModelSpecs) BuildModel() ([]float64, [][]float64, []float64, []ModelNot
 	//
 	//SyCosts := []float64{0.1, 0.8, 2.7} //equal to: math.Pow(val, 3) / 10.0
 	//SyCosts := []float64{0.2, 1.25, 2.5}
-	if !UsePieceWiseMethod {
+	if !ms.UsePieceWiseMethod {
 		SyCosts := []float64{0.2, 1.75, 2.5}
 		if ms.Ip.Accmap[Aftertax] > 0 {
 			for year := 0; year < ms.Ip.Numyr; year++ {
@@ -780,7 +781,7 @@ func (ms ModelSpecs) BuildModel() ([]float64, [][]float64, []float64, []ModelNot
 			}
 			row[ms.Vindx.W(year, j)] = -1 * p
 		}
-		if UsePieceWiseMethod {
+		if ms.UsePieceWiseMethod {
 			// using X(year,2)===IT(year) or Income Tax for year
 			row[ms.Vindx.X(year, 2)] = 1
 
@@ -790,7 +791,7 @@ func (ms ModelSpecs) BuildModel() ([]float64, [][]float64, []float64, []ModelNot
 			}
 		}
 		if ms.Ip.Accmap[Aftertax] > 0 {
-			if UsePieceWiseMethod {
+			if ms.UsePieceWiseMethod {
 				// using Y(year,2)===CGIT(year) or Income Tax for year
 				row[ms.Vindx.Y(year, 2)] = 1
 
@@ -1071,7 +1072,7 @@ func (ms ModelSpecs) BuildModel() ([]float64, [][]float64, []float64, []ModelNot
 				row[ms.Vindx.D(year, j)] = -1 // Account 0 is TDRA
 			}
 		}
-		if UsePieceWiseMethod {
+		if ms.UsePieceWiseMethod {
 			// here x(year,1) represents total taxable income in year
 			row[ms.Vindx.X(year, 1)] = -1
 		} else {
@@ -1085,7 +1086,7 @@ func (ms ModelSpecs) BuildModel() ([]float64, [][]float64, []float64, []ModelNot
 	//
 	// Add constraints for (15')
 	//
-	if !UsePieceWiseMethod {
+	if !ms.UsePieceWiseMethod {
 		notes = append(notes, ModelNote{len(A), "Constraints 15':"})
 		if ms.Ip.Accmap[Aftertax] > 0 {
 			for year := 0; year < ms.Ip.Numyr; year++ {
@@ -1111,14 +1112,14 @@ func (ms ModelSpecs) BuildModel() ([]float64, [][]float64, []float64, []ModelNot
 	//
 	// Mrk*xi1 – ITi <= -btik, I = 1..n, k=1..Bt-1
 	skipLastNbrackets := 1
-	if UsePieceWiseMethod {
+	if ms.UsePieceWiseMethod {
 		skipLastNbrackets = 0
 	}
 	notes = append(notes, ModelNote{len(A), "Constraints 12':"})
 	for year := 0; year < ms.Ip.Numyr; year++ {
 		for k := 0; k < len(*ms.Ti.Taxtable)-skipLastNbrackets; k++ {
 			row := make([]float64, nvars)
-			if UsePieceWiseMethod {
+			if ms.UsePieceWiseMethod {
 				// line y=mx+b, b is yintercept
 				// X(year,1) === total tabable income
 				// X(year,2) === income tax for X(year,1)
@@ -1148,7 +1149,7 @@ func (ms ModelSpecs) BuildModel() ([]float64, [][]float64, []float64, []ModelNot
 	//
 	// Add constraints for (16')
 	//
-	if !UsePieceWiseMethod {
+	if !ms.UsePieceWiseMethod {
 		notes = append(notes, ModelNote{len(A), "Constraints 16':"})
 		if ms.Ip.Accmap[Aftertax] > 0 {
 			for year := 0; year < ms.Ip.Numyr; year++ {
@@ -1169,7 +1170,7 @@ func (ms ModelSpecs) BuildModel() ([]float64, [][]float64, []float64, []ModelNot
 		for year := 0; year < ms.Ip.Numyr; year++ {
 			f := ms.cgTaxableFraction(year)
 			row := make([]float64, nvars)
-			if UsePieceWiseMethod {
+			if ms.UsePieceWiseMethod {
 				row[ms.Vindx.Y(year, 1)] = 1
 			} else {
 				for l := 0; l < len(*ms.Ti.Capgainstable); l++ {
@@ -1194,7 +1195,7 @@ func (ms ModelSpecs) BuildModel() ([]float64, [][]float64, []float64, []ModelNot
 			cgt := AccessVector(ms.CgAssetTaxed, year)
 			j := len(ms.Accounttable) - 1 // last Acc is investment / stocks
 			row[ms.Vindx.W(year, j)] = f
-			if UsePieceWiseMethod {
+			if ms.UsePieceWiseMethod {
 				row[ms.Vindx.Y(year, 1)] = -1
 			} else {
 				for l := 0; l < len(*ms.Ti.Capgainstable); l++ {
@@ -1205,7 +1206,7 @@ func (ms ModelSpecs) BuildModel() ([]float64, [][]float64, []float64, []ModelNot
 			b = append(b, -1*cgt)
 		}
 	}
-	if UsePieceWiseMethod {
+	if ms.UsePieceWiseMethod {
 		//
 		// Add constraints for (14a', 14b', 14c' like 12')
 		//
@@ -1357,7 +1358,7 @@ func (ms ModelSpecs) BuildModel() ([]float64, [][]float64, []float64, []ModelNot
 	//      unless have sale of asset contributing
 	//
 	notes = append(notes, ModelNote{len(A), "Constraints 18' and 19':"})
-	if !UsePieceWiseMethod {
+	if !ms.UsePieceWiseMethod {
 		for year := 0; year < ms.Ip.Numyr; year++ {
 			for j := 0; j < len(ms.Accounttable); j++ {
 				row := make([]float64, nvars)

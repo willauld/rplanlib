@@ -337,7 +337,7 @@ func NewModelSpecs(vindx VectorVarIndex,
 		//tablefile:               tablefile,
 		OneK:               1000.0,
 		DeveloperInfo:      developerInfo,
-		UsePieceWiseMethod: false,
+		UsePieceWiseMethod: false, // use ms.SetParam() to change
 	}
 	if !RoundToOneK {
 		ms.OneK = 1.0
@@ -1089,6 +1089,9 @@ func (ms ModelSpecs) BuildModel() ([]float64, [][]float64, []float64, []ModelNot
 	if !ms.UsePieceWiseMethod {
 		notes = append(notes, ModelNote{len(A), "Constraints 15':"})
 		if ms.Ip.Accmap[Aftertax] > 0 {
+			// 15' is same as 11' exept that we are storing ordinary income
+			// in Sy (Shadow brackes) to be used to calc cap gains. That's
+			// why this is protected for Aftertax only
 			for year := 0; year < ms.Ip.Numyr; year++ {
 				adjInf := math.Pow(ms.Ip.IRate, float64(ms.Ip.PrePlanYears+year))
 				row := make([]float64, nvars)
@@ -1125,9 +1128,9 @@ func (ms ModelSpecs) BuildModel() ([]float64, [][]float64, []float64, []ModelNot
 				// X(year,2) === income tax for X(year,1)
 				// adj inflation adjustment
 				adj := math.Pow(ms.Ip.IRate, float64(ms.Ip.PrePlanYears+year))
-				x := (*ms.Ti.Taxtable)[k][0] * adj
-				y := (*ms.Ti.Taxtable)[k][3] * adj
-				m := (*ms.Ti.Taxtable)[k][2]
+				x := (*ms.Ti.Taxtable)[k][0] * adj // base
+				y := (*ms.Ti.Taxtable)[k][3] * adj // tax at base
+				m := (*ms.Ti.Taxtable)[k][2]       // rate
 				yintercept := y - m*x
 				row[ms.Vindx.X(year, 1)] = 1 * m
 				row[ms.Vindx.X(year, 2)] = -1
@@ -1207,18 +1210,31 @@ func (ms ModelSpecs) BuildModel() ([]float64, [][]float64, []float64, []ModelNot
 		}
 	}
 	if ms.UsePieceWiseMethod {
+		// line y=mx+b, b is yintercept
+		// X(year,1) === total tabable income
+		// X(year,2) === income tax for X(year,1)
+		// X(year,3) === amount if cap gains tax was for X(i,1)+Y(i,1)
+		// X(year,4) === amount if cap gains tax was for x(i,1)
+		// Y(year,1) === total taxable cap gains
+		// Y(year,2) === total cap gains tax
+		//x := (*ms.Ti.Taxtable)[k][0] * adj // base
+		//y := (*ms.Ti.Taxtable)[k][3] * adj // tax at base
+		//m := (*ms.Ti.Taxtable)[k][2]       // rate
+		//yintercept := y - m*x
+		// m * xi1 - xi2 <= -yintercept
 		//
 		// Add constraints for (14a', 14b', 14c' like 12')
 		//
-		// 1) mrik * xi1 + mrik * yi1 - yi3 <= - yintercept ik for all i,k (14a')
-		// 2) mrik * xi1 - yi4 <= - yintercept ik for all i,k (14b')
-		// 3) yi3 - yi4 - yi2 <= 0 for all i (14c')
+		// 1) mrik * xi1 + mrik * yi1 - xi3 <= - yintercept ik for all i,k (14a')
+		// 2) mrik * xi1 - xi4 <= - yintercept ik for all i,k (14b')
+		// 3) xi3 - xi4 - yi2 <= 0 for all i (14c')
 		if ms.Ip.Accmap[Aftertax] > 0 {
 			//
-			// 1) mrik * xi1 + mrik * yi1 - yi3 <= - yintercept ik for all i,k (14a')
+			// 1) mrik * xi1 + mrik * yi1 - xi3 <= - yintercept ik for all i,k (14a')
 			//
 			notes = append(notes, ModelNote{len(A), "Constraints 14a':"})
 			for year := 0; year < ms.Ip.Numyr; year++ {
+				/////// l == 0 is intentionally scipt as it is all zero
 				for l := 0; l < len(*ms.Ti.Capgainstable); l++ {
 					row := make([]float64, nvars)
 					// line y=mx+b, b is yintercept
@@ -1229,27 +1245,36 @@ func (ms ModelSpecs) BuildModel() ([]float64, [][]float64, []float64, []ModelNot
 					// X(year,4) === amount if cap gains tax was for x(i,1)
 					// adj inflation adjustment
 					adj := math.Pow(ms.Ip.IRate, float64(ms.Ip.PrePlanYears+year))
-					x := (*ms.Ti.Capgainstable)[l][0] * adj
-					y := (*ms.Ti.Capgainstable)[l][3] * adj
-					m := (*ms.Ti.Capgainstable)[l][2]
+					x := (*ms.Ti.Capgainstable)[l][0] * adj // base
+					y := (*ms.Ti.Capgainstable)[l][3] * adj // tax at base
+					m := (*ms.Ti.Capgainstable)[l][2]       // rate
 					yintercept := y - m*x
 					row[ms.Vindx.X(year, 1)] = 1 * m
 					row[ms.Vindx.Y(year, 1)] = 1 * m
 					row[ms.Vindx.X(year, 3)] = -1
 					A = append(A, row)
 					b = append(b, -yintercept) // inflation adjusted
-					/*
-						if year < 3 {
-							fmt.Printf("k: %d, y: %6.2f, m: %6.2f, x: %6.2f, yintercep: %6.2f\n", k, y, m, x, yintercept)
-						}
-					*/
+					/**/
+					if year < 3 {
+						fmt.Printf("14a l: %d, y: %10.5f, m: %10.5f, x: %10.5f, yintercep: %10.5f\n", l, y, m, x, yintercept)
+					}
+					/**/
 				}
 			}
 			//
-			// 2) mrik * xi1 - yi4 <= - yintercept ik for all i,k (14b')
+			// 2) mrik * xi1 - xi4 <= - yintercept ik for all i,k (14b')
 			//
+			// FIXME FIXME FIXME FIXME FIXME FIXME FIXME FIXME FIXME FIXME
+			// I now relize that the delta between 14a' and 14b' can be
+			// negitive or even 14b' itself may be negative so this approach
+			// does not work. So 14*' can't be used. Thought about using the
+			// shadow brackets (Sy) rather than 14b' but this requires pressure
+			// on them to fill from the bottom which is the problem I'm trying
+			// to get away from. Need to find a different method!!!!
+			// FIXME FIXME FIXME FIXME FIXME FIXME FIXME FIXME FIXME FIXME
 			notes = append(notes, ModelNote{len(A), "Constraints 14b':"})
 			for year := 0; year < ms.Ip.Numyr; year++ {
+				/////// l == 0 is intentionally scipt as it is all zero
 				for l := 0; l < len(*ms.Ti.Capgainstable); l++ {
 					row := make([]float64, nvars)
 					// line y=mx+b, b is yintercept
@@ -1260,23 +1285,23 @@ func (ms ModelSpecs) BuildModel() ([]float64, [][]float64, []float64, []ModelNot
 					// X(year,4) === amount if cap gains tax was for x(i,1)
 					// adj inflation adjustment
 					adj := math.Pow(ms.Ip.IRate, float64(ms.Ip.PrePlanYears+year))
-					x := (*ms.Ti.Capgainstable)[l][0] * adj
-					y := (*ms.Ti.Capgainstable)[l][3] * adj
-					m := (*ms.Ti.Capgainstable)[l][2]
+					x := (*ms.Ti.Capgainstable)[l][0] * adj // base
+					y := (*ms.Ti.Capgainstable)[l][3] * adj // tax at base
+					m := (*ms.Ti.Capgainstable)[l][2]       // rate
 					yintercept := y - m*x
 					row[ms.Vindx.X(year, 1)] = 1 * m
 					row[ms.Vindx.X(year, 4)] = -1
 					A = append(A, row)
 					b = append(b, -yintercept) // inflation adjusted
-					/*
-						if year < 3 {
-							fmt.Printf("k: %d, y: %6.2f, m: %6.2f, x: %6.2f, yintercep: %6.2f\n", k, y, m, x, yintercept)
-						}
-					*/
+					/**/
+					if year < 3 {
+						fmt.Printf("14b l: %d, y: %6.2f, m: %10.5f, x: %10.5f, yintercep: %10.5f\n", l, y, m, x, yintercept)
+					}
+					/**/
 				}
 			}
 			//
-			// 3) yi3 - yi4 - yi2 <= 0 for all i (14c')
+			// 3) xi3 - xi4 - yi2 <= 0 for all i (14c')
 			//
 			notes = append(notes, ModelNote{len(A), "Constraints 14c':"})
 			for year := 0; year < ms.Ip.Numyr; year++ {
@@ -1506,6 +1531,10 @@ func (ms ModelSpecs) PrecheckConsistency() bool {
 func (ms ModelSpecs) ConsistencyCheckBrackets(X *[]float64) (OK bool) {
 	// check to see if the ordinary tax brackets are filled in properly
 	OK = true
+	if ms.UsePieceWiseMethod {
+		ms.Ao.Output("\n\nNOT DOING Consistency Checking Brackets:\n\n")
+		return
+	}
 	ms.Ao.Output("\n\nConsistency Checking Brackets:\n\n")
 
 	for year := 0; year < ms.Ip.Numyr; year++ {

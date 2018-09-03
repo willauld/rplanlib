@@ -61,7 +61,7 @@ func (ms ModelSpecs) WriteLPFormatModel(c []float64, A [][]float64, b []float64,
 		ms.writeConstraint(A[constraint], b[constraint], modelfile)
 	}
 	fmt.Fprintf(modelfile, "\n")
-	ms.writeObjectFunctionSolution(c, row, modelfile)
+	ms.WriteObjectFunctionSolution(c, row, modelfile)
 	return nil
 }
 
@@ -130,106 +130,116 @@ func (ms ModelSpecs) writeModelRow(row []float64, suppressNewline bool, modelfil
 	}
 }
 
-func (ms ModelSpecs) writeObjectFunctionSolution(c []float64, row []float64, modelfile *os.File) {
+func (ms ModelSpecs) WriteObjectFunctionSolution(c []float64, row []float64, modelfile *os.File) {
+	//
+	// if modelfile is nil use ms.Ao.Output to write to wherever it points
+	// if it is not nil create an AppOutput() pointing to it and use that
+	//
+	objOut := ms.Ao
+	writeAll := true // write the complex c and res.X vectors
+	if modelfile != nil {
+		objOut = NewAppOutput(nil, modelfile)
+		writeAll = false
+	}
 	if ms.Ip.Numacc < 0 || ms.Ip.Numacc > 5 {
 		e := fmt.Errorf("PrintObjectFunc: number of accounts is out of bounds, should be between [0, 5] but is %d", ms.Ip.Numacc)
-		fmt.Fprintf(modelfile, "%s\n", e)
+		objOut.Output(fmt.Sprintf("%s\n", e))
 		return
 	}
-	fmt.Fprintf(modelfile, "/* LPSimplex solution: \n")
+	objOut.Output(fmt.Sprintf("/* LPSimplex solution: \n"))
 	localSum := 0.0
 	globalSum := 0.0
 	for i := 0; i < ms.Ip.Numyr; i++ { // x[]
 		for k := 0; k < len(*ms.Ti.Taxtable); k++ {
 			cIndx := ms.Vindx.X(i, k)
-			if c[cIndx] != 0 {
+			if c[cIndx] != 0 || writeAll { // should all values for c and vars
 				cXrow := c[cIndx] * row[cIndx]
 				localSum += cXrow
-				fmt.Fprintf(modelfile, "C[%d]=%6.3f * x[%d,%d]=%6.3f == %6.3f\n", cIndx, c[cIndx], i, k, row[cIndx], cXrow)
+				objOut.Output(fmt.Sprintf("C[%d]=@%6.3f@&*@&x[%d,%d]=@%6.3f@&== @&%6.3f\n", cIndx, c[cIndx], i, k, row[cIndx], cXrow))
 			}
 		}
 	}
-	fmt.Fprintf(modelfile, "\tSum Ci*Xi == %6.3f\n", localSum)
+	objOut.Output(fmt.Sprintf("\tSum Ci*Xi == %6.3f\n", localSum))
 	globalSum += localSum
 	localSum = 0.0
 	if ms.Ip.Accmap[Aftertax] > 0 {
 		for i := 0; i < ms.Ip.Numyr; i++ { // sy[]
 			for l := 0; l < len(*ms.Ti.Capgainstable); l++ {
 				cIndx := ms.Vindx.Sy(i, l)
-				if c[cIndx] != 0 {
+				if c[cIndx] != 0 || writeAll {
 					cXrow := c[cIndx] * row[cIndx]
 					localSum += cXrow
-					fmt.Fprintf(modelfile, "C[%d]=%6.3f * Sy[%d,%d]=%6.3f == %6.3f\n", cIndx, c[cIndx], i, l, row[cIndx], cXrow)
+					objOut.Output(fmt.Sprintf("C[%d]=@%6.3f@&*@&Sy[%d,%d]=@%6.3f@&==@&%6.3f\n", cIndx, c[cIndx], i, l, row[cIndx], cXrow))
 				}
 			}
 		}
-		fmt.Fprintf(modelfile, "\tSum Ci*Syi == %6.3f\n", localSum)
+		objOut.Output(fmt.Sprintf("\tSum Ci*Syi@&==@&%6.3f\n", localSum))
 		globalSum += localSum
 		localSum = 0.0
 		for i := 0; i < ms.Ip.Numyr; i++ { // y[]
 			for l := 0; l < len(*ms.Ti.Capgainstable); l++ {
 				cIndx := ms.Vindx.Y(i, l)
-				if c[cIndx] != 0 {
+				if c[cIndx] != 0 || writeAll {
 					cXrow := c[cIndx] * row[cIndx]
 					localSum += cXrow
-					fmt.Fprintf(modelfile, "C[%d]=%6.3f * Y[%d,%d]=%6.3f == %6.3f\n", cIndx, c[cIndx], i, l, row[cIndx], cXrow)
+					objOut.Output(fmt.Sprintf("C[%d]=@%6.3f@&*@&Y[%d,%d]=@%6.3f@&==@&%6.3f\n", cIndx, c[cIndx], i, l, row[cIndx], cXrow))
 				}
 			}
 		}
-		fmt.Fprintf(modelfile, "\tSum Ci*Yi == %6.3f\n", localSum)
+		objOut.Output(fmt.Sprintf("\tSum Ci*Yi@&==@&%6.3f\n", localSum))
 		globalSum += localSum
 		localSum = 0.0
 	}
 	for i := 0; i < ms.Ip.Numyr; i++ { // w[]
 		for j := 0; j < ms.Ip.Numacc; j++ {
 			cIndx := ms.Vindx.W(i, j)
-			if c[cIndx] != 0 {
+			if c[cIndx] != 0 || writeAll {
 				cXrow := c[cIndx] * row[cIndx]
 				localSum += cXrow
-				fmt.Fprintf(modelfile, "C[%d]=%6.3f * w[%d,%d]=%6.3f == %6.3f\n", cIndx, c[cIndx], i, j, row[cIndx], cXrow)
+				objOut.Output(fmt.Sprintf("C[%d]=@%6.3f@&*@&w[%d,%d]=@%6.3f@&==@&%6.3f\n", cIndx, c[cIndx], i, j, row[cIndx], cXrow))
 			}
 		}
 	}
-	fmt.Fprintf(modelfile, "\tSum Ci*wi == %6.3f\n", localSum)
+	objOut.Output(fmt.Sprintf("\tSum Ci*wi@&==@&%6.3f\n", localSum))
 	globalSum += localSum
 	localSum = 0.0
 	for i := 0; i < ms.Ip.Numyr+1; i++ { // b[] has an extra year
 		for j := 0; j < ms.Ip.Numacc; j++ {
 			cIndx := ms.Vindx.B(i, j)
-			if c[cIndx] != 0 {
+			if c[cIndx] != 0 || writeAll {
 				cXrow := c[cIndx] * row[cIndx]
 				localSum += cXrow
-				fmt.Fprintf(modelfile, "C[%d]=%6.3f * b[%d,%d]=%6.3f == %6.3f\n", cIndx, c[cIndx], i, j, row[cIndx], cXrow)
+				objOut.Output(fmt.Sprintf("C[%d]=@%6.3f@&*@&b[%d,%d]=@%6.3f@&==@&%6.3f\n", cIndx, c[cIndx], i, j, row[cIndx], cXrow))
 			}
 		}
 	}
-	fmt.Fprintf(modelfile, "\tSum Ci*bi == %6.3f\n", localSum)
+	objOut.Output(fmt.Sprintf("\tSum Ci*bi@&==@&%6.3f\n", localSum))
 	globalSum += localSum
 	localSum = 0.0
 	for i := 0; i < ms.Ip.Numyr; i++ { // s[]
 		cIndx := ms.Vindx.S(i)
-		if c[cIndx] != 0 {
+		if c[cIndx] != 0 || writeAll {
 			cXrow := c[cIndx] * row[cIndx]
 			localSum += cXrow
-			fmt.Fprintf(modelfile, "C[%d]=%6.3f * S[%d]=%6.3f == %6.3f\n", cIndx, c[cIndx], i, row[cIndx], cXrow)
+			objOut.Output(fmt.Sprintf("C[%d]=@%6.3f@&*@&S[%d]=@%6.3f@&==@&%6.3f\n", cIndx, c[cIndx], i, row[cIndx], cXrow))
 		}
 	}
-	fmt.Fprintf(modelfile, "\tSum Ci*Si == %6.3f\n", localSum)
+	objOut.Output(fmt.Sprintf("\tSum Ci*Si@&==@&%6.3f\n", localSum))
 	globalSum += localSum
 	localSum = 0.0
 	for i := 0; i < ms.Ip.Numyr; i++ { // D[]
 		for j := 0; j < ms.Ip.Numacc; j++ {
 			cIndx := ms.Vindx.D(i, j)
-			if c[cIndx] != 0 {
+			if c[cIndx] != 0 || writeAll {
 				cXrow := c[cIndx] * row[cIndx]
 				localSum += cXrow
-				fmt.Fprintf(modelfile, "C[%d]=%6.3f * D[%d,%d]=%6.3f == %6.3f\n", cIndx, c[cIndx], i, j, row[cIndx], cXrow)
+				objOut.Output(fmt.Sprintf("C[%d]=@%6.3f@&*@&D[%d,%d]=@%6.3f@&==@&%6.3f\n", cIndx, c[cIndx], i, j, row[cIndx], cXrow))
 			}
 		}
 	}
-	fmt.Fprintf(modelfile, "\tSum Ci*Di == %6.3f\n", localSum)
+	objOut.Output(fmt.Sprintf("\tSum Ci*Di@&==@&%6.3f\n", localSum))
 	globalSum += localSum
-	fmt.Fprintf(modelfile, "\t\tSum overall == %6.3f\n", globalSum)
+	objOut.Output(fmt.Sprintf("\t\tSum overall@&==@&%6.3f\n", globalSum))
 	localSum = 0.0
-	fmt.Fprintf(modelfile, " End LPSimplex solution */\n")
+	objOut.Output(fmt.Sprintf(" End LPSimplex solution */\n"))
 }

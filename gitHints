@@ -1,0 +1,17 @@
+
+# display the files that have changed between branch A and B
+git diff --name-only A B
+
+# display the differences for all files that have changed between branch A and B
+git diff A B
+
+# display the differences for a file that have changed between branch A and B
+git diff A B -- file
+
+# update a branch A with a file f from another branch B
+git checkout A
+git checkout --patch B f  
+
+or
+
+git checkout B f  # if its a new file or don't want to patch but just overwrite

@@ -108,10 +108,17 @@ func (ms ModelSpecs) PrintActivitySummary(xp *[]float64) {
 		} else {
 			ms.Ao.Output(fmt.Sprintf(" %3d:", year+ms.Ip.StartPlan))
 		}
-		items := []float64{withdrawal[IRA] / ms.OneK, deposit[IRA] / ms.OneK, rmdref / ms.OneK, // IRA
-			withdrawal[Roth] / ms.OneK, deposit[Roth] / ms.OneK, // Roth
-			withdrawal[Aftertax] / ms.OneK, deposit[Aftertax] / ms.OneK, //D, // AftaTax
-			AccessVector(ms.Income[0], year) / ms.OneK, AccessVector(ms.SS[0], year) / ms.OneK, AccessVector(ms.Expenses[0], year) / ms.OneK,
+		items := []float64{
+			withdrawal[IRA] / ms.OneK,
+			deposit[IRA] / ms.OneK,
+			rmdref / ms.OneK, // IRA
+			withdrawal[Roth] / ms.OneK,
+			deposit[Roth] / ms.OneK, // Roth
+			withdrawal[Aftertax] / ms.OneK,
+			deposit[Aftertax] / ms.OneK, //D, // AftaTax
+			AccessVector(ms.Income[0], year) / ms.OneK,
+			AccessVector(ms.SS[0], year) / ms.OneK,
+			AccessVector(ms.Expenses[0], year) / ms.OneK,
 			(tax + cgtax + earlytax) / ms.OneK}
 		for _, f := range items {
 			format := fmt.Sprintf("&@%%%d.0f", fieldwidth)
@@ -1094,6 +1101,7 @@ func (ms ModelSpecs) IncomeSummary(year int, xp *[]float64) (T, spendable, tax, 
 	// return ordinaryTaxable, Spendable, Tax, Rate, CG_Tax
 	// Need to account for withdrawals from IRA deposited in Investment account NOT SPENDABLE
 
+	/////////if ms.UsePieceWiseMethod {
 	earlytax, rothearly = ms.EarlyPenaltyCharged(year, xp)
 
 	T = ms.ordinaryTaxable(year, xp)

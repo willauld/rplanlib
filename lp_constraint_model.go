@@ -69,8 +69,9 @@ type ModelSpecs struct {
 	Errfile *os.File
 	Logfile *os.File
 
-	OneK          float64
-	DeveloperInfo bool
+	OneK               float64
+	DeveloperInfo      bool
+	UsePieceWiseMethod bool
 }
 
 func intMax(a, b int) int {
@@ -334,8 +335,9 @@ func NewModelSpecs(vindx VectorVarIndex,
 		Logfile:                 logfile,
 		//csvfile:                 csvfile,
 		//tablefile:               tablefile,
-		OneK:          1000.0,
-		DeveloperInfo: developerInfo,
+		OneK:               1000.0,
+		DeveloperInfo:      developerInfo,
+		UsePieceWiseMethod: false,
 	}
 	if !RoundToOneK {
 		ms.OneK = 1.0

@@ -305,6 +305,19 @@ func getPathStrValue(path string, config *toml.Tree) string {
 	return s
 }
 
+func setStringMapValueWithDefaultValue(ipsm *map[string]string,
+	s string, val string) error {
+	k, ok := (*ipsm)[s]
+	if !ok {
+		e := fmt.Errorf("setStringMapDefaultValue: attempt to set a non-existant parameter: %s", s)
+		return e
+	}
+	if k == "" { // only set default if not set
+		(*ipsm)[s] = val
+	}
+	return nil
+}
+
 func setStringMapValueWithValue(ipsm *map[string]string,
 	s string, val string) error {
 	//fmt.Printf("Set %s to %s\n", s, val)
@@ -523,6 +536,17 @@ func GetInputStringsMapFromToml(filename string) (*map[string]string, error) {
 	err = setStringMapValueWithValue(&ipsm, "dollarsInThousands", "false")
 	if err != nil {
 		fmt.Printf("getInputStringsMapFromToml: %s\n", err)
+	}
+	// set default values if needed
+	err = setStringMapValueWithDefaultValue(&ipsm, "setName", "activeParams")
+	if err != nil {
+		e := fmt.Errorf("Error: %s", err)
+		return nil, e
+	}
+	err = setStringMapValueWithDefaultValue(&ipsm, "filingStatus", "joint")
+	if err != nil {
+		e := fmt.Errorf("Error: %s", err)
+		return nil, e
 	}
 	return &ipsm, nil
 }

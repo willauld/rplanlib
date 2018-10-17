@@ -241,7 +241,7 @@ func verifyFilingStatus(s string) (TaxStatus, error) {
 	return UnknownTaxStatus, e
 }
 
-// Default values is not defined
+// Default values if not defined
 const ReturnRatePercent = 6.0
 const InflactionRatePercent = 2.5
 const MaximizeDefault = Spending

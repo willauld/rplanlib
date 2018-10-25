@@ -58,13 +58,13 @@ type ModelSpecs struct {
 	SSspecs     []ssI       // ss specs for each retiree: pia, fra, ...
 	Income      [][]float64 // income[0] is combined, income[1] first income stream...
 	Incometags  []string    // ...
-	AssetSale   [][]float64 // assetSale[0] combined, assetSale[1] first asset
+	AssetSale   [][]float64 // assetSale[0] combined, assetSale[1] first asset (net from sales)
 	Assettags   []string    // ...
 	Expenses    [][]float64 // expenses[0] combined, expensee[1] first expense
 	Expensetags []string    // ...
 
 	Taxed        []float64
-	CgAssetTaxed []float64
+	CgAssetTaxed []float64 // taxable from asset sales
 
 	Errfile *os.File
 	Logfile *os.File
@@ -326,10 +326,10 @@ func NewModelSpecs(vindx VectorVarIndex,
 
 	//fmt.Printf("InputParams: %#v\n", ip)
 	ms := ModelSpecs{
-		Ip:    ip,
-		Vindx: vindx,
-		Ti:    ti,
-		Ao:    NewAppOutput(csvfile, tablefile),
+		Ip:                      ip,
+		Vindx:                   vindx,
+		Ti:                      ti,
+		Ao:                      NewAppOutput(csvfile, tablefile),
 		AllowTdraRothraDeposits: allowDeposits,
 		Errfile:                 errfile,
 		Logfile:                 logfile,
@@ -345,20 +345,20 @@ func NewModelSpecs(vindx VectorVarIndex,
 
 	retirees := []retiree{
 		{
-			age:        ip.Age1,
-			ageAtStart: ip.Age1 + ip.PrePlanYears,
-			throughAge: ip.PlanThroughAge1,
-			mykey:      ip.MyKey1,
+			age:                             ip.Age1,
+			ageAtStart:                      ip.Age1 + ip.PrePlanYears,
+			throughAge:                      ip.PlanThroughAge1,
+			mykey:                           ip.MyKey1,
 			definedContributionPlanStartAge: ip.DefinedContributionPlanStart1,
 			definedContributionPlanEndAge:   ip.DefinedContributionPlanEnd1,
 		},
 	}
 	if ip.FilingStatus == Joint {
 		r2 := retiree{
-			age:        ip.Age2,
-			ageAtStart: ip.Age2 + ip.PrePlanYears,
-			throughAge: ip.PlanThroughAge2,
-			mykey:      ip.MyKey2,
+			age:                             ip.Age2,
+			ageAtStart:                      ip.Age2 + ip.PrePlanYears,
+			throughAge:                      ip.PlanThroughAge2,
+			mykey:                           ip.MyKey2,
 			definedContributionPlanStartAge: ip.DefinedContributionPlanStart2,
 			definedContributionPlanEndAge:   ip.DefinedContributionPlanEnd2,
 		}
@@ -787,15 +787,21 @@ func (ms ModelSpecs) BuildModel() ([]float64, [][]float64, []float64, []ModelNot
 				row[ms.Vindx.Y(year, l)] = (*ms.Ti.Capgainstable)[l][2] // cap gains tax
 			}
 		}
-		for j := 0; j < len(ms.Accounttable); j++ {
-			row[ms.Vindx.D(year, j)] = 1
+		if ms.Ip.Accmap[Aftertax] > 0 {
+			j := len(ms.Accounttable) - 1
+			row[ms.Vindx.D(year, j)] = 1 // only the aftertax account has a deposit
 		}
 		row[ms.Vindx.S(year)] = 1
 		A = append(A, row)
 		inc := AccessVector(ms.Income[0], year)
 		ss := AccessVector(ms.SS[0], year)
+		assetSale := AccessVector(ms.AssetSale[0], year)
 		exp := AccessVector(ms.Expenses[0], year)
-		b = append(b, inc+ss-exp)
+		contrib_sum := 0.0
+		for j := 0; j < len(ms.Accounttable); j++ {
+			contrib_sum += AccessVector(ms.Accounttable[j].Contributions, year)
+		}
+		b = append(b, inc+ss+assetSale-exp-contrib_sum)
 	}
 	//
 	// Add constraint (3a')
@@ -849,181 +855,6 @@ func (ms ModelSpecs) BuildModel() ([]float64, [][]float64, []float64, []ModelNot
 	}
 
 	//
-	// Add constaints for (6') rows
-	//
-	notes = append(notes, ModelNote{len(A), "Constraints 6':"})
-	for year := 0; year < ms.Ip.Numyr; year++ {
-		row := make([]float64, nvars)
-		atleastone := false
-		totContrib := 0.0
-		for j := 0; j < len(ms.Accounttable); j++ {
-			t := ms.Accounttable[j].acctype
-			if t != Aftertax {
-				ownerAge := ms.accountOwnerAge(year, ms.Accounttable[j])
-				//fmt.Printf("888:: 6' account type: %v, ownerAge: %d\n", t.String(), ownerAge)
-				if t != IRA || ownerAge < int(ms.Ti.Contribspecs["TDRANOCONTRIBAGE"]) {
-					row[ms.Vindx.D(year, j)] = 1 // TODO if this is not executed, DONT register this constrain, DONT add to A and b
-					totContrib += AccessVector(ms.Accounttable[j].Contributions, year)
-					atleastone = true
-				}
-			}
-		}
-		if atleastone {
-			A = append(A, row)
-			//b+=[min(ms.Income[year],ms.Ti.maxContribution(year,None))]
-			// using ms.Taxed rather than ms.Income because income could
-			// include non-taxed anueities that don't count.
-			None := ""
-			infyears := ms.Ip.PrePlanYears + year
-			bmax := ms.Ti.maxContribution(year, infyears, ms.Retirees, None, ms.Ip.IRate)
-			if !ms.AllowTdraRothraDeposits {
-				//merging the Eq N' into 6' and 7'
-				bmax = math.Min(totContrib, bmax)
-			}
-			b = append(b, math.Min(AccessVector(ms.Taxed, year), bmax))
-		}
-	}
-	//
-	// Add constaints for (7') rows
-	//
-	notes = append(notes, ModelNote{len(A), "Constraints 7':"})
-	for year := 0; year < ms.Ip.Numyr; year++ {
-		for _, v := range ms.Retirees {
-			if AccessVector(ms.Taxed, year) > 0.0 {
-				// No deposits to tax favored accounts are allow when
-				// there is no taxable income. So those cases (I<=0)
-				// are covered by case (6') constrains
-				atleastone := false
-				row := make([]float64, nvars)
-				totContrib := 0.0
-				for j := 0; j < len(ms.Accounttable); j++ {
-					if v.mykey == ms.Accounttable[j].mykey {
-						t := ms.Accounttable[j].acctype
-						ownerAge := ms.accountOwnerAge(year, ms.Accounttable[j])
-						if t != IRA || ownerAge < int(ms.Ti.Contribspecs["TDRANOCONTRIBAGE"]) {
-							// ["acctype"] != "aftertax": no "mykey" in aftertax
-							// (this will either break or just not match - we
-							// will see)
-							row[ms.Vindx.D(year, j)] = 1 // TODO if this is not executed, DONT register this constraint, DONT add to A and b
-							totContrib += AccessVector(ms.Accounttable[j].Contributions, year)
-							atleastone = true
-						}
-					}
-				}
-				if atleastone {
-					A = append(A, row)
-					infyears := ms.Ip.PrePlanYears + year
-					bmax := ms.Ti.maxContribution(year, infyears, ms.Retirees, v.mykey, ms.Ip.IRate)
-					if !ms.AllowTdraRothraDeposits {
-						//merging the Eq N' into 6' and 7'
-						bmax = math.Min(totContrib, bmax)
-					}
-					b = append(b, math.Min(AccessVector(ms.Taxed, year), bmax))
-				}
-			}
-		}
-	}
-	//
-	// Add constaints for (8') rows
-	//
-	notes = append(notes, ModelNote{len(A), "Constraints 8':"})
-	for year := 0; year < ms.Ip.Numyr; year++ {
-		for j := 0; j < len(ms.Accounttable); j++ {
-			v := ms.Accounttable[j].Contributions
-			if v != nil {
-				if v[year] > 0 {
-					row := make([]float64, nvars)
-					row[ms.Vindx.D(year, j)] = -1
-					A = append(A, row)
-					b = append(b, -1*v[year])
-				}
-			}
-		}
-	}
-	//
-	// Add constaints for (9') rows
-	//
-	notes = append(notes, ModelNote{len(A), "Constraints 9':"})
-	for year := 0; year < ms.Ip.Numyr; year++ {
-		row := make([]float64, nvars)
-		rowActive := false
-		for j := 0; j < intMin(2, len(ms.Accounttable)); j++ {
-			// at most the first two accounts are type IRA w/
-			// RMD requirement
-			if ms.Accounttable[j].acctype == IRA {
-				ownerAge := ms.accountOwnerAge(year, ms.Accounttable[j])
-				if ownerAge >= int(ms.Ti.Contribspecs["TDRANOCONTRIBAGE"]) {
-					// set both accounts if both retirees are over 70
-					row[ms.Vindx.D(year, j)] = 1
-					rowActive = true
-				}
-			}
-		}
-		if rowActive {
-			A = append(A, row)
-			b = append(b, 0)
-		}
-	}
-	/* Incorportated into 6' and 7'
-	//
-	// Add constaints for (N') rows
-	//
-	notes = append(notes, ModelNote{len(A), "Constraints N':"})
-	if !ms.AllowTdraRothraDeposits {
-		for year := 0; year < ms.Ip.Numyr; year++ {
-			if AccessVector(ms.Taxed, year) >= 0.0 {
-				// Deposits to tax favored accounts are only allowed when
-				// there is taxable income.
-				// when there is none (6') constrains will cover (N')
-				tot := 0.0
-				for j := 0; j < len(ms.Accounttable); j++ {
-					v := ms.Accounttable[j].Contributions
-					if v != nil {
-						tot += v[year]
-					}
-				}
-				if tot > 0.0 {
-					// need a row for each account to set it's own contribution
-					for j := 0; j < len(ms.Accounttable); j++ {
-						ownerAge := ms.accountOwnerAge(year, ms.Accounttable[j])
-						t := ms.Accounttable[j].acctype
-						//fmt.Printf("888:: account type: %v, ownerAge: %d, maxage: %d\n", t.String(), ownerAge, int(ms.Ti.Contribspecs["TDRANOCONTRIBAGE"]))
-						if t != Aftertax && (t != IRA || ownerAge < int(ms.Ti.Contribspecs["TDRANOCONTRIBAGE"])) { // IRA over age 70 handled by 9'
-							v := ms.Accounttable[j].Contributions
-							max := 0.0
-							if v != nil {
-								max = v[year]
-							}
-							row := make([]float64, nvars)
-							row[ms.Vindx.D(year, j)] = 1
-							A = append(A, row)
-							b = append(b, max)
-						}
-					}
-				} else {
-					// use just one row for all accounts, no contribution
-					row := make([]float64, nvars)
-					rowActive := false
-					for j := 0; j < len(ms.Accounttable); j++ {
-						ownerAge := ms.accountOwnerAge(year, ms.Accounttable[j])
-						t := ms.Accounttable[j].acctype
-						//fmt.Printf("888:: account type: %v, ownerAge: %d, maxage: %d\n", t.String(), ownerAge, int(ms.Ti.Contribspecs["TDRANOCONTRIBAGE"]))
-						if t != Aftertax && (t != IRA || ownerAge < int(ms.Ti.Contribspecs["TDRANOCONTRIBAGE"])) { // IRA over age 70 handled by 9'
-							row[ms.Vindx.D(year, j)] = 1
-							rowActive = true
-						}
-					}
-					if rowActive {
-						A = append(A, row)
-						b = append(b, 0)
-					}
-				}
-			}
-		}
-
-	}
-	*/
-	//
 	// Add constaints for (10') rows
 	//
 	notes = append(notes, ModelNote{len(A), "Constraints 10':"})
@@ -1054,15 +885,24 @@ func (ms ModelSpecs) BuildModel() ([]float64, [][]float64, []float64, []ModelNot
 		for j := 0; j < intMin(2, len(ms.Accounttable)); j++ {
 			// IRA can only be in the first two accounts
 			if ms.Accounttable[j].acctype == IRA {
-				row[ms.Vindx.W(year, j)] = 1  // Account 0 is TDRA
-				row[ms.Vindx.D(year, j)] = -1 // Account 0 is TDRA
+				row[ms.Vindx.W(year, j)] = 1 // Account 0 is TDRA
 			}
 		}
 		for k := 0; k < len(*ms.Ti.Taxtable); k++ {
 			row[ms.Vindx.X(year, k)] = -1
 		}
 		A = append(A, row)
-		b = append(b, ms.Ti.Stded*adjInf-AccessVector(ms.Taxed, year)-ms.Ti.SStaxable*AccessVector(ms.SS[0], year))
+		stddeduct := ms.Ti.Stded * adjInf
+		taxed := AccessVector(ms.Taxed, year)
+		SStaxed := ms.Ti.SStaxable * AccessVector(ms.SS[0], year)
+		contrib_sum := 0.0
+		for j := 0; j < intMin(2, len(ms.Accounttable)); j++ {
+			// IRA can only be in the first two accounts
+			if ms.Accounttable[j].acctype == IRA {
+				contrib_sum += AccessVector(ms.Accounttable[j].Contributions, year)
+			}
+		}
+		b = append(b, stddeduct+contrib_sum-taxed-SStaxed)
 	}
 	//
 	// Add constraints for (15')
@@ -1075,15 +915,24 @@ func (ms ModelSpecs) BuildModel() ([]float64, [][]float64, []float64, []ModelNot
 			for j := 0; j < intMin(2, len(ms.Accounttable)); j++ {
 				// IRA can only be in the first two accounts
 				if ms.Accounttable[j].acctype == IRA {
-					row[ms.Vindx.W(year, j)] = 1  // Account 0 is TDRA
-					row[ms.Vindx.D(year, j)] = -1 // Account 0 is TDRA
+					row[ms.Vindx.W(year, j)] = 1 // Account 0 is TDRA
 				}
 			}
 			for l := 0; l < len(*ms.Ti.Capgainstable); l++ {
 				row[ms.Vindx.Sy(year, l)] = -1
 			}
 			A = append(A, row)
-			b = append(b, ms.Ti.Stded*adjInf-AccessVector(ms.Taxed, year)-ms.Ti.SStaxable*AccessVector(ms.SS[0], year))
+			stddeduct := ms.Ti.Stded * adjInf
+			taxed := AccessVector(ms.Taxed, year)
+			SStaxed := ms.Ti.SStaxable * AccessVector(ms.SS[0], year)
+			contrib_sum := 0.0
+			for j := 0; j < intMin(2, len(ms.Accounttable)); j++ {
+				// IRA can only be in the first two accounts
+				if ms.Accounttable[j].acctype == IRA {
+					contrib_sum += AccessVector(ms.Accounttable[j].Contributions, year)
+				}
+			}
+			b = append(b, stddeduct+contrib_sum-taxed-SStaxed)
 		}
 	}
 	//
@@ -1175,14 +1024,11 @@ func (ms ModelSpecs) BuildModel() ([]float64, [][]float64, []float64, []ModelNot
 			row[ms.Vindx.B(year+1, j)] = 1 // b[i,j] supports an extra year
 			row[ms.Vindx.B(year, j)] = -1 * ms.Accounttable[j].RRate
 			row[ms.Vindx.W(year, j)] = ms.Accounttable[j].RRate
-			row[ms.Vindx.D(year, j)] = -1 * ms.Accounttable[j].RRate
-			A = append(A, row)
-			// In the event of a sell of an asset for the year
-			temp := 0.0
-			if ms.Accounttable[j].acctype == Aftertax {
-				temp = AccessVector(ms.AssetSale[0], year) *
-					ms.Accounttable[j].RRate //TODO test
+			if ms.Accounttable[j].acctype == Aftertax { // deposit only for aftertax account now
+				row[ms.Vindx.D(year, j)] = -1 * ms.Accounttable[j].RRate
 			}
+			A = append(A, row)
+			temp := AccessVector(ms.Accounttable[j].Contributions, year)
 			b = append(b, temp)
 		}
 	}
@@ -1196,14 +1042,12 @@ func (ms ModelSpecs) BuildModel() ([]float64, [][]float64, []float64, []ModelNot
 			row := make([]float64, nvars)
 			row[ms.Vindx.B(year, j)] = ms.Accounttable[j].RRate
 			row[ms.Vindx.W(year, j)] = -1 * ms.Accounttable[j].RRate
-			row[ms.Vindx.D(year, j)] = ms.Accounttable[j].RRate
+			if ms.Accounttable[j].acctype == Aftertax { // deposit only for aftertax account now
+				row[ms.Vindx.D(year, j)] = ms.Accounttable[j].RRate
+			}
 			row[ms.Vindx.B(year+1, j)] = -1 ////// b[i,j] supports an extra year
 			A = append(A, row)
-			temp := 0.0
-			if ms.Accounttable[j].acctype == Aftertax {
-				temp = -1 * AccessVector(ms.AssetSale[0], year) *
-					ms.Accounttable[j].RRate //TODO test
-			}
+			temp := AccessVector(ms.Accounttable[j].Contributions, year)
 			b = append(b, temp)
 		}
 	}
@@ -1458,7 +1302,12 @@ func (ms ModelSpecs) ConsistencyCheckSpendable(X *[]float64) (OK bool) {
 
 	for year := 0; year < ms.Ip.Numyr; year++ {
 		for j := 0; j < len(ms.Accounttable); j++ {
-			a := (*X)[ms.Vindx.B(year+1, j)] - ((*X)[ms.Vindx.B(year, j)]-(*X)[ms.Vindx.W(year, j)]+ms.depositAmount(X, year, j))*ms.Accounttable[j].RRate
+			deposit := 0.0
+			if ms.Accounttable[j].acctype == Aftertax {
+				deposit = (*X)[ms.Vindx.D(year, j)]
+			}
+			deposit += AccessVector(ms.Accounttable[j].Contributions, year)
+			a := (*X)[ms.Vindx.B(year+1, j)] - ((*X)[ms.Vindx.B(year, j)]-(*X)[ms.Vindx.W(year, j)]+deposit)*ms.Accounttable[j].RRate
 			if a > 1 {
 				OK = false
 				v := ms.Accounttable[j]
@@ -1476,7 +1325,11 @@ func (ms ModelSpecs) ConsistencyCheckSpendable(X *[]float64) (OK bool) {
 			ms.Ao.Output("\t")
 			for j := 0; j < len(ms.Accounttable); j++ {
 				ms.Ao.Output(fmt.Sprintf(" +w[%d,%d]: %6.0f", year, j, (*X)[ms.Vindx.W(year, j)]))
-				ms.Ao.Output(fmt.Sprintf(" -D[%d,%d]: %6.0f", year, j, ms.depositAmount(X, year, j)))
+				accdeposit := AccessVector(ms.Accounttable[j].Contributions, year)
+				if ms.Accounttable[j].acctype == Aftertax {
+					accdeposit += (*X)[ms.Vindx.D(year, j)]
+				}
+				ms.Ao.Output(fmt.Sprintf(" -D[%d,%d]: %6.0f", year, j, accdeposit))
 			}
 			ms.Ao.Output(fmt.Sprintf(" +o[%d]: %6.0f +SS[%d]: %6.0f -e[%d]: %6.0f -tax: %6.0f -cg_tax: %6.0f\n", year, AccessVector(ms.Income[0], year), year, AccessVector(ms.SS[0], year), year, AccessVector(ms.Expenses[0], year), tax, cgTax))
 		}

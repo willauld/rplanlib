@@ -19,7 +19,7 @@ func checkIndexSequence(years, taxbins, cgbins int, accmap map[Acctype]int, vari
 		for k := 0; k < taxbins; k++ {
 			if varindex.X(i, k) != ky {
 				passOk = false
-				fmt.Fprintf(errfile, "varindex.x(%d,%d) is %d not %d as it should be",
+				fmt.Fprintf(errfile, "varindex.x(%d,%d) is %d not %d as it should be\n",
 					i, k, varindex.X(i, k), ky)
 			}
 			ky++
@@ -31,7 +31,7 @@ func checkIndexSequence(years, taxbins, cgbins int, accmap map[Acctype]int, vari
 				if varindex.Sy(i, l) != ky {
 					passOk = false
 					fmt.Fprintf(errfile,
-						"varindex.y(%d,%d) is %d not %d as it should be",
+						"varindex.y(%d,%d) is %d not %d as it should be\n",
 						i, l, varindex.Sy(i, l), ky)
 				}
 				ky++
@@ -41,7 +41,7 @@ func checkIndexSequence(years, taxbins, cgbins int, accmap map[Acctype]int, vari
 			for l := 0; l < cgbins; l++ {
 				if varindex.Y(i, l) != ky {
 					passOk = false
-					fmt.Fprintf(errfile, "varindex.y(%d,%d) is %d not %d as it should be",
+					fmt.Fprintf(errfile, "varindex.y(%d,%d) is %d not %d as it should be\n",
 						i, l, varindex.Y(i, l), ky)
 				}
 				ky++
@@ -52,7 +52,7 @@ func checkIndexSequence(years, taxbins, cgbins int, accmap map[Acctype]int, vari
 		for j := 0; j < accounts; j++ {
 			if varindex.W(i, j) != ky {
 				passOk = false
-				fmt.Fprintf(errfile, "varindex.w(%d,%d) is %d not %d as it should be",
+				fmt.Fprintf(errfile, "varindex.w(%d,%d) is %d not %d as it should be\n",
 					i, j, varindex.W(i, j), ky)
 			}
 			ky++
@@ -62,7 +62,7 @@ func checkIndexSequence(years, taxbins, cgbins int, accmap map[Acctype]int, vari
 		for j := 0; j < accounts; j++ {
 			if varindex.B(i, j) != ky {
 				passOk = false
-				fmt.Fprintf(errfile, "varindex.b(%d,%d) is %d not %d as it should be",
+				fmt.Fprintf(errfile, "varindex.b(%d,%d) is %d not %d as it should be\n",
 					i, j, varindex.B(i, j), ky)
 			}
 			ky++
@@ -71,33 +71,23 @@ func checkIndexSequence(years, taxbins, cgbins int, accmap map[Acctype]int, vari
 	for i := 0; i < years; i++ {
 		if varindex.S(i) != ky {
 			passOk = false
-			fmt.Fprintf(errfile, "varindex.s(%d) is %d not %d as it should be",
+			fmt.Fprintf(errfile, "varindex.s(%d) is %d not %d as it should be\n",
 				i, varindex.S(i), ky)
 		}
 		ky++
 	}
 	if accmap[Aftertax] > 0 {
 		for i := 0; i < years; i++ {
-			for j := 0; j < accounts; j++ {
-				if varindex.D(i, j) != ky {
-					passOk = false
-					fmt.Fprintf(errfile, "varindex.D(%d,%d) is %d not %d as it should be",
-						i, j, varindex.D(i, j), ky)
-				}
-				ky++
+			if varindex.D(i) != ky {
+				passOk = false
+				fmt.Fprintf(errfile, "varindex.D(%d) is %d not %d as it should be\n",
+					i, varindex.D(i), ky)
 			}
+			ky++
 		}
 	}
 	return passOk
 }
-
-/* TODO FIXME ReMOVEME
-var accountCat = []string{
-	"IRA",
-	"roth",
-	"aftertax",
-}
-*/
 
 // VectorVarIndex contains the index information to convert from variable index to vector index
 type VectorVarIndex struct {
@@ -172,8 +162,8 @@ func NewVectorVarIndex(iyears, itaxbins, icgbins int,
 	xcount := iyears * itaxbins
 	wcount := iyears * iaccounts
 	bcount := (iyears + 1) * iaccounts
-	dcount := iyears * iaccounts
 	scount := iyears
+	dcount := iyears
 	vsize := xcount + 2*ycount + wcount + bcount + scount + dcount
 	systart := xcount
 	ystart := systart + sycount
@@ -260,12 +250,11 @@ func (v VectorVarIndex) S(i int) int {
 	return v.Sstart + i
 }
 
-// D (i,j) returns the variable index in a variable vector
-func (v VectorVarIndex) D(i, j int) int {
+// D (i) returns the variable index in a variable vector
+func (v VectorVarIndex) D(i int) int {
 	//assert S.accmap["aftertax"] > 0
-	//assert j >= 0 and j < v.Accounts
 	//assert i >= 0 and i < v.Years
-	return v.Dstart + i*v.Accounts + j
+	return v.Dstart + i
 }
 
 // Varstr returns the variable name and index(s) for the variable at indx in the variable vector
@@ -307,21 +296,13 @@ func (v VectorVarIndex) Varstr(indx int) string {
 		return fmt.Sprintf("s[%d]", c) // add actual values for i,j
 	} else if indx < v.Xcount+v.Sycount+v.Ycount+v.Wcount+v.Bcount+v.Scount+v.Dcount {
 		c = indx - (v.Xcount + v.Sycount + v.Ycount + v.Wcount + v.Bcount + v.Scount)
-		a = c / v.Accounts
-		b = c % v.Accounts
-		name = v.Accname[b]
-		return fmt.Sprintf("D[%d,%d=%s]", a, b, name)
+		//a = c / v.Accounts
+		//b = c % v.Accounts
+		//name = v.Accname[b]
+		return fmt.Sprintf("d[%d]", c)
 	}
 	if v.errfile != nil {
 		fmt.Fprintf(v.errfile, "\nError -- varstr() corupted\n")
 	}
 	return "don't know"
 }
-
-//v.ycount = 0
-//if v.accmap["aftertax"] > 0:  /// no cgbins if no aftertax account
-//    v.ycount = v.years * v.cgbins
-//v.wcount = v.years * v.accounts
-// final balances in years+1
-//v.bcount = (v.years + 1) * v.accounts
-//v.scount = v.years

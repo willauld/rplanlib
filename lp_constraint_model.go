@@ -775,8 +775,7 @@ func (ms ModelSpecs) BuildModel() ([]float64, [][]float64, []float64, []ModelNot
 			}
 		}
 		if ms.Ip.Accmap[Aftertax] > 0 {
-			j := len(ms.Accounttable) - 1
-			row[ms.Vindx.D(year, j)] = 1 // only the aftertax account has a deposit
+			row[ms.Vindx.D(year)] = 1
 		}
 		row[ms.Vindx.S(year)] = 1
 		A = append(A, row)
@@ -1012,7 +1011,7 @@ func (ms ModelSpecs) BuildModel() ([]float64, [][]float64, []float64, []ModelNot
 			row[ms.Vindx.B(year, j)] = -1 * ms.Accounttable[j].RRate
 			row[ms.Vindx.W(year, j)] = ms.Accounttable[j].RRate
 			if ms.Accounttable[j].acctype == Aftertax { // deposit only for aftertax account now
-				row[ms.Vindx.D(year, j)] = -1 * ms.Accounttable[j].RRate
+				row[ms.Vindx.D(year)] = -1 * ms.Accounttable[j].RRate
 			}
 			A = append(A, row)
 			temp := AccessVector(ms.Accounttable[j].Contributions, year)
@@ -1030,7 +1029,7 @@ func (ms ModelSpecs) BuildModel() ([]float64, [][]float64, []float64, []ModelNot
 			row[ms.Vindx.B(year, j)] = ms.Accounttable[j].RRate
 			row[ms.Vindx.W(year, j)] = -1 * ms.Accounttable[j].RRate
 			if ms.Accounttable[j].acctype == Aftertax { // deposit only for aftertax account now
-				row[ms.Vindx.D(year, j)] = ms.Accounttable[j].RRate
+				row[ms.Vindx.D(year)] = ms.Accounttable[j].RRate
 			}
 			row[ms.Vindx.B(year+1, j)] = -1 ////// b[i,j] supports an extra year
 			A = append(A, row)
@@ -1286,7 +1285,7 @@ func (ms ModelSpecs) ConsistencyCheckSpendable(X *[]float64) (OK bool) {
 		for j := 0; j < len(ms.Accounttable); j++ {
 			deposit := 0.0
 			if ms.Accounttable[j].acctype == Aftertax {
-				deposit = (*X)[ms.Vindx.D(year, j)]
+				deposit = (*X)[ms.Vindx.D(year)]
 			}
 			deposit += AccessVector(ms.Accounttable[j].Contributions, year)
 			a := (*X)[ms.Vindx.B(year+1, j)] - ((*X)[ms.Vindx.B(year, j)]-(*X)[ms.Vindx.W(year, j)]+deposit)*ms.Accounttable[j].RRate
@@ -1309,7 +1308,7 @@ func (ms ModelSpecs) ConsistencyCheckSpendable(X *[]float64) (OK bool) {
 				ms.Ao.Output(fmt.Sprintf(" +w[%d,%d]: %6.0f", year, j, (*X)[ms.Vindx.W(year, j)]))
 				accdeposit := AccessVector(ms.Accounttable[j].Contributions, year)
 				if ms.Accounttable[j].acctype == Aftertax {
-					accdeposit += (*X)[ms.Vindx.D(year, j)]
+					accdeposit += (*X)[ms.Vindx.D(year)]
 				}
 				ms.Ao.Output(fmt.Sprintf(" -D[%d,%d]: %6.0f", year, j, accdeposit))
 			}
@@ -1607,10 +1606,8 @@ func (ms ModelSpecs) printModelRow(row []float64, suppressNewline bool) {
 		}
 	}
 	for i := 0; i < ms.Ip.Numyr; i++ { // D[]
-		for j := 0; j < ms.Ip.Numacc; j++ {
-			if row[ms.Vindx.D(i, j)] != 0 {
-				fmt.Fprintf(ms.Logfile, "D[%d,%d]=%6.3f, ", i, j, row[ms.Vindx.D(i, j)])
-			}
+		if row[ms.Vindx.D(i)] != 0 {
+			fmt.Fprintf(ms.Logfile, "d[%d]=%6.3f, ", i, row[ms.Vindx.D(i)])
 		}
 	}
 	if !suppressNewline {
@@ -1705,13 +1702,11 @@ func (ms ModelSpecs) PrintObjectFunctionSolution(c []float64, row []float64) {
 	globalSum += localSum
 	localSum = 0.0
 	for i := 0; i < ms.Ip.Numyr; i++ { // D[]
-		for j := 0; j < ms.Ip.Numacc; j++ {
-			cIndx := ms.Vindx.D(i, j)
-			if c[cIndx] != 0 {
-				cXrow := c[cIndx] * row[cIndx]
-				localSum += cXrow
-				fmt.Fprintf(ms.Logfile, "C[%d]=%6.3f * D[%d,%d]=%6.3f == %6.3f\n", cIndx, c[cIndx], i, j, row[cIndx], cXrow)
-			}
+		cIndx := ms.Vindx.D(i)
+		if c[cIndx] != 0 {
+			cXrow := c[cIndx] * row[cIndx]
+			localSum += cXrow
+			fmt.Fprintf(ms.Logfile, "C[%d]=%6.3f * D[%d]=%6.3f == %6.3f\n", cIndx, c[cIndx], i, row[cIndx], cXrow)
 		}
 	}
 	fmt.Fprintf(ms.Logfile, "\tSum Ci*Di == %6.3f\n", localSum)

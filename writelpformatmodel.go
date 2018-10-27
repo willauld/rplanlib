@@ -119,10 +119,8 @@ func (ms ModelSpecs) writeModelRow(row []float64, suppressNewline bool, modelfil
 		}
 	}
 	for i := 0; i < ms.Ip.Numyr; i++ { // D[]
-		for j := 0; j < ms.Ip.Numacc; j++ {
-			if row[ms.Vindx.D(i, j)] != 0 {
-				fmt.Fprintf(modelfile, "+ %10.4f D.%d.%d ", row[ms.Vindx.D(i, j)], i, j)
-			}
+		if row[ms.Vindx.D(i)] != 0 {
+			fmt.Fprintf(modelfile, "+ %10.4f D.%d ", row[ms.Vindx.D(i)], i)
 		}
 	}
 	if !suppressNewline {
@@ -228,13 +226,11 @@ func (ms ModelSpecs) WriteObjectFunctionSolution(c []float64, row []float64, mod
 	globalSum += localSum
 	localSum = 0.0
 	for i := 0; i < ms.Ip.Numyr; i++ { // D[]
-		for j := 0; j < ms.Ip.Numacc; j++ {
-			cIndx := ms.Vindx.D(i, j)
-			if c[cIndx] != 0 || writeAll {
-				cXrow := c[cIndx] * row[cIndx]
-				localSum += cXrow
-				objOut.Output(fmt.Sprintf("C[%d]=@%6.3f@&*@&D[%d,%d]=@%6.3f@&==@&%6.3f\n", cIndx, c[cIndx], i, j, row[cIndx], cXrow))
-			}
+		cIndx := ms.Vindx.D(i)
+		if c[cIndx] != 0 || writeAll {
+			cXrow := c[cIndx] * row[cIndx]
+			localSum += cXrow
+			objOut.Output(fmt.Sprintf("C[%d]=@%6.3f@&*@&D[%d]=@%6.3f@&==@&%6.3f\n", cIndx, c[cIndx], i, row[cIndx], cXrow))
 		}
 	}
 	objOut.Output(fmt.Sprintf("\tSum Ci*Di@&==@&%6.3f\n", localSum))

@@ -2572,6 +2572,8 @@ func TestResultsOutput(t *testing.T) {
 func TestGenStockOutput(t *testing.T) {
 	if !(testing.Short() && testing.Verbose()) { //Skip unless set "-v -short"
 		t.Skip("GenStockOutput(): skipping unless set '-v -short'")
+	} else {
+		fmt.Printf("\nTo regenerate Stock output, use:: go test -run TestGenStockOutput -v -Short\n\n")
 	}
 	GenStockOutput(t)
 }
@@ -2602,7 +2604,7 @@ func GenStockOutput(t *testing.T) {
 			iRate:   1.025,
 		},
 	}
-	Stockfile, err := os.Create("temp.go")
+	Stockfile, err := os.Create("./temp.go")
 	if err != nil {
 		t.Errorf("GenStockOutput():  %s", err)
 		return

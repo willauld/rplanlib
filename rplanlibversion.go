@@ -14,5 +14,5 @@ var Version = struct {
     Minor         string
     Patch         string
     Str           string
-} {"0", "5", "1", "alpha" }
+} {"0", "5", "2", "alpha" }
 

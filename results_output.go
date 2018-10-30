@@ -80,7 +80,7 @@ func (ms ModelSpecs) PrintActivitySummary(xp *[]float64) {
 		if ms.UsePieceWiseMethod {
 			// piecewise tax changes
 			tax = (*xp)[ms.Vindx.X(year, 2)]
-			if ms.Accounttable[len(ms.Accounttable)-1].acctype == Aftertax {
+			if ms.Accounttable[len(ms.Accounttable)-1].Acctype == Aftertax {
 				cgtax = (*xp)[ms.Vindx.Y(year, 2)]
 			}
 			spendable = (*xp)[ms.Vindx.S(year)]
@@ -88,7 +88,7 @@ func (ms ModelSpecs) PrintActivitySummary(xp *[]float64) {
 
 		rmdref := 0.0
 		for j := 0; j < intMin(2, len(ms.Accounttable)); j++ { // at most the first two accounts are type IRA w/ RMD requirement
-			if ms.Accounttable[j].acctype == IRA {
+			if ms.Accounttable[j].Acctype == IRA {
 				rmd := ms.Ti.rmdNeeded(year, ms.matchRetiree(ms.Accounttable[j].mykey, year, true))
 				if rmd > 0 {
 					rmdref += (*xp)[ms.Vindx.B(year, j)] / rmd
@@ -98,11 +98,11 @@ func (ms ModelSpecs) PrintActivitySummary(xp *[]float64) {
 		withdrawal := map[Acctype]float64{IRA: 0, Roth: 0, Aftertax: 0}
 		deposit := map[Acctype]float64{IRA: 0, Roth: 0, Aftertax: 0}
 		for j := 0; j < len(ms.Accounttable); j++ {
-			withdrawal[ms.Accounttable[j].acctype] += (*xp)[ms.Vindx.W(year, j)]
-			deposit[ms.Accounttable[j].acctype] +=
+			withdrawal[ms.Accounttable[j].Acctype] += (*xp)[ms.Vindx.W(year, j)]
+			deposit[ms.Accounttable[j].Acctype] +=
 				AccessVector(ms.Accounttable[j].Contributions, year)
-			if ms.Accounttable[j].acctype == Aftertax {
-				deposit[ms.Accounttable[j].acctype] += (*xp)[ms.Vindx.D(year)]
+			if ms.Accounttable[j].Acctype == Aftertax {
+				deposit[ms.Accounttable[j].Acctype] += (*xp)[ms.Vindx.D(year)]
 			}
 		}
 
@@ -384,7 +384,7 @@ func (ms ModelSpecs) PrintAccountTrans(xp *[]float64) {
 	for year := 0; year < ms.Ip.Numyr; year++ {
 		rmdref := make([]float64, 2)
 		for j := 0; j < intMin(2, len(ms.Accounttable)); j++ { // only first two accounts are type IRA w/ RMD
-			if ms.Accounttable[j].acctype == IRA {
+			if ms.Accounttable[j].Acctype == IRA {
 				rmd := ms.Ti.rmdNeeded(year, ms.matchRetiree(ms.Accounttable[j].mykey, year, true))
 				if rmd > 0 {
 					rmdref[j] = (*xp)[ms.Vindx.B(year, j)] / rmd
@@ -441,7 +441,7 @@ func (ms ModelSpecs) PrintAccountTrans(xp *[]float64) {
 		}
 		index = ms.Ip.Accmap[IRA] + ms.Ip.Accmap[Roth]
 		//assert index == len(S.accounttable)-1
-		if ms.Ip.Accmap[Aftertax] > 0 && ms.Accounttable[index].acctype == Aftertax {
+		if ms.Ip.Accmap[Aftertax] > 0 && ms.Accounttable[index].Acctype == Aftertax {
 			// Aftertax has both contribe and deposit values
 			deposit := AccessVector(ms.Accounttable[index].Contributions, year) + (*xp)[ms.Vindx.D(year)]
 			str := fmt.Sprintf("&@%7.0f&@%7.0f&@%7.0f",
@@ -562,12 +562,12 @@ func (ms ModelSpecs) PrintTax(xp *[]float64) {
 		withdrawal := map[Acctype]float64{IRA: 0, Roth: 0, Aftertax: 0}
 		deposit := map[Acctype]float64{IRA: 0, Roth: 0, Aftertax: 0}
 		for j := 0; j < len(ms.Accounttable); j++ {
-			withdrawal[ms.Accounttable[j].acctype] += (*xp)[ms.Vindx.W(year, j)]
+			withdrawal[ms.Accounttable[j].Acctype] += (*xp)[ms.Vindx.W(year, j)]
 			accdeposit := AccessVector(ms.Accounttable[j].Contributions, year)
-			if ms.Accounttable[j].acctype == Aftertax {
+			if ms.Accounttable[j].Acctype == Aftertax {
 				accdeposit += (*xp)[ms.Vindx.D(year)]
 			}
-			deposit[ms.Accounttable[j].acctype] += accdeposit
+			deposit[ms.Accounttable[j].Acctype] += accdeposit
 		}
 		if ms.Ip.MyKey2 != "" && ms.Ip.FilingStatus == Joint {
 			ms.Ao.Output(fmt.Sprintf("%3d/%3d:", age, age-ms.Ip.AgeDelta))
@@ -655,12 +655,12 @@ func (ms ModelSpecs) PrintTaxBrackets(xp *[]float64) {
 		withdrawal := map[Acctype]float64{IRA: 0, Roth: 0, Aftertax: 0}
 		deposit := map[Acctype]float64{IRA: 0, Roth: 0, Aftertax: 0}
 		for j := 0; j < len(ms.Accounttable); j++ {
-			withdrawal[ms.Accounttable[j].acctype] += (*xp)[ms.Vindx.W(year, j)]
+			withdrawal[ms.Accounttable[j].Acctype] += (*xp)[ms.Vindx.W(year, j)]
 			accdeposit := AccessVector(ms.Accounttable[j].Contributions, year)
-			if ms.Accounttable[j].acctype == Aftertax {
+			if ms.Accounttable[j].Acctype == Aftertax {
 				accdeposit += (*xp)[ms.Vindx.D(year)]
 			}
-			deposit[ms.Accounttable[j].acctype] += accdeposit
+			deposit[ms.Accounttable[j].Acctype] += accdeposit
 		}
 		str := fmt.Sprintf("&@%7.0f&@%7.0f&@%7.0f&@%7.0f&@%7.0f&@%7.0f&@%7.0f",
 			withdrawal[IRA],              // /ms.OneK,
@@ -741,12 +741,12 @@ func (ms ModelSpecs) PrintShadowTaxBrackets(xp *[]float64) {
 		withdrawal := map[Acctype]float64{IRA: 0, Roth: 0, Aftertax: 0}
 		deposit := map[Acctype]float64{IRA: 0, Roth: 0, Aftertax: 0}
 		for j := 0; j < len(ms.Accounttable); j++ {
-			withdrawal[ms.Accounttable[j].acctype] += (*xp)[ms.Vindx.W(year, j)]
+			withdrawal[ms.Accounttable[j].Acctype] += (*xp)[ms.Vindx.W(year, j)]
 			accdeposit := AccessVector(ms.Accounttable[j].Contributions, year)
-			if ms.Accounttable[j].acctype == Aftertax {
+			if ms.Accounttable[j].Acctype == Aftertax {
 				accdeposit += (*xp)[ms.Vindx.D(year)]
 			}
-			deposit[ms.Accounttable[j].acctype] += accdeposit
+			deposit[ms.Accounttable[j].Acctype] += accdeposit
 		}
 		str := fmt.Sprintf("&@%7.0f&@%7.0f&@%7.0f&@%7.0f&@%7.0f&@%7.0f&@%7.0f",
 			withdrawal[IRA],              // /ms.OneK,
@@ -1082,7 +1082,7 @@ func (ms ModelSpecs) ordinaryTaxable(year int, xp *[]float64) float64 {
 	withdrawals := 0.0
 	deposits := 0.0
 	for j := 0; j < intMin(2, len(ms.Accounttable)); j++ {
-		if ms.Accounttable[j].acctype == IRA {
+		if ms.Accounttable[j].Acctype == IRA {
 			withdrawals += (*xp)[ms.Vindx.W(year, j)]
 			deposits += AccessVector(ms.Accounttable[j].Contributions, year)
 		}
@@ -1099,10 +1099,10 @@ func (ms ModelSpecs) EarlyPenaltyCharged(year int, xp *[]float64) (earlytax floa
 	earlytax = 0.0
 	rothearly = false
 	for j, acc := range ms.Accounttable {
-		if acc.acctype != Aftertax {
+		if acc.Acctype != Aftertax {
 			if ms.Ti.applyEarlyPenalty(year, ms.matchRetiree(acc.mykey, year, true)) {
 				earlytax += (*xp)[ms.Vindx.W(year, j)] * ms.Ti.Penalty
-				if (*xp)[ms.Vindx.W(year, j)] > 0 && acc.acctype == Roth {
+				if (*xp)[ms.Vindx.W(year, j)] > 0 && acc.Acctype == Roth {
 					rothearly = true
 				}
 			}
@@ -1136,7 +1136,7 @@ func (ms ModelSpecs) IncomeSummary(year int, xp *[]float64) (T, spendable, tax, 
 	//if S.accmap["aftertax"] > 0:
 	for j := 0; j < len(ms.Accounttable); j++ {
 		D += AccessVector(ms.Accounttable[j].Contributions, year)
-		if ms.Accounttable[j].acctype == Aftertax {
+		if ms.Accounttable[j].Acctype == Aftertax {
 			D += (*xp)[ms.Vindx.D(year)]
 		}
 	}

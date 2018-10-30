@@ -32,7 +32,7 @@ type account struct {
 	Contributions []float64
 	Contrib       float64
 	RRate         float64
-	acctype       Acctype
+	Acctype       Acctype
 	mykey         string
 	Owner         ownerPosition
 }
@@ -239,7 +239,8 @@ func (ms ModelSpecs) verifyTaxableIncomeCoversContrib(mList *WarnErrorList) erro
 	// - Contributions are below legal maximums
 	//   - Sum of contrib for all retirees is less than taxable income
 	//   - Sum of contrib for all retirees is less thansum of legal max's
-	//   - IRA+ROTH+401(k) Contributions are less than other taxable income for each
+	//   - IRA+ROTH+401(k) Contributions are less than other taxable income
+	//     for each
 	//   - IRA+ROTH+401(k) Contributions are less than legal max for each
 	// - this is all talking about uc(ij)
 	for year := 0; year < ms.Ip.Numyr; year++ {
@@ -248,14 +249,14 @@ func (ms ModelSpecs) verifyTaxableIncomeCoversContrib(mList *WarnErrorList) erro
 		//print("jointMaxContrib: ", jointMaxContrib)
 		//jointMaxContrib = maxContribution(year, None)
 		for _, acc := range ms.Accounttable {
-			if acc.acctype != Aftertax {
+			if acc.Acctype != Aftertax {
 				carray := acc.Contributions
 				if carray != nil && carray[year] > 0 {
 					contrib += carray[year]
 					ownerage := ms.accountOwnerAge(year, acc)
 					if ownerage >= 70 {
-						if acc.acctype == IRA {
-							str := fmt.Sprintf("Error - IRS does not allow contributions to TDRA accounts after age 70.\n\tPlease correct the contributions at age %d,\n\tfrom the PRIMARY age line, for account type %s and owner %s", ms.Ip.StartPlan+year, acc.acctype, acc.mykey)
+						if acc.Acctype == IRA {
+							str := fmt.Sprintf("Error - IRS does not allow contributions to TDRA accounts after age 70.\n\tPlease correct the contributions at age %d,\n\tfrom the PRIMARY age line, for account type %s and owner %s", ms.Ip.StartPlan+year, acc.Acctype, acc.mykey)
 							mList.AppendError(str)
 							e := fmt.Errorf(str)
 							return e
@@ -288,7 +289,7 @@ func (ms ModelSpecs) verifyTaxableIncomeCoversContrib(mList *WarnErrorList) erro
 				//print("MaxContrib: ", MaxContrib, v.mykey)
 				for _, acc := range ms.Accounttable {
 					//print(acc)
-					if acc.acctype != Aftertax {
+					if acc.Acctype != Aftertax {
 						if acc.mykey == v.mykey {
 							carray := acc.Contributions
 							if carray != nil {
@@ -377,7 +378,7 @@ func NewModelSpecs(vindx VectorVarIndex,
 		if ip.TDRAContribInflate1 == true {
 			infr = ip.IRate
 		}
-		a.acctype = IRA
+		a.Acctype = IRA
 		a.mykey = ip.MyKey1
 		a.Owner = primaryOwner
 		a.Origbal = float64(ip.TDRA1)
@@ -399,7 +400,7 @@ func NewModelSpecs(vindx VectorVarIndex,
 		if ip.TDRAContribInflate2 == true {
 			infr = ip.IRate
 		}
-		a.acctype = IRA
+		a.Acctype = IRA
 		a.mykey = ip.MyKey2
 		a.Owner = secondaryOwner
 		a.Origbal = float64(ip.TDRA2)
@@ -421,7 +422,7 @@ func NewModelSpecs(vindx VectorVarIndex,
 		if ip.RothContribInflate1 == true {
 			infr = ip.IRate
 		}
-		a.acctype = Roth
+		a.Acctype = Roth
 		a.mykey = ip.MyKey1
 		a.Owner = primaryOwner
 		a.Origbal = float64(ip.Roth1)
@@ -444,7 +445,7 @@ func NewModelSpecs(vindx VectorVarIndex,
 		if ip.RothContribInflate2 == true {
 			infr = ip.IRate
 		}
-		a.acctype = Roth
+		a.Acctype = Roth
 		a.mykey = ip.MyKey2
 		a.Owner = secondaryOwner
 		a.Origbal = float64(ip.Roth2)
@@ -467,7 +468,7 @@ func NewModelSpecs(vindx VectorVarIndex,
 		if ip.AftataxContribInflate == true {
 			infr = ip.IRate
 		}
-		a.acctype = Aftertax
+		a.Acctype = Aftertax
 		a.mykey = "" // need to make this definable for pc versions
 		a.Owner = noOwner
 		a.Origbal = float64(ip.Aftatax)
@@ -735,7 +736,7 @@ func (ms ModelSpecs) BuildModel() ([]float64, [][]float64, []float64, []ModelNot
 	//fmt.Printf("ms.Ip.Maximize: %#v\n", ms.Ip.Maximize)
 	if ms.Ip.Maximize == PlusEstate {
 		for j := 0; j < len(ms.Accounttable); j++ {
-			estateTax := ms.Ti.AccountEstateTax[ms.Accounttable[j].acctype]
+			estateTax := ms.Ti.AccountEstateTax[ms.Accounttable[j].Acctype]
 			c[ms.Vindx.B(ms.Ip.Numyr, j)] = -1 * Emphasis * estateTax // account discount rate
 		}
 		//fmt.Fprintf(ms.Logfile, "\nConstructing Spending + Estate Model:\n")
@@ -744,7 +745,7 @@ func (ms ModelSpecs) BuildModel() ([]float64, [][]float64, []float64, []ModelNot
 		//fmt.Fprintf(ms.Logfile, "\nConstructing Spending Model:\n")
 		balancer := 0.001 * Emphasis
 		for j := 0; j < len(ms.Accounttable); j++ {
-			estateTax := ms.Ti.AccountEstateTax[ms.Accounttable[j].acctype]
+			estateTax := ms.Ti.AccountEstateTax[ms.Accounttable[j].Acctype]
 			c[ms.Vindx.B(ms.Ip.Numyr, j)] = -1 * balancer * estateTax // balance and discount rate
 		}
 		notes = append(notes, ModelNote{-1, "Objective function S1':"})
@@ -757,7 +758,7 @@ func (ms ModelSpecs) BuildModel() ([]float64, [][]float64, []float64, []ModelNot
 		row := make([]float64, nvars)
 		for j := 0; j < len(ms.Accounttable); j++ {
 			p := 1.0
-			if ms.Accounttable[j].acctype != Aftertax {
+			if ms.Accounttable[j].Acctype != Aftertax {
 				if ms.Ti.applyEarlyPenalty(year, ms.matchRetiree(ms.Accounttable[j].mykey, year, true)) { // TODO: should applyEarlyPenalty() return the penalty amount, spimplifying things?
 					p = 1 - ms.Ti.Penalty
 				}
@@ -846,7 +847,7 @@ func (ms ModelSpecs) BuildModel() ([]float64, [][]float64, []float64, []ModelNot
 		for j := 0; j < intMin(2, len(ms.Accounttable)); j++ {
 			// at most the first two accounts are type IRA
 			// w/ RMD requirement
-			if ms.Accounttable[j].acctype == IRA {
+			if ms.Accounttable[j].Acctype == IRA {
 				rmd := ms.Ti.rmdNeeded(year, ms.matchRetiree(ms.Accounttable[j].mykey, year, true))
 				if rmd > 0 {
 					row := make([]float64, nvars)
@@ -868,7 +869,7 @@ func (ms ModelSpecs) BuildModel() ([]float64, [][]float64, []float64, []ModelNot
 		row := make([]float64, nvars)
 		for j := 0; j < intMin(2, len(ms.Accounttable)); j++ {
 			// IRA can only be in the first two accounts
-			if ms.Accounttable[j].acctype == IRA {
+			if ms.Accounttable[j].Acctype == IRA {
 				row[ms.Vindx.W(year, j)] = 1 // Account 0 is TDRA
 			}
 		}
@@ -882,7 +883,7 @@ func (ms ModelSpecs) BuildModel() ([]float64, [][]float64, []float64, []ModelNot
 		contrib_sum := 0.0
 		for j := 0; j < intMin(2, len(ms.Accounttable)); j++ {
 			// IRA can only be in the first two accounts
-			if ms.Accounttable[j].acctype == IRA {
+			if ms.Accounttable[j].Acctype == IRA {
 				contrib_sum += AccessVector(ms.Accounttable[j].Contributions, year)
 			}
 		}
@@ -910,7 +911,7 @@ func (ms ModelSpecs) BuildModel() ([]float64, [][]float64, []float64, []ModelNot
 			row := make([]float64, nvars)
 			for j := 0; j < intMin(2, len(ms.Accounttable)); j++ {
 				// IRA can only be in the first two accounts
-				if ms.Accounttable[j].acctype == IRA {
+				if ms.Accounttable[j].Acctype == IRA {
 					row[ms.Vindx.W(year, j)] = 1 // Account 0 is TDRA
 				}
 			}
@@ -924,7 +925,7 @@ func (ms ModelSpecs) BuildModel() ([]float64, [][]float64, []float64, []ModelNot
 			contrib_sum := 0.0
 			for j := 0; j < intMin(2, len(ms.Accounttable)); j++ {
 				// IRA can only be in the first two accounts
-				if ms.Accounttable[j].acctype == IRA {
+				if ms.Accounttable[j].Acctype == IRA {
 					contrib_sum += AccessVector(ms.Accounttable[j].Contributions, year)
 				}
 			}
@@ -1008,7 +1009,7 @@ func (ms ModelSpecs) BuildModel() ([]float64, [][]float64, []float64, []ModelNot
 			row[ms.Vindx.B(year+1, j)] = 1 // b[i,j] supports an extra year
 			row[ms.Vindx.B(year, j)] = -1 * ms.Accounttable[j].RRate
 			row[ms.Vindx.W(year, j)] = ms.Accounttable[j].RRate
-			if ms.Accounttable[j].acctype == Aftertax { // deposit only for aftertax account now
+			if ms.Accounttable[j].Acctype == Aftertax { // deposit only for aftertax account now
 				row[ms.Vindx.D(year)] = -1 * ms.Accounttable[j].RRate
 			}
 			A = append(A, row)
@@ -1026,7 +1027,7 @@ func (ms ModelSpecs) BuildModel() ([]float64, [][]float64, []float64, []ModelNot
 			row := make([]float64, nvars)
 			row[ms.Vindx.B(year, j)] = ms.Accounttable[j].RRate
 			row[ms.Vindx.W(year, j)] = -1 * ms.Accounttable[j].RRate
-			if ms.Accounttable[j].acctype == Aftertax { // deposit only for aftertax account now
+			if ms.Accounttable[j].Acctype == Aftertax { // deposit only for aftertax account now
 				row[ms.Vindx.D(year)] = ms.Accounttable[j].RRate
 			}
 			row[ms.Vindx.B(year+1, j)] = -1 ////// b[i,j] supports an extra year
@@ -1161,7 +1162,7 @@ func (ms ModelSpecs) PrecheckConsistency() bool {
 		t := 0.0
 		for j := 0; j < len(ms.Accounttable); j++ {
 			v := ms.Accounttable[j]
-			if v.acctype != Aftertax {
+			if v.Acctype != Aftertax {
 				if v.Contributions != nil && len(v.Contributions) > 0 {
 					t += v.Contributions[year]
 				}
@@ -1282,7 +1283,7 @@ func (ms ModelSpecs) ConsistencyCheckSpendable(X *[]float64) (OK bool) {
 	for year := 0; year < ms.Ip.Numyr; year++ {
 		for j := 0; j < len(ms.Accounttable); j++ {
 			deposit := 0.0
-			if ms.Accounttable[j].acctype == Aftertax {
+			if ms.Accounttable[j].Acctype == Aftertax {
 				deposit = (*X)[ms.Vindx.D(year)]
 			}
 			deposit += AccessVector(ms.Accounttable[j].Contributions, year)
@@ -1290,7 +1291,7 @@ func (ms ModelSpecs) ConsistencyCheckSpendable(X *[]float64) (OK bool) {
 			if a > 1 {
 				OK = false
 				v := ms.Accounttable[j]
-				ms.Ao.Output(fmt.Sprintf("\naccount[%d], type '%s', owner '%s'\n", j, v.acctype.String(), v.mykey))
+				ms.Ao.Output(fmt.Sprintf("\naccount[%d], type '%s', owner '%s'\n", j, v.Acctype.String(), v.mykey))
 				ms.Ao.Output(fmt.Sprintf("\tyear to year balance NOT OK years %d to %d\n", year, year+1))
 				ms.Ao.Output(fmt.Sprintf("\tdifference is %v\n", a))
 			}
@@ -1305,7 +1306,7 @@ func (ms ModelSpecs) ConsistencyCheckSpendable(X *[]float64) (OK bool) {
 			for j := 0; j < len(ms.Accounttable); j++ {
 				ms.Ao.Output(fmt.Sprintf(" +w[%d,%d]: %6.0f", year, j, (*X)[ms.Vindx.W(year, j)]))
 				accdeposit := AccessVector(ms.Accounttable[j].Contributions, year)
-				if ms.Accounttable[j].acctype == Aftertax {
+				if ms.Accounttable[j].Acctype == Aftertax {
 					accdeposit += (*X)[ms.Vindx.D(year)]
 				}
 				ms.Ao.Output(fmt.Sprintf(" -D[%d,%d]: %6.0f", year, j, accdeposit))

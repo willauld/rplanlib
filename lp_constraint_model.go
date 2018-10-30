@@ -314,7 +314,7 @@ func (ms ModelSpecs) verifyTaxableIncomeCoversContrib(mList *WarnErrorList) erro
 func NewModelSpecs(vindx VectorVarIndex,
 	ti Taxinfo,
 	ip InputParams,
-	allowDeposits bool,
+	//allowDeposits bool,
 	RoundToOneK bool,
 	developerInfo bool,
 	fourPercentRule bool,
@@ -330,14 +330,14 @@ func NewModelSpecs(vindx VectorVarIndex,
 		Vindx: vindx,
 		Ti:    ti,
 		Ao:    NewAppOutput(csvfile, tablefile),
-		AllowTdraRothraDeposits: allowDeposits,
-		Errfile:                 errfile,
-		Logfile:                 logfile,
+		//AllowTdraRothraDeposits: allowDeposits,
+		Errfile: errfile,
+		Logfile: logfile,
 		//csvfile:                 csvfile,
 		//tablefile:               tablefile,
 		OneK:               1000.0,
 		DeveloperInfo:      developerInfo,
-		UsePieceWiseMethod: false, // use ms.SetParam() to change
+		UsePieceWiseMethod: true, // use ms.SetParam() to change
 	}
 	if !RoundToOneK {
 		ms.OneK = 1.0
@@ -345,20 +345,20 @@ func NewModelSpecs(vindx VectorVarIndex,
 
 	retirees := []retiree{
 		{
-			age:        ip.Age1,
-			ageAtStart: ip.Age1 + ip.PrePlanYears,
-			throughAge: ip.PlanThroughAge1,
-			mykey:      ip.MyKey1,
+			age:                             ip.Age1,
+			ageAtStart:                      ip.Age1 + ip.PrePlanYears,
+			throughAge:                      ip.PlanThroughAge1,
+			mykey:                           ip.MyKey1,
 			definedContributionPlanStartAge: ip.DefinedContributionPlanStart1,
 			definedContributionPlanEndAge:   ip.DefinedContributionPlanEnd1,
 		},
 	}
 	if ip.FilingStatus == Joint {
 		r2 := retiree{
-			age:        ip.Age2,
-			ageAtStart: ip.Age2 + ip.PrePlanYears,
-			throughAge: ip.PlanThroughAge2,
-			mykey:      ip.MyKey2,
+			age:                             ip.Age2,
+			ageAtStart:                      ip.Age2 + ip.PrePlanYears,
+			throughAge:                      ip.PlanThroughAge2,
+			mykey:                           ip.MyKey2,
 			definedContributionPlanStartAge: ip.DefinedContributionPlanStart2,
 			definedContributionPlanEndAge:   ip.DefinedContributionPlanEnd2,
 		}
@@ -1113,7 +1113,7 @@ func (ms ModelSpecs) BuildModel() ([]float64, [][]float64, []float64, []ModelNot
 	//
 	// Add constraints for (12')
 	//
-	// Mrk*xi1 – ITi <= -btik, I = 1..n, k=1..Bt-1
+	// Mrk*xi1 – ITi <= -btik*infadj, i = 1..n, k=1..Bt-1
 	skipLastNbrackets := 1
 	if ms.UsePieceWiseMethod {
 		skipLastNbrackets = 0
@@ -1211,7 +1211,7 @@ func (ms ModelSpecs) BuildModel() ([]float64, [][]float64, []float64, []ModelNot
 	}
 	if ms.UsePieceWiseMethod {
 		// line y=mx+b, b is yintercept
-		// X(year,1) === total tabable income
+		// X(year,1) === total taxable income
 		// X(year,2) === income tax for X(year,1)
 		// X(year,3) === amount if cap gains tax was for X(i,1)+Y(i,1)
 		// X(year,4) === amount if cap gains tax was for x(i,1)
@@ -1261,9 +1261,6 @@ func (ms ModelSpecs) BuildModel() ([]float64, [][]float64, []float64, []ModelNot
 					/**/
 				}
 			}
-			//
-			// 2) mrik * xi1 - xi4 <= - yintercept ik for all i,k (14b')
-			//
 			// FIXME FIXME FIXME FIXME FIXME FIXME FIXME FIXME FIXME FIXME
 			// I now relize that the delta between 14a' and 14b' can be
 			// negitive or even 14b' itself may be negative so this approach
@@ -1272,6 +1269,9 @@ func (ms ModelSpecs) BuildModel() ([]float64, [][]float64, []float64, []ModelNot
 			// on them to fill from the bottom which is the problem I'm trying
 			// to get away from. Need to find a different method!!!!
 			// FIXME FIXME FIXME FIXME FIXME FIXME FIXME FIXME FIXME FIXME
+			//
+			// 2) mrik * xi1 - xi4 <= - yintercept ik for all i,k (14b')
+			//
 			notes = append(notes, ModelNote{len(A), "Constraints 14b':"})
 			for year := 0; year < ms.Ip.Numyr; year++ {
 				/////// l == 0 is intentionally scipt as it is all zero

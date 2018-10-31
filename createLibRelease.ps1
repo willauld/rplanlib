@@ -1,6 +1,6 @@
 param(
     [string]$vermajor = "0", 
-    [string]$verminor = "4",
+    [string]$verminor = "5",
     [string]$verStr = "alpha",
     [switch]$resetPatch = $false,
     [switch]$tagRepo = $false

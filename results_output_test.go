@@ -174,12 +174,12 @@ func TestActivitySummaryHeader(t *testing.T) {
 		{
 			sip: sipJoint,
 			expect: `retiree1/retiree2
-    age     fIRA    tIRA  RMDref   fRoth   tRoth fAftaTx tAftaTx   o_inc      SS Expense TFedTax Spndble`,
+    age     fIRA    tIRA  RMDref   fRoth   tRoth fAftaTx tAftaTx   o_inc      SS NetASal Expense TFedTax Spndble`,
 		},
 		{
 			sip: sipSingle,
 			expect: `retiree1
- age     fIRA    tIRA  RMDref   fRoth   tRoth fAftaTx tAftaTx   o_inc      SS Expense TFedTax Spndble`,
+ age     fIRA    tIRA  RMDref   fRoth   tRoth fAftaTx tAftaTx   o_inc      SS NetASal Expense TFedTax Spndble`,
 		},
 	}
 	for i, elem := range tests {
@@ -241,20 +241,20 @@ func TestActivitySummary(t *testing.T) {
 			expect: `Activity Summary:
 
  retiree1
- age     fIRA    tIRA  RMDref   fRoth   tRoth fAftaTx tAftaTx   o_inc      SS Expense TFedTax Spndble
-  65:   40594       0       0       0       0       0       0       0       0       0    3431   37164 
-  66:   41609       0       0       0       0       0       0       0       0       0    3516   38093 
-  67:   42650       0       0       0       0       0       0       0       0       0    3604   39045 
-  68:   43716       0       0       0       0       0       0       0       0       0    3694   40021 
-  69:   44809       0       0       0       0       0       0       0       0       0    3787   41022 
-  70:   45929       0    9263       0       0       0       0       0       0       0    3881   42048 
-  71:   47077       0    8315       0       0       0       0       0       0       0    3978   43099 
-  72:   48254       0    7174       0       0       0       0       0       0       0    4078   44176 
-  73:   49460       0    5811       0       0       0       0       0       0       0    4180   45281 
-  74:   50697       0    4190       0       0       0       0       0       0       0    4284   46413 
-  75:   51964       0    2269       0       0       0       0       0       0       0    4391   47573 
+ age     fIRA    tIRA  RMDref   fRoth   tRoth fAftaTx tAftaTx   o_inc      SS NetASal Expense TFedTax Spndble
+  65:   40594       0       0       0       0       0       0       0       0       0       0    3431   37164 
+  66:   41609       0       0       0       0       0       0       0       0       0       0    3516   38093 
+  67:   42650       0       0       0       0       0       0       0       0       0       0    3604   39045 
+  68:   43716       0       0       0       0       0       0       0       0       0       0    3694   40021 
+  69:   44809       0       0       0       0       0       0       0       0       0       0    3787   41022 
+  70:   45929       0    9263       0       0       0       0       0       0       0       0    3881   42048 
+  71:   47077       0    8315       0       0       0       0       0       0       0       0    3978   43099 
+  72:   48254       0    7174       0       0       0       0       0       0       0       0    4078   44176 
+  73:   49460       0    5811       0       0       0       0       0       0       0       0    4180   45281 
+  74:   50697       0    4190       0       0       0       0       0       0       0       0    4284   46413 
+  75:   51964       0    2269       0       0       0       0       0       0       0       0    4391   47573 
  retiree1
- age     fIRA    tIRA  RMDref   fRoth   tRoth fAftaTx tAftaTx   o_inc      SS Expense TFedTax Spndble`,
+ age     fIRA    tIRA  RMDref   fRoth   tRoth fAftaTx tAftaTx   o_inc      SS NetASal Expense TFedTax Spndble`,
 			sip: sipSingle,
 			xp:  xpSingle,
 		},
@@ -262,20 +262,20 @@ func TestActivitySummary(t *testing.T) {
 			expect: `Activity Summary:
 
 retiree1/retiree2
-    age     fIRA    tIRA  RMDref   fRoth   tRoth fAftaTx tAftaTx   o_inc      SS Expense TFedTax Spndble
- 65/ 65:   40594       0       0       0       0       0       0       0       0       0    1330   39264 
- 66/ 66:   41609       0       0       0       0       0       0       0       0       0    1364   40246 
- 67/ 67:   42650       0       0       0       0       0       0       0       0       0    1398   41252 
- 68/ 68:   43716       0       0       0       0       0       0       0       0       0    1433   42283 
- 69/ 69:   44809       0       0       0       0       0       0       0       0       0    1468   43340 
- 70/ 70:   45929       0    9263       0       0       0       0       0       0       0    1505   44424 
- 71/ 71:   47077       0    8315       0       0       0       0       0       0       0    1543   45534 
- 72/ 72:   48254       0    7174       0       0       0       0       0       0       0    1581   46673 
- 73/ 73:   49460       0    5811       0       0       0       0       0       0       0    1621   47840 
- 74/ 74:   50697       0    4190       0       0       0       0       0       0       0    1661   49036 
- 75/ 75:   51964       0    2269       0       0       0       0       0       0       0    1703   50261 
+    age     fIRA    tIRA  RMDref   fRoth   tRoth fAftaTx tAftaTx   o_inc      SS NetASal Expense TFedTax Spndble
+ 65/ 65:   40594       0       0       0       0       0       0       0       0       0       0    1330   39264 
+ 66/ 66:   41609       0       0       0       0       0       0       0       0       0       0    1364   40246 
+ 67/ 67:   42650       0       0       0       0       0       0       0       0       0       0    1398   41252 
+ 68/ 68:   43716       0       0       0       0       0       0       0       0       0       0    1433   42283 
+ 69/ 69:   44809       0       0       0       0       0       0       0       0       0       0    1468   43340 
+ 70/ 70:   45929       0    9263       0       0       0       0       0       0       0       0    1505   44424 
+ 71/ 71:   47077       0    8315       0       0       0       0       0       0       0       0    1543   45534 
+ 72/ 72:   48254       0    7174       0       0       0       0       0       0       0       0    1581   46673 
+ 73/ 73:   49460       0    5811       0       0       0       0       0       0       0       0    1621   47840 
+ 74/ 74:   50697       0    4190       0       0       0       0       0       0       0       0    1661   49036 
+ 75/ 75:   51964       0    2269       0       0       0       0       0       0       0       0    1703   50261 
 retiree1/retiree2
-    age     fIRA    tIRA  RMDref   fRoth   tRoth fAftaTx tAftaTx   o_inc      SS Expense TFedTax Spndble`,
+    age     fIRA    tIRA  RMDref   fRoth   tRoth fAftaTx tAftaTx   o_inc      SS NetASal Expense TFedTax Spndble`,
 			sip: sipJoint,
 			xp:  xpJoint,
 		},
@@ -331,7 +331,8 @@ retiree1/retiree2
 		//strn := stripWhitespace(str)
 		//warningmes := stripWhitespace(elem.warningmes)
 		if expect != strnn {
-			showStrMismatch(expect, strnn)
+			str := fmt.Sprintf("TestActivitySummary Case %d:", i)
+			showStrMismatch(str, expect, strnn)
 			t.Errorf("TestActivitySummary case %d:  expected output:\n\t '%s'\n\tbut found:\n\t'%s'\n", i, elem.expect, strnn)
 		}
 	}
@@ -417,7 +418,8 @@ func TestPrintIncomeHeader(t *testing.T) {
 		str := ms.RestoreModelSpecsTable(mychan, oldout, w, DoNothing)
 		strn := strings.TrimSpace(str)
 		if elem.expect != strn {
-			//showStrMismatch(elem.expect, strn)
+			str := fmt.Sprintf("TestPrintIncomeHeader Case %d:", i)
+			showStrMismatch(str, elem.expect, strn)
 			t.Errorf("TestPrintIncomeHeader case %d:  expected output:\n\t '%s'\n\tbut found:\n\t'%s'\n", i, elem.expect, strn)
 		}
 	}
@@ -671,7 +673,8 @@ retir SSincome:         Income:  AssetSale:
 		str := ms.RestoreModelSpecsTable(mychan, oldout, w, DoNothing)
 		strn := strings.TrimSpace(str)
 		if elem.expect != strn {
-			//showStrMismatch(elem.expect, strn)
+			str := fmt.Sprintf("TestTestPrintIncomeExpenseDetails Case %d:", i)
+			showStrMismatch(str, elem.expect, strn)
 			t.Errorf("TestTestPrintIncomeExpenseDetails case %d:  expected output:\n\t '%s'\n\tbut found:\n\t'%s'\n", i, elem.expect, strn)
 		}
 	}
@@ -733,8 +736,9 @@ func TestPrintAccHeader(t *testing.T) {
 		str := ms.RestoreModelSpecsTable(mychan, oldout, w, DoNothing)
 		strn := strings.TrimSpace(str)
 		if elem.expect != strn {
-			showStrMismatch(elem.expect, strn)
-			t.Errorf("TestTestPrintIncomeExpenseDetails case %d:  expected output:\n\t '%s'\n\tbut found:\n\t'%s'\n", i, elem.expect, strn)
+			str := fmt.Sprintf("TestPrintIncomeExpenseDetails Case %d:", i)
+			showStrMismatch(str, elem.expect, strn)
+			t.Errorf("TestPrintIncomeExpenseDetails case %d:  expected output:\n\t '%s'\n\tbut found:\n\t'%s'\n", i, elem.expect, strn)
 		}
 	}
 }
@@ -861,7 +865,8 @@ retiree1
 		str := ms.RestoreModelSpecsTable(mychan, oldout, w, DoNothing)
 		strn := strings.TrimSpace(str)
 		if elem.expect != strn {
-			showStrMismatch(elem.expect, strn)
+			str := fmt.Sprintf("TestPrintAccountTrans Case %d:", i)
+			showStrMismatch(str, elem.expect, strn)
 			t.Errorf("TestPrintAccountTrans case %d:  expected output:\n\t '%s'\n\tbut found:\n\t'%s'\n", i, elem.expect, strn)
 		}
 	}
@@ -876,12 +881,12 @@ func TestPrintHeaderTax(t *testing.T) {
 		{ // Case 0
 			sip: sipSingle,
 			expect: `retiree1
- age     fIRA    tIRA  TxbleO TxbleSS  deduct   T_inc  earlyP  fedtax  mTaxB% fAftaTx tAftaTx  cgTax%   cgTax TFedTax spndble`,
+ age     fIRA    tIRA  TxbleO TxbleSS  deduct   T_inc  earlyP  fedtax  mTaxB% fAftaTx TxblASl  cgTax%   cgTax TFedTax spndble`,
 		},
 		{ // Case 1
 			sip: sipJoint,
 			expect: `retiree1/retiree2
-    age     fIRA    tIRA  TxbleO TxbleSS  deduct   T_inc  earlyP  fedtax  mTaxB% fAftaTx tAftaTx  cgTax%   cgTax TFedTax spndble`,
+    age     fIRA    tIRA  TxbleO TxbleSS  deduct   T_inc  earlyP  fedtax  mTaxB% fAftaTx TxblASl  cgTax%   cgTax TFedTax spndble`,
 		},
 	}
 	for i, elem := range tests {
@@ -912,7 +917,8 @@ func TestPrintHeaderTax(t *testing.T) {
 		str := ms.RestoreModelSpecsTable(mychan, oldout, w, DoNothing)
 		strn := strings.TrimSpace(str)
 		if elem.expect != strn {
-			showStrMismatch(elem.expect, strn)
+			str := fmt.Sprintf("TestPrintHeaderTax Case %d:", i)
+			showStrMismatch(str, elem.expect, strn)
 			t.Errorf("TestPrintHeaderTax case %d:  expected output:\n\t '%s'\n\tbut found:\n\t'%s'\n", i, elem.expect, strn)
 		}
 	}
@@ -931,7 +937,7 @@ func TestPrintTax(t *testing.T) {
 			expect: `Tax Summary:
 
 retiree1
- age     fIRA    tIRA  TxbleO TxbleSS  deduct   T_inc  earlyP  fedtax  mTaxB% fAftaTx tAftaTx  cgTax%   cgTax TFedTax spndble
+ age     fIRA    tIRA  TxbleO TxbleSS  deduct   T_inc  earlyP  fedtax  mTaxB% fAftaTx TxblASl  cgTax%   cgTax TFedTax spndble
   65:   40594       0       0       0   13646   26949      0     3431      15       0       0     100       0    3431   37164
   66:   41609       0       0       0   13987   27622      0     3516      15       0       0     100       0    3516   38093
   67:   42650       0       0       0   14337   28313      0     3604      15       0       0     100       0    3604   39045
@@ -944,7 +950,7 @@ retiree1
   74:   50697       0       0       0   17042   33655      0     4284      15       0       0     100       0    4284   46413
   75:   51964       0       0       0   17468   34497      0     4391      15       0       0     100       0    4391   47573
 retiree1
- age     fIRA    tIRA  TxbleO TxbleSS  deduct   T_inc  earlyP  fedtax  mTaxB% fAftaTx tAftaTx  cgTax%   cgTax TFedTax spndble`,
+ age     fIRA    tIRA  TxbleO TxbleSS  deduct   T_inc  earlyP  fedtax  mTaxB% fAftaTx TxblASl  cgTax%   cgTax TFedTax spndble`,
 		},
 		{ // Case 1
 			sip: sipJoint,
@@ -952,7 +958,7 @@ retiree1
 			expect: `Tax Summary:
 
 retiree1/retiree2
-    age     fIRA    tIRA  TxbleO TxbleSS  deduct   T_inc  earlyP  fedtax  mTaxB% fAftaTx tAftaTx  cgTax%   cgTax TFedTax spndble
+    age     fIRA    tIRA  TxbleO TxbleSS  deduct   T_inc  earlyP  fedtax  mTaxB% fAftaTx TxblASl  cgTax%   cgTax TFedTax spndble
  65/ 65:   40594       0       0       0   27291   13303      0     1330      10       0       0     100       0    1330   39264
  66/ 66:   41609       0       0       0   27974   13636      0     1364      10       0       0     100       0    1364   40246
  67/ 67:   42650       0       0       0   28673   13977      0     1398      10       0       0     100       0    1398   41252
@@ -965,7 +971,7 @@ retiree1/retiree2
  74/ 74:   50697       0       0       0   34083   16614      0     1661      10       0       0     100       0    1661   49036
  75/ 75:   51964       0       0       0   34935   17029      0     1703      10       0       0     100       0    1703   50261
 retiree1/retiree2
-    age     fIRA    tIRA  TxbleO TxbleSS  deduct   T_inc  earlyP  fedtax  mTaxB% fAftaTx tAftaTx  cgTax%   cgTax TFedTax spndble`,
+    age     fIRA    tIRA  TxbleO TxbleSS  deduct   T_inc  earlyP  fedtax  mTaxB% fAftaTx TxblASl  cgTax%   cgTax TFedTax spndble`,
 		},
 		{ // Case 2
 			sip: sipSingle3Acc,
@@ -973,7 +979,7 @@ retiree1/retiree2
 			expect: `Tax Summary:
 
 retiree1
- age     fIRA    tIRA  TxbleO TxbleSS  deduct   T_inc  earlyP  fedtax  mTaxB% fAftaTx tAftaTx  cgTax%   cgTax TFedTax spndble
+ age     fIRA    tIRA  TxbleO TxbleSS  deduct   T_inc  earlyP  fedtax  mTaxB% fAftaTx TxblASl  cgTax%   cgTax TFedTax spndble
   65:   54922       0       0       0   13646   41276      0     5580      15       0       0     100       0    5580   49342
   66:   56295       0       0       0   13987   42308      0     5719      15       0       0     100       0    5719   50576
   67:   57702       0       0       0   14337   43366      0     5862      15       0       0     100       0    5862   51840
@@ -986,7 +992,7 @@ retiree1
   74:   32322       0       0       0   17042   15280      0     1528      10   30828       0     100       0    1528   61622
   75:   33130       0       0       0   17468   15662      0     1566      10       0       0     100       0    1566   63162
 retiree1
- age     fIRA    tIRA  TxbleO TxbleSS  deduct   T_inc  earlyP  fedtax  mTaxB% fAftaTx tAftaTx  cgTax%   cgTax TFedTax spndble`,
+ age     fIRA    tIRA  TxbleO TxbleSS  deduct   T_inc  earlyP  fedtax  mTaxB% fAftaTx TxblASl  cgTax%   cgTax TFedTax spndble`,
 		},
 	}
 	for i, elem := range tests {
@@ -1028,7 +1034,8 @@ retiree1
 		str := ms.RestoreModelSpecsTable(mychan, oldout, w, DoNothing)
 		strn := strings.TrimSpace(str)
 		if elem.expect != strn {
-			showStrMismatch(elem.expect, strn)
+			str := fmt.Sprintf("TestPrintTax Case %d:", i)
+			showStrMismatch(str, elem.expect, strn)
 			t.Errorf("TestPrintTax case %d:  expected output:\n\t '%s'\n\tbut found:\n\t'%s'\n", i, elem.expect, strn)
 		}
 	}
@@ -1083,7 +1090,8 @@ retiree1/retiree2
 		str := ms.RestoreModelSpecsTable(mychan, oldout, w, DoNothing)
 		strn := strings.TrimSpace(str)
 		if elem.expect != strn {
-			showStrMismatch(elem.expect, strn)
+			str := fmt.Sprintf("TestPrintHeaderTaxBrackets Case %d:", i)
+			showStrMismatch(str, elem.expect, strn)
 			t.Errorf("TestPrintHeaderTaxBrackests case %d:  expected output:\n\t '%s'\n\tbut found:\n\t'%s'\n", i, elem.expect, strn)
 		}
 	}
@@ -1202,7 +1210,8 @@ retiree1
 		str := ms.RestoreModelSpecsTable(mychan, oldout, w, DoNothing)
 		strn := strings.TrimSpace(str)
 		if elem.expect != strn {
-			showStrMismatch(elem.expect, strn)
+			str := fmt.Sprintf("TestPrintTaxBrackets Case %d:", i)
+			showStrMismatch(str, elem.expect, strn)
 			t.Errorf("TestPrintTaxBrackets case %d:  expected output:\n\t '%s'\n\tbut found:\n\t'%s'\n", i, elem.expect, strn)
 		}
 	}
@@ -1256,7 +1265,8 @@ retiree1/retiree2
 		str := ms.RestoreModelSpecsTable(mychan, oldout, w, DoNothing)
 		strn := strings.TrimSpace(str)
 		if elem.expect != strn {
-			showStrMismatch(elem.expect, strn)
+			str := fmt.Sprintf("TestPrintHeaderCapgainsBrackets Case %d:", i)
+			showStrMismatch(str, elem.expect, strn)
 			t.Errorf("TestPrintHeaderCapgainsBrackests case %d:  expected output:\n\t '%s'\n\tbut found:\n\t'%s'\n", i, elem.expect, strn)
 		}
 	}
@@ -1375,76 +1385,22 @@ retiree1
 		str := ms.RestoreModelSpecsTable(mychan, oldout, w, DoNothing)
 		strn := strings.TrimSpace(str)
 		if elem.expect != strn {
-			showStrMismatch(elem.expect, strn)
+			str := fmt.Sprintf("TestPrintCapgainsBrackets Case %d:", i)
+			showStrMismatch(str, elem.expect, strn)
 			t.Errorf("TestPrintCapGainsBrackets case %d:  expected output:\n\t '%s'\n\tbut found:\n\t'%s'\n", i, elem.expect, strn)
 		}
 	}
 }
 
-func showStrMismatch(s1, s2 string) { // TODO move to Utility functions
+func showStrMismatch(title, s1, s2 string) { // TODO move to Utility functions
 	for i := 0; i < intMin(len(s1), len(s2)); i++ {
 		if s1[i] != s2[i] {
-			fmt.Printf("Char#: %d, CharVals1: %c, CharInts1: %d, CharVals2: %c, CharInts2: %d\n", i, s1[i], s1[i], s2[i], s2[i])
-			fmt.Printf("expect: '%s'\n", s1[:i])
-			fmt.Printf(" strnn: '%s'\n", s2[:i])
+			fmt.Printf("%s:\n", title)
+			fmt.Printf("	Strings don't match, miscompare between '[]':\n")
+			fmt.Printf("	Char#: %d, CharVals1: %c, CharInts1: %d, CharVals2: %c, CharInts2: %d\n", i, s1[i], s1[i], s2[i], s2[i])
+			fmt.Printf("expect:\n'%s'['%s']\n", s1[:i], s1[i:])
+			fmt.Printf(" found:\n'%s'['%s']\n", s2[:i], s2[i:])
 			break
-		}
-	}
-}
-
-//func (ms ModelSpecs) depositAmount(xp *[]float64, year int, index int) float64
-func TestDepositAmount(t *testing.T) {
-	tests := []struct {
-		year     int
-		index    int
-		expected float64
-	}{
-		{ // CASE 0
-			year:     5,
-			index:    0,
-			expected: 0.0,
-		},
-		{ // CASE 1
-			year:     5,
-			index:    1,
-			expected: 20000.0,
-		},
-	}
-	for i, elem := range tests {
-		ip, err := NewInputParams(sipSingle, nil)
-		if err != nil {
-			t.Errorf("TestDepositAmount: Case %d: %s\n", i, err)
-		}
-		ti := NewTaxInfo(ip.FilingStatus, 2017)
-		taxbins := len(*ti.Taxtable)
-		cgbins := len(*ti.Capgainstable)
-		vindx, err := NewVectorVarIndex(ip.Numyr, taxbins, cgbins, ip.Accmap, os.Stdout)
-		if err != nil {
-			t.Errorf("PrintModelRow case %d: %s", i, err)
-			continue
-		}
-		ms := ModelSpecs{
-			Ip:      *ip,
-			Vindx:   vindx,
-			Ti:      ti,
-			Logfile: os.Stdout,
-			Errfile: os.Stderr,
-			Accounttable: []account{
-				{
-					acctype: IRA,
-				},
-				{
-					acctype: Aftertax,
-				},
-			},
-			AssetSale: make([][]float64, 0),
-		}
-		ms.AssetSale = append(ms.AssetSale, make([]float64, ip.Numyr))
-		ms.AssetSale[0][5] = 20000
-
-		damount := ms.depositAmount(xpSingle, elem.year, elem.index)
-		if damount != elem.expected {
-			t.Errorf("PrintdepositAmount case %d: expected: %f found %f\n", i, elem.expected, damount)
 		}
 	}
 }
@@ -1600,7 +1556,8 @@ Total spendable (after tax money): $490_153`,
 		//strn := stripWhitespace(str)
 		//ot := ms.ordinaryTaxable(elem.year, elem.sxp)
 		if strn != elem.expect {
-			//showStrMismatch(elem.expect, strn)
+			str := fmt.Sprintf("TestBaseConfig Case %d:", i)
+			showStrMismatch(str, elem.expect, strn)
 			t.Errorf("TestPrintBaseConfig case %d: expected\n'%s'\nfound '%s'\n", i, elem.expect, strn)
 		}
 	}
@@ -2615,6 +2572,8 @@ func TestResultsOutput(t *testing.T) {
 func TestGenStockOutput(t *testing.T) {
 	if !(testing.Short() && testing.Verbose()) { //Skip unless set "-v -short"
 		t.Skip("GenStockOutput(): skipping unless set '-v -short'")
+	} else {
+		fmt.Printf("\nTo regenerate Stock output, use:: go test -run TestGenStockOutput -v -Short\n\n")
 	}
 	GenStockOutput(t)
 }
@@ -2645,7 +2604,7 @@ func GenStockOutput(t *testing.T) {
 			iRate:   1.025,
 		},
 	}
-	Stockfile, err := os.Create("temp.go")
+	Stockfile, err := os.Create("./temp.go")
 	if err != nil {
 		t.Errorf("GenStockOutput():  %s", err)
 		return

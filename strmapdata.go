@@ -68,5 +68,16 @@ func GetInputStrStrMapFromFile(f string) (*map[string]string, error) {
 		e := fmt.Errorf("Error: %s", err)
 		return nil, e
 	}
+	// set default values if needed
+	err = setStringMapValueWithDefaultValue(&ipsm, "setName", "activeParams")
+	if err != nil {
+		e := fmt.Errorf("Error: %s", err)
+		return nil, e
+	}
+	err = setStringMapValueWithDefaultValue(&ipsm, "filingStatus", "joint")
+	if err != nil {
+		e := fmt.Errorf("Error: %s", err)
+		return nil, e
+	}
 	return &ipsm, nil
 }

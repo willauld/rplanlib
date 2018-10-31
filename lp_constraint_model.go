@@ -32,7 +32,7 @@ type account struct {
 	Contributions []float64
 	Contrib       float64
 	RRate         float64
-	acctype       Acctype
+	Acctype       Acctype
 	mykey         string
 	Owner         ownerPosition
 }
@@ -58,13 +58,13 @@ type ModelSpecs struct {
 	SSspecs     []ssI       // ss specs for each retiree: pia, fra, ...
 	Income      [][]float64 // income[0] is combined, income[1] first income stream...
 	Incometags  []string    // ...
-	AssetSale   [][]float64 // assetSale[0] combined, assetSale[1] first asset
+	AssetSale   [][]float64 // assetSale[0] combined, assetSale[1] first asset (net from sales)
 	Assettags   []string    // ...
 	Expenses    [][]float64 // expenses[0] combined, expensee[1] first expense
 	Expensetags []string    // ...
 
 	Taxed        []float64
-	CgAssetTaxed []float64
+	CgAssetTaxed []float64 // taxable from asset sales
 
 	Errfile *os.File
 	Logfile *os.File
@@ -239,7 +239,8 @@ func (ms ModelSpecs) verifyTaxableIncomeCoversContrib(mList *WarnErrorList) erro
 	// - Contributions are below legal maximums
 	//   - Sum of contrib for all retirees is less than taxable income
 	//   - Sum of contrib for all retirees is less thansum of legal max's
-	//   - IRA+ROTH+401(k) Contributions are less than other taxable income for each
+	//   - IRA+ROTH+401(k) Contributions are less than other taxable income
+	//     for each
 	//   - IRA+ROTH+401(k) Contributions are less than legal max for each
 	// - this is all talking about uc(ij)
 	for year := 0; year < ms.Ip.Numyr; year++ {
@@ -248,14 +249,14 @@ func (ms ModelSpecs) verifyTaxableIncomeCoversContrib(mList *WarnErrorList) erro
 		//print("jointMaxContrib: ", jointMaxContrib)
 		//jointMaxContrib = maxContribution(year, None)
 		for _, acc := range ms.Accounttable {
-			if acc.acctype != Aftertax {
+			if acc.Acctype != Aftertax {
 				carray := acc.Contributions
 				if carray != nil && carray[year] > 0 {
 					contrib += carray[year]
 					ownerage := ms.accountOwnerAge(year, acc)
 					if ownerage >= 70 {
-						if acc.acctype == IRA {
-							str := fmt.Sprintf("Error - IRS does not allow contributions to TDRA accounts after age 70.\n\tPlease correct the contributions at age %d,\n\tfrom the PRIMARY age line, for account type %s and owner %s", ms.Ip.StartPlan+year, acc.acctype, acc.mykey)
+						if acc.Acctype == IRA {
+							str := fmt.Sprintf("Error - IRS does not allow contributions to TDRA accounts after age 70.\n\tPlease correct the contributions at age %d,\n\tfrom the PRIMARY age line, for account type %s and owner %s", ms.Ip.StartPlan+year, acc.Acctype, acc.mykey)
 							mList.AppendError(str)
 							e := fmt.Errorf(str)
 							return e
@@ -288,7 +289,7 @@ func (ms ModelSpecs) verifyTaxableIncomeCoversContrib(mList *WarnErrorList) erro
 				//print("MaxContrib: ", MaxContrib, v.mykey)
 				for _, acc := range ms.Accounttable {
 					//print(acc)
-					if acc.acctype != Aftertax {
+					if acc.Acctype != Aftertax {
 						if acc.mykey == v.mykey {
 							carray := acc.Contributions
 							if carray != nil {
@@ -314,7 +315,6 @@ func (ms ModelSpecs) verifyTaxableIncomeCoversContrib(mList *WarnErrorList) erro
 func NewModelSpecs(vindx VectorVarIndex,
 	ti Taxinfo,
 	ip InputParams,
-	//allowDeposits bool,
 	RoundToOneK bool,
 	developerInfo bool,
 	fourPercentRule bool,
@@ -326,11 +326,10 @@ func NewModelSpecs(vindx VectorVarIndex,
 
 	//fmt.Printf("InputParams: %#v\n", ip)
 	ms := ModelSpecs{
-		Ip:    ip,
-		Vindx: vindx,
-		Ti:    ti,
-		Ao:    NewAppOutput(csvfile, tablefile),
-		//AllowTdraRothraDeposits: allowDeposits,
+		Ip:      ip,
+		Vindx:   vindx,
+		Ti:      ti,
+		Ao:      NewAppOutput(csvfile, tablefile),
 		Errfile: errfile,
 		Logfile: logfile,
 		//csvfile:                 csvfile,
@@ -379,7 +378,7 @@ func NewModelSpecs(vindx VectorVarIndex,
 		if ip.TDRAContribInflate1 == true {
 			infr = ip.IRate
 		}
-		a.acctype = IRA
+		a.Acctype = IRA
 		a.mykey = ip.MyKey1
 		a.Owner = primaryOwner
 		a.Origbal = float64(ip.TDRA1)
@@ -401,7 +400,7 @@ func NewModelSpecs(vindx VectorVarIndex,
 		if ip.TDRAContribInflate2 == true {
 			infr = ip.IRate
 		}
-		a.acctype = IRA
+		a.Acctype = IRA
 		a.mykey = ip.MyKey2
 		a.Owner = secondaryOwner
 		a.Origbal = float64(ip.TDRA2)
@@ -423,7 +422,7 @@ func NewModelSpecs(vindx VectorVarIndex,
 		if ip.RothContribInflate1 == true {
 			infr = ip.IRate
 		}
-		a.acctype = Roth
+		a.Acctype = Roth
 		a.mykey = ip.MyKey1
 		a.Owner = primaryOwner
 		a.Origbal = float64(ip.Roth1)
@@ -446,7 +445,7 @@ func NewModelSpecs(vindx VectorVarIndex,
 		if ip.RothContribInflate2 == true {
 			infr = ip.IRate
 		}
-		a.acctype = Roth
+		a.Acctype = Roth
 		a.mykey = ip.MyKey2
 		a.Owner = secondaryOwner
 		a.Origbal = float64(ip.Roth2)
@@ -469,7 +468,7 @@ func NewModelSpecs(vindx VectorVarIndex,
 		if ip.AftataxContribInflate == true {
 			infr = ip.IRate
 		}
-		a.acctype = Aftertax
+		a.Acctype = Aftertax
 		a.mykey = "" // need to make this definable for pc versions
 		a.Owner = noOwner
 		a.Origbal = float64(ip.Aftatax)
@@ -716,19 +715,6 @@ func (ms ModelSpecs) BuildModel() ([]float64, [][]float64, []float64, []ModelNot
 		c[ms.Vindx.S(year)] = -1 * Emphasis
 	}
 	//
-	// Add objective function tax bracket forcing function
-	//
-	/** /
-	for year := 0; year < ms.Ip.Numyr; year++ {
-		for k := 0; k < len(*ms.Ti.Taxtable); k++ {
-			// Multiplies the impact of higher brackets opposite to
-			// optimization. The intent here is to pressure higher
-			// brackets more and pack the lower brackets
-			c[ms.Vindx.X(year, k)] = float64(k) / 10.0
-		}
-	}
-	/ **/
-	//
 	// Add objective function shadow cap gains (Sy) bracket forcing function
 	//
 	//SyCosts := []float64{0.1, 0.8, 2.7} //equal to: math.Pow(val, 3) / 10.0
@@ -752,7 +738,7 @@ func (ms ModelSpecs) BuildModel() ([]float64, [][]float64, []float64, []ModelNot
 	//fmt.Printf("ms.Ip.Maximize: %#v\n", ms.Ip.Maximize)
 	if ms.Ip.Maximize == PlusEstate {
 		for j := 0; j < len(ms.Accounttable); j++ {
-			estateTax := ms.Ti.AccountEstateTax[ms.Accounttable[j].acctype]
+			estateTax := ms.Ti.AccountEstateTax[ms.Accounttable[j].Acctype]
 			c[ms.Vindx.B(ms.Ip.Numyr, j)] = -1 * Emphasis * estateTax // account discount rate
 		}
 		//fmt.Fprintf(ms.Logfile, "\nConstructing Spending + Estate Model:\n")
@@ -761,7 +747,7 @@ func (ms ModelSpecs) BuildModel() ([]float64, [][]float64, []float64, []ModelNot
 		//fmt.Fprintf(ms.Logfile, "\nConstructing Spending Model:\n")
 		balancer := 0.001 * Emphasis
 		for j := 0; j < len(ms.Accounttable); j++ {
-			estateTax := ms.Ti.AccountEstateTax[ms.Accounttable[j].acctype]
+			estateTax := ms.Ti.AccountEstateTax[ms.Accounttable[j].Acctype]
 			c[ms.Vindx.B(ms.Ip.Numyr, j)] = -1 * balancer * estateTax // balance and discount rate
 		}
 		notes = append(notes, ModelNote{-1, "Objective function S1':"})
@@ -774,7 +760,7 @@ func (ms ModelSpecs) BuildModel() ([]float64, [][]float64, []float64, []ModelNot
 		row := make([]float64, nvars)
 		for j := 0; j < len(ms.Accounttable); j++ {
 			p := 1.0
-			if ms.Accounttable[j].acctype != Aftertax {
+			if ms.Accounttable[j].Acctype != Aftertax {
 				if ms.Ti.applyEarlyPenalty(year, ms.matchRetiree(ms.Accounttable[j].mykey, year, true)) { // TODO: should applyEarlyPenalty() return the penalty amount, spimplifying things?
 					p = 1 - ms.Ti.Penalty
 				}
@@ -801,15 +787,20 @@ func (ms ModelSpecs) BuildModel() ([]float64, [][]float64, []float64, []ModelNot
 				}
 			}
 		}
-		for j := 0; j < len(ms.Accounttable); j++ {
-			row[ms.Vindx.D(year, j)] = 1
+		if ms.Ip.Accmap[Aftertax] > 0 {
+			row[ms.Vindx.D(year)] = 1
 		}
 		row[ms.Vindx.S(year)] = 1
 		A = append(A, row)
 		inc := AccessVector(ms.Income[0], year)
 		ss := AccessVector(ms.SS[0], year)
+		assetSale := AccessVector(ms.AssetSale[0], year)
 		exp := AccessVector(ms.Expenses[0], year)
-		b = append(b, inc+ss-exp)
+		contrib_sum := 0.0
+		for j := 0; j < len(ms.Accounttable); j++ {
+			contrib_sum += AccessVector(ms.Accounttable[j].Contributions, year)
+		}
+		b = append(b, inc+ss+assetSale-exp-contrib_sum)
 	}
 	//
 	// Add constraint (3a')
@@ -863,14 +854,14 @@ func (ms ModelSpecs) BuildModel() ([]float64, [][]float64, []float64, []ModelNot
 	}
 
 	//
-	// Add constaints for (10') rows
+	// Add constaints for (6') rows
 	//
-	notes = append(notes, ModelNote{len(A), "Constraints 10':"})
+	notes = append(notes, ModelNote{len(A), "Constraints 6':"})
 	for year := 0; year < ms.Ip.Numyr; year++ {
 		for j := 0; j < intMin(2, len(ms.Accounttable)); j++ {
 			// at most the first two accounts are type IRA
 			// w/ RMD requirement
-			if ms.Accounttable[j].acctype == IRA {
+			if ms.Accounttable[j].Acctype == IRA {
 				rmd := ms.Ti.rmdNeeded(year, ms.matchRetiree(ms.Accounttable[j].mykey, year, true))
 				if rmd > 0 {
 					row := make([]float64, nvars)
@@ -884,17 +875,16 @@ func (ms ModelSpecs) BuildModel() ([]float64, [][]float64, []float64, []ModelNot
 	}
 
 	//
-	// Add constraints for (11')
+	// Add constraints for (7')
 	//
-	notes = append(notes, ModelNote{len(A), "Constraints 11':"})
+	notes = append(notes, ModelNote{len(A), "Constraints 7':"})
 	for year := 0; year < ms.Ip.Numyr; year++ {
 		adjInf := math.Pow(ms.Ip.IRate, float64(ms.Ip.PrePlanYears+year))
 		row := make([]float64, nvars)
 		for j := 0; j < intMin(2, len(ms.Accounttable)); j++ {
 			// IRA can only be in the first two accounts
-			if ms.Accounttable[j].acctype == IRA {
-				row[ms.Vindx.W(year, j)] = 1  // Account 0 is TDRA
-				row[ms.Vindx.D(year, j)] = -1 // Account 0 is TDRA
+			if ms.Accounttable[j].Acctype == IRA {
+				row[ms.Vindx.W(year, j)] = 1 // Account 0 is TDRA
 			}
 		}
 		if ms.UsePieceWiseMethod {
@@ -906,17 +896,27 @@ func (ms ModelSpecs) BuildModel() ([]float64, [][]float64, []float64, []ModelNot
 			}
 		}
 		A = append(A, row)
-		b = append(b, ms.Ti.Stded*adjInf-AccessVector(ms.Taxed, year)-ms.Ti.SStaxable*AccessVector(ms.SS[0], year))
+		stddeduct := ms.Ti.Stded * adjInf
+		taxed := AccessVector(ms.Taxed, year)
+		SStaxed := ms.Ti.SStaxable * AccessVector(ms.SS[0], year)
+		contrib_sum := 0.0
+		for j := 0; j < intMin(2, len(ms.Accounttable)); j++ {
+			// IRA can only be in the first two accounts
+			if ms.Accounttable[j].Acctype == IRA {
+				contrib_sum += AccessVector(ms.Accounttable[j].Contributions, year)
+			}
+		}
+		b = append(b, stddeduct+contrib_sum-taxed-SStaxed)
 	}
 	//
-	// Add constraints for (12')
+	// Add constraints for (8')
 	//
 	// Mrk*xi1 – ITi <= -btik*infadj, i = 1..n, k=1..Bt-1
 	skipLastNbrackets := 1
 	if ms.UsePieceWiseMethod {
 		skipLastNbrackets = 0
 	}
-	notes = append(notes, ModelNote{len(A), "Constraints 12':"})
+	notes = append(notes, ModelNote{len(A), "Constraints 8':"})
 	for year := 0; year < ms.Ip.Numyr; year++ {
 		for k := 0; k < len(*ms.Ti.Taxtable)-skipLastNbrackets; k++ {
 			row := make([]float64, nvars)
@@ -948,10 +948,10 @@ func (ms ModelSpecs) BuildModel() ([]float64, [][]float64, []float64, []ModelNot
 		}
 	}
 	//
-	// Add constraints for (15')
+	// Add constraints for (9')
 	//
 	if !ms.UsePieceWiseMethod {
-		notes = append(notes, ModelNote{len(A), "Constraints 15':"})
+		notes = append(notes, ModelNote{len(A), "Constraints 9':"})
 		if ms.Ip.Accmap[Aftertax] > 0 {
 			// 15' is same as 11' exept that we are storing ordinary income
 			// in Sy (Shadow brackes) to be used to calc cap gains. That's
@@ -961,24 +961,33 @@ func (ms ModelSpecs) BuildModel() ([]float64, [][]float64, []float64, []ModelNot
 				row := make([]float64, nvars)
 				for j := 0; j < intMin(2, len(ms.Accounttable)); j++ {
 					// IRA can only be in the first two accounts
-					if ms.Accounttable[j].acctype == IRA {
-						row[ms.Vindx.W(year, j)] = 1  // Account 0 is TDRA
-						row[ms.Vindx.D(year, j)] = -1 // Account 0 is TDRA
+					if ms.Accounttable[j].Acctype == IRA {
+						row[ms.Vindx.W(year, j)] = 1 // Account 0 is TDRA
 					}
 				}
 				for l := 0; l < len(*ms.Ti.Capgainstable); l++ {
 					row[ms.Vindx.Sy(year, l)] = -1
 				}
 				A = append(A, row)
-				b = append(b, ms.Ti.Stded*adjInf-AccessVector(ms.Taxed, year)-ms.Ti.SStaxable*AccessVector(ms.SS[0], year))
+				stddeduct := ms.Ti.Stded * adjInf
+				taxed := AccessVector(ms.Taxed, year)
+				SStaxed := ms.Ti.SStaxable * AccessVector(ms.SS[0], year)
+				contrib_sum := 0.0
+				for j := 0; j < intMin(2, len(ms.Accounttable)); j++ {
+					// IRA can only be in the first two accounts
+					if ms.Accounttable[j].Acctype == IRA {
+						contrib_sum += AccessVector(ms.Accounttable[j].Contributions, year)
+					}
+				}
+				b = append(b, stddeduct+contrib_sum-taxed-SStaxed)
 			}
 		}
 	}
 	//
-	// Add constraints for (16')
+	// Add constraints for (10')
 	//
 	if !ms.UsePieceWiseMethod {
-		notes = append(notes, ModelNote{len(A), "Constraints 16':"})
+		notes = append(notes, ModelNote{len(A), "Constraints 10':"})
 		if ms.Ip.Accmap[Aftertax] > 0 {
 			for year := 0; year < ms.Ip.Numyr; year++ {
 				for l := 0; l < len(*ms.Ti.Capgainstable)-1; l++ {
@@ -991,9 +1000,9 @@ func (ms ModelSpecs) BuildModel() ([]float64, [][]float64, []float64, []ModelNot
 		}
 	}
 	//
-	// Add constraints for (13a')
+	// Add constraints for (11a')
 	//
-	notes = append(notes, ModelNote{len(A), "Constraints 13a':"})
+	notes = append(notes, ModelNote{len(A), "Constraints 11a':"})
 	if ms.Ip.Accmap[Aftertax] > 0 {
 		for year := 0; year < ms.Ip.Numyr; year++ {
 			f := ms.cgTaxableFraction(year)
@@ -1013,9 +1022,9 @@ func (ms ModelSpecs) BuildModel() ([]float64, [][]float64, []float64, []ModelNot
 		}
 	}
 	//
-	// Add constraints for (13b')
+	// Add constraints for (11b')
 	//
-	notes = append(notes, ModelNote{len(A), "Constraints 13b':"})
+	notes = append(notes, ModelNote{len(A), "Constraints 11b':"})
 	if ms.Ip.Accmap[Aftertax] > 0 {
 		for year := 0; year < ms.Ip.Numyr; year++ {
 			f := ms.cgTaxableFraction(year)
@@ -1048,16 +1057,16 @@ func (ms ModelSpecs) BuildModel() ([]float64, [][]float64, []float64, []ModelNot
 		//yintercept := y - m*x
 		// m * xi1 - xi2 <= -yintercept
 		//
-		// Add constraints for (14a', 14b', 14c' like 12')
+		// Add constraints for (12a', 12b', 12c' like 8')
 		//
-		// 1) mrik * xi1 + mrik * yi1 - xi3 <= - yintercept ik for all i,k (14a')
-		// 2) mrik * xi1 - xi4 <= - yintercept ik for all i,k (14b')
-		// 3) xi3 - xi4 - yi2 <= 0 for all i (14c')
+		// 1) mrik * xi1 + mrik * yi1 - xi3 <= - yintercept ik for all i,k (12a')
+		// 2) mrik * xi1 - xi4 <= - yintercept ik for all i,k (12b')
+		// 3) xi3 - xi4 - yi2 <= 0 for all i (12c')
 		if ms.Ip.Accmap[Aftertax] > 0 {
 			//
-			// 1) mrik * xi1 + mrik * yi1 - xi3 <= - yintercept ik for all i,k (14a')
+			// 1) mrik * xi1 + mrik * yi1 - xi3 <= - yintercept ik for all i,k (12a')
 			//
-			notes = append(notes, ModelNote{len(A), "Constraints 14a':"})
+			notes = append(notes, ModelNote{len(A), "Constraints 12a':"})
 			for year := 0; year < ms.Ip.Numyr; year++ {
 				/////// l == 0 is intentionally scipt as it is all zero
 				for l := 0; l < len(*ms.Ti.Capgainstable); l++ {
@@ -1097,7 +1106,7 @@ func (ms ModelSpecs) BuildModel() ([]float64, [][]float64, []float64, []ModelNot
 			//
 			// 2) mrik * xi1 - xi4 <= - yintercept ik for all i,k (14b')
 			//
-			notes = append(notes, ModelNote{len(A), "Constraints 14b':"})
+			notes = append(notes, ModelNote{len(A), "Constraints 12b':"})
 			for year := 0; year < ms.Ip.Numyr; year++ {
 				/////// l == 0 is intentionally scipt as it is all zero
 				for l := 0; l < len(*ms.Ti.Capgainstable); l++ {
@@ -1126,9 +1135,9 @@ func (ms ModelSpecs) BuildModel() ([]float64, [][]float64, []float64, []ModelNot
 				}
 			}
 			//
-			// 3) xi3 - xi4 - yi2 <= 0 for all i (14c')
+			// 3) xi3 - xi4 - yi2 <= 0 for all i (12c')
 			//
-			notes = append(notes, ModelNote{len(A), "Constraints 14c':"})
+			notes = append(notes, ModelNote{len(A), "Constraints 12c':"})
 			for year := 0; year < ms.Ip.Numyr; year++ {
 				// Y(year,2) === total cap gains tax
 				// X(year,3) === amount if cap gains tax was for X(i,1)+Y(i,1)
@@ -1143,9 +1152,9 @@ func (ms ModelSpecs) BuildModel() ([]float64, [][]float64, []float64, []ModelNot
 		}
 	} else {
 		//
-		// Add constraints for (14-2018')
+		// Add constraints for (12')
 		//
-		notes = append(notes, ModelNote{len(A), "Constraints 14-2018':"})
+		notes = append(notes, ModelNote{len(A), "Constraints 12':"})
 		if ms.Ip.Accmap[Aftertax] > 0 {
 			for year := 0; year < ms.Ip.Numyr; year++ {
 				adjInf := math.Pow(ms.Ip.IRate, float64(ms.Ip.PrePlanYears+year))
@@ -1160,9 +1169,9 @@ func (ms ModelSpecs) BuildModel() ([]float64, [][]float64, []float64, []ModelNot
 		}
 	}
 	//
-	// Add constraints for (17a')
+	// Add constraints for (13a')
 	//
-	notes = append(notes, ModelNote{len(A), "Constraints 17a':"})
+	notes = append(notes, ModelNote{len(A), "Constraints 13a':"})
 	for year := 0; year < ms.Ip.Numyr; year++ {
 		for j := 0; j < len(ms.Accounttable); j++ {
 			//j = len(ms.Accounttable)-1 // nl the last account, the investment account
@@ -1170,44 +1179,38 @@ func (ms ModelSpecs) BuildModel() ([]float64, [][]float64, []float64, []ModelNot
 			row[ms.Vindx.B(year+1, j)] = 1 // b[i,j] supports an extra year
 			row[ms.Vindx.B(year, j)] = -1 * ms.Accounttable[j].RRate
 			row[ms.Vindx.W(year, j)] = ms.Accounttable[j].RRate
-			row[ms.Vindx.D(year, j)] = -1 * ms.Accounttable[j].RRate
-			A = append(A, row)
-			// In the event of a sell of an asset for the year
-			temp := 0.0
-			if ms.Accounttable[j].acctype == Aftertax {
-				temp = AccessVector(ms.AssetSale[0], year) *
-					ms.Accounttable[j].RRate //TODO test
+			if ms.Accounttable[j].Acctype == Aftertax { // deposit only for aftertax account now
+				row[ms.Vindx.D(year)] = -1 * ms.Accounttable[j].RRate
 			}
+			A = append(A, row)
+			temp := AccessVector(ms.Accounttable[j].Contributions, year)
 			b = append(b, temp)
 		}
 	}
 	//
-	// Add constraints for (17b')
+	// Add constraints for (13b')
 	//
-	notes = append(notes, ModelNote{len(A), "Constraints 17b':"})
+	notes = append(notes, ModelNote{len(A), "Constraints 13b':"})
 	for year := 0; year < ms.Ip.Numyr; year++ {
 		for j := 0; j < len(ms.Accounttable); j++ {
 			//j = len(ms.Accounttable)-1 // nl the last account, the investment account
 			row := make([]float64, nvars)
 			row[ms.Vindx.B(year, j)] = ms.Accounttable[j].RRate
 			row[ms.Vindx.W(year, j)] = -1 * ms.Accounttable[j].RRate
-			row[ms.Vindx.D(year, j)] = ms.Accounttable[j].RRate
+			if ms.Accounttable[j].Acctype == Aftertax { // deposit only for aftertax account now
+				row[ms.Vindx.D(year)] = ms.Accounttable[j].RRate
+			}
 			row[ms.Vindx.B(year+1, j)] = -1 ////// b[i,j] supports an extra year
 			A = append(A, row)
-			temp := 0.0
-			if ms.Accounttable[j].acctype == Aftertax {
-				temp = -1 * AccessVector(ms.AssetSale[0], year) *
-					ms.Accounttable[j].RRate //TODO test
-			}
+			temp := AccessVector(ms.Accounttable[j].Contributions, year)
 			b = append(b, temp)
 		}
 	}
 	//
-	// Constraint for (18' and 19')
+	// Constraint for (14')
 	//   Withdradrawal must be <= balance
-	//      unless have sale of asset contributing
 	//
-	notes = append(notes, ModelNote{len(A), "Constraints 18' and 19':"})
+	notes = append(notes, ModelNote{len(A), "Constraints 14':"})
 	if !ms.UsePieceWiseMethod {
 		for year := 0; year < ms.Ip.Numyr; year++ {
 			for j := 0; j < len(ms.Accounttable); j++ {
@@ -1215,19 +1218,15 @@ func (ms ModelSpecs) BuildModel() ([]float64, [][]float64, []float64, []ModelNot
 				row[ms.Vindx.W(year, j)] = 1
 				row[ms.Vindx.B(year, j)] = -1
 				A = append(A, row)
-				temp := 0.0
-				if ms.Accounttable[j].acctype == Aftertax {
-					temp = AccessVector(ms.AssetSale[0], year)
-				}
-				b = append(b, temp)
+				b = append(b, 0.0)
 			}
 		}
 	}
 	//
-	// Constraint for (20a')
+	// Constraint for (15a')
 	//   Set the beginning b[1,j] balances
 	//
-	notes = append(notes, ModelNote{len(A), "Constraints 20a':"})
+	notes = append(notes, ModelNote{len(A), "Constraints 15a':"})
 	for j := 0; j < len(ms.Accounttable); j++ {
 		row := make([]float64, nvars)
 		row[ms.Vindx.B(0, j)] = 1
@@ -1235,10 +1234,10 @@ func (ms ModelSpecs) BuildModel() ([]float64, [][]float64, []float64, []ModelNot
 		b = append(b, ms.Accounttable[j].Bal)
 	}
 	//
-	// Constraint for (20b')
+	// Constraint for (15b')
 	//   Set the beginning b[1,j] balances
 	//
-	notes = append(notes, ModelNote{len(A), "Constraints 20b':"})
+	notes = append(notes, ModelNote{len(A), "Constraints 15b':"})
 	for j := 0; j < len(ms.Accounttable); j++ {
 		row := make([]float64, nvars)
 		row[ms.Vindx.B(0, j)] = -1
@@ -1247,9 +1246,9 @@ func (ms ModelSpecs) BuildModel() ([]float64, [][]float64, []float64, []ModelNot
 	}
 
 	//
-	// Constrant for (21') is default for sycpy so no code is needed
+	// Constrant for (16') is default for simplex method so no code is needed
 	//
-	notes = append(notes, ModelNote{len(A), "Constraints 21':"})
+	notes = append(notes, ModelNote{len(A), "Constraints 16':"})
 
 	return c, A, b, notes
 }
@@ -1335,7 +1334,7 @@ func (ms ModelSpecs) PrecheckConsistency() bool {
 		t := 0.0
 		for j := 0; j < len(ms.Accounttable); j++ {
 			v := ms.Accounttable[j]
-			if v.acctype != Aftertax {
+			if v.Acctype != Aftertax {
 				if v.Contributions != nil && len(v.Contributions) > 0 {
 					t += v.Contributions[year]
 				}
@@ -1459,11 +1458,16 @@ func (ms ModelSpecs) ConsistencyCheckSpendable(X *[]float64) (OK bool) {
 
 	for year := 0; year < ms.Ip.Numyr; year++ {
 		for j := 0; j < len(ms.Accounttable); j++ {
-			a := (*X)[ms.Vindx.B(year+1, j)] - ((*X)[ms.Vindx.B(year, j)]-(*X)[ms.Vindx.W(year, j)]+ms.depositAmount(X, year, j))*ms.Accounttable[j].RRate
+			deposit := 0.0
+			if ms.Accounttable[j].Acctype == Aftertax {
+				deposit = (*X)[ms.Vindx.D(year)]
+			}
+			deposit += AccessVector(ms.Accounttable[j].Contributions, year)
+			a := (*X)[ms.Vindx.B(year+1, j)] - ((*X)[ms.Vindx.B(year, j)]-(*X)[ms.Vindx.W(year, j)]+deposit)*ms.Accounttable[j].RRate
 			if a > 1 {
 				OK = false
 				v := ms.Accounttable[j]
-				ms.Ao.Output(fmt.Sprintf("\naccount[%d], type '%s', owner '%s'\n", j, v.acctype.String(), v.mykey))
+				ms.Ao.Output(fmt.Sprintf("\naccount[%d], type '%s', owner '%s'\n", j, v.Acctype.String(), v.mykey))
 				ms.Ao.Output(fmt.Sprintf("\tyear to year balance NOT OK years %d to %d\n", year, year+1))
 				ms.Ao.Output(fmt.Sprintf("\tdifference is %v\n", a))
 			}
@@ -1476,8 +1480,12 @@ func (ms ModelSpecs) ConsistencyCheckSpendable(X *[]float64) (OK bool) {
 			ms.Ao.Output(fmt.Sprintf("\nCalc Spendable %6.2f should equal s(year:%d) %6.2f but differ by: %6.2f\n", spendable, year, (*X)[ms.Vindx.S(year)], diff))
 			ms.Ao.Output("\t")
 			for j := 0; j < len(ms.Accounttable); j++ {
-				ms.Ao.Output(fmt.Sprintf(" +w[%d,%d]: %6.0f", year, j, (*X)[ms.Vindx.W(year, j)]))
-				ms.Ao.Output(fmt.Sprintf(" -D[%d,%d]: %6.0f", year, j, ms.depositAmount(X, year, j)))
+				ms.Ao.Output(fmt.Sprintf(" +w[%d_%d]: %6.0f", year, j, (*X)[ms.Vindx.W(year, j)]))
+				accdeposit := AccessVector(ms.Accounttable[j].Contributions, year)
+				if ms.Accounttable[j].Acctype == Aftertax {
+					accdeposit += (*X)[ms.Vindx.D(year)]
+				}
+				ms.Ao.Output(fmt.Sprintf(" -D[%d_%d]: %6.0f", year, j, accdeposit))
 			}
 			ms.Ao.Output(fmt.Sprintf(" +o[%d]: %6.0f +SS[%d]: %6.0f -e[%d]: %6.0f -tax: %6.0f -cg_tax: %6.0f\n", year, AccessVector(ms.Income[0], year), year, AccessVector(ms.SS[0], year), year, AccessVector(ms.Expenses[0], year), tax, cgTax))
 		}
@@ -1773,10 +1781,8 @@ func (ms ModelSpecs) printModelRow(row []float64, suppressNewline bool) {
 		}
 	}
 	for i := 0; i < ms.Ip.Numyr; i++ { // D[]
-		for j := 0; j < ms.Ip.Numacc; j++ {
-			if row[ms.Vindx.D(i, j)] != 0 {
-				fmt.Fprintf(ms.Logfile, "D[%d,%d]=%6.3f, ", i, j, row[ms.Vindx.D(i, j)])
-			}
+		if row[ms.Vindx.D(i)] != 0 {
+			fmt.Fprintf(ms.Logfile, "d[%d]=%6.3f, ", i, row[ms.Vindx.D(i)])
 		}
 	}
 	if !suppressNewline {
@@ -1871,13 +1877,11 @@ func (ms ModelSpecs) PrintObjectFunctionSolution(c []float64, row []float64) {
 	globalSum += localSum
 	localSum = 0.0
 	for i := 0; i < ms.Ip.Numyr; i++ { // D[]
-		for j := 0; j < ms.Ip.Numacc; j++ {
-			cIndx := ms.Vindx.D(i, j)
-			if c[cIndx] != 0 {
-				cXrow := c[cIndx] * row[cIndx]
-				localSum += cXrow
-				fmt.Fprintf(ms.Logfile, "C[%d]=%6.3f * D[%d,%d]=%6.3f == %6.3f\n", cIndx, c[cIndx], i, j, row[cIndx], cXrow)
-			}
+		cIndx := ms.Vindx.D(i)
+		if c[cIndx] != 0 {
+			cXrow := c[cIndx] * row[cIndx]
+			localSum += cXrow
+			fmt.Fprintf(ms.Logfile, "C[%d]=%6.3f * D[%d]=%6.3f == %6.3f\n", cIndx, c[cIndx], i, row[cIndx], cXrow)
 		}
 	}
 	fmt.Fprintf(ms.Logfile, "\tSum Ci*Di == %6.3f\n", localSum)

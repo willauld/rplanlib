@@ -41,6 +41,8 @@ through = 75    # age you want to plan through
 definedContributionPlan = "54-65"
 				`),
 			ipsm: map[string]string{
+				"setName":                          "activeParams",
+				"filingStatus":                     "joint",
 				"key1":                             "retiree1",
 				"eT_Age1":                          "54",
 				"eT_RetireAge1":                    "65",
@@ -60,6 +62,8 @@ through = 75    # age you want to plan through
 definedContributionPlan = "54-65"
 				`),
 			ipsm: map[string]string{
+				"setName":                          "activeParams",
+				"filingStatus":                     "joint",
 				"key1":                             "nokey",
 				"eT_Age1":                          "54",
 				"eT_RetireAge1":                    "65",
@@ -84,6 +88,8 @@ through = 76    # age you want to plan through
 definedContributionPlan = "55-66"
 				`),
 			ipsm: map[string]string{
+				"setName":                          "activeParams",
+				"filingStatus":                     "joint",
 				"key1":                             "nokey",
 				"eT_Age1":                          "54",
 				"eT_RetireAge1":                    "65",
@@ -114,6 +120,8 @@ through = 76    # age you want to plan through
 definedContributionPlan = "55-66"
 				`),
 			ipsm: map[string]string{
+				"setName":                          "activeParams",
+				"filingStatus":                     "joint",
 				"key1":                             "retiree2",
 				"key2":                             "nokey",
 				"eT_Age1":                          "55",
@@ -149,6 +157,8 @@ age = "70-"         # period you expect to receive SS ("68-" indicates start at 
 
 				`),
 			ipsm: map[string]string{
+				"setName":                          "activeParams",
+				"filingStatus":                     "joint",
 				"key1":                             "retiree2",
 				"key2":                             "nokey",
 				"eT_Age1":                          "55",
@@ -188,6 +198,8 @@ age = "70-"         # period you expect to receive SS ("68-" indicates start at 
 
 				`),
 			ipsm: map[string]string{
+				"setName":                          "activeParams",
+				"filingStatus":                     "joint",
 				"key1":                             "retiree2",
 				"key2":                             "nokey",
 				"eT_Age1":                          "55",
@@ -223,6 +235,8 @@ inflation = true  # Will the contribution rise with inflation?
 #period = '56-60'   # period you will be making the contributions
 				`),
 			ipsm: map[string]string{
+				"setName":                          "activeParams",
+				"filingStatus":                     "joint",
 				"key1":                             "nokey",
 				"eT_Age1":                          "54",
 				"eT_RetireAge1":                    "65",
@@ -259,6 +273,8 @@ inflation = true  # Will the contribution rise with inflation?
 #period = '56-60'   # period you will be making the contributions
 				`),
 			ipsm: map[string]string{
+				"setName":                          "activeParams",
+				"filingStatus":                     "joint",
 				"key1":                             "nokey",
 				"eT_Age1":                          "54",
 				"eT_RetireAge1":                    "65",
@@ -289,6 +305,8 @@ inflation = true
 tax = true
 				`),
 			ipsm: map[string]string{
+				"setName":                          "activeParams",
+				"filingStatus":                     "joint",
 				"key1":                             "nokey",
 				"eT_Age1":                          "54",
 				"eT_RetireAge1":                    "65",
@@ -324,6 +342,8 @@ inflation = true
 tax = true
 				`),
 			ipsm: map[string]string{
+				"setName":                          "activeParams",
+				"filingStatus":                     "joint",
 				"key1":                             "nokey",
 				"eT_Age1":                          "54",
 				"eT_RetireAge1":                    "65",
@@ -627,6 +647,8 @@ inflation = true  # Will the contribution rise with inflation?
 amount = 100_000
 				`),
 			ipsm: map[string]string{
+				"setName":                          "activeParams",
+				"filingStatus":                     "joint",
 				"key1":                             "nokey",
 				"eT_Age1":                          "54",
 				"eT_RetireAge1":                    "65",
@@ -666,6 +688,8 @@ inflation = true  # Will the contribution rise with inflation?
 amount = 100_000
 				`),
 			ipsm: map[string]string{
+				"setName":                          "activeParams",
+				"filingStatus":                     "joint",
 				"key1":                             "nokey",
 				"eT_Age1":                          "54",
 				"eT_RetireAge1":                    "65",

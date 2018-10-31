@@ -71,6 +71,8 @@ func TestE2E(t *testing.T) {
 	DisplayOutputAndTiming := false  //true
 	DoModelOptimizationTest := false //true //false
 	updateExpectFile := false
+	updateExpectFileInterationCounts := true
+	updateExpectFileSpendableAtLeast := false
 	ExecuteOnlyCase := -1 // -1 for all cases OR specific case number
 	//
 	// Bring this back in to make sure all configuration files are
@@ -281,7 +283,8 @@ func TestE2E(t *testing.T) {
 			// Check expected Spendable
 			//
 			s := res.X[ms.Vindx.S(0)]
-			if updateExpectFile {
+			if updateExpectFile ||
+				updateExpectFileSpendableAtLeast {
 				newVal := int(s - 5.0)
 				cases[i].SpendableAtLeast = newVal
 				curCase.SpendableAtLeast = newVal
@@ -307,7 +310,7 @@ func TestE2E(t *testing.T) {
 			// Check expected iteration count
 			//
 			nitr := res.Nitr
-			if updateExpectFile {
+			if updateExpectFile || updateExpectFileInterationCounts {
 				cases[i].Iterations = nitr
 				curCase.Iterations = nitr
 			}
@@ -347,7 +350,9 @@ func TestE2E(t *testing.T) {
 		}
 		//createDefX(&res.X)
 	}
-	if updateExpectFile {
+	if updateExpectFile ||
+		updateExpectFileInterationCounts ||
+		updateExpectFileSpendableAtLeast {
 		err = csvtag.DumpToFile(cases, "testdata/expect.csv")
 		if err != nil {
 			t.Errorf("***** Update of expect.csv failed *******")

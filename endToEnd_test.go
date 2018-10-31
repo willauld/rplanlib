@@ -173,11 +173,10 @@ func TestE2E(t *testing.T) {
 			continue
 		}
 		RoundToOneK := false
-		allowDeposits := false
 		developerInfo := true
 		fourPercentRule := false
 		ms, err := rplanlib.NewModelSpecs(vindx, ti, *ip,
-			allowDeposits, RoundToOneK, developerInfo, fourPercentRule,
+			RoundToOneK, developerInfo, fourPercentRule,
 			os.Stderr, logfile, csvfile, logfile, msgList)
 		if err != nil {
 			t.Errorf("TestE2E case %d: %s", i, err)

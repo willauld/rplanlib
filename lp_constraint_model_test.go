@@ -306,11 +306,10 @@ func TestBuildVector(t *testing.T) {
 
 func TestNewModelSpecs(t *testing.T) {
 	tests := []struct {
-		years         int
-		ip            map[string]string
-		verbose       bool
-		allowDeposits bool
-		iRate         float64
+		years   int
+		ip      map[string]string
+		verbose bool
+		iRate   float64
 	}{
 		{ // Case 0 // joint
 			years: 10,
@@ -355,9 +354,8 @@ func TestNewModelSpecs(t *testing.T) {
 				"eT_Aftatax_ContribStartAge": "",
 				"eT_Aftatax_ContribEndAge":   "",
 			},
-			verbose:       false,
-			allowDeposits: false,
-			iRate:         1.025,
+			verbose: false,
+			iRate:   1.025,
 		},
 		{ // Case 1 // mseparate
 			years: 10,
@@ -402,9 +400,8 @@ func TestNewModelSpecs(t *testing.T) {
 				"eT_Aftatax_ContribStartAge": "",
 				"eT_Aftatax_ContribEndAge":   "",
 			},
-			verbose:       false,
-			allowDeposits: false,
-			iRate:         1.025,
+			verbose: false,
+			iRate:   1.025,
 		},
 		{ // Case 2 // single
 			years: 10,
@@ -450,9 +447,8 @@ func TestNewModelSpecs(t *testing.T) {
 				"eT_Aftatax_ContribStartAge": "",
 				"eT_Aftatax_ContribEndAge":   "",
 			},
-			verbose:       false,
-			allowDeposits: false,
-			iRate:         1.025,
+			verbose: false,
+			iRate:   1.025,
 		},
 	}
 	if !(testing.Short() && testing.Verbose()) { //Skip unless set "-v -short"
@@ -474,7 +470,7 @@ func TestNewModelSpecs(t *testing.T) {
 		}
 		RoundToOneK := false
 		ms, err := NewModelSpecs(vindx, ti, *ip,
-			elem.allowDeposits, RoundToOneK, false, false,
+			RoundToOneK, false, false,
 			os.Stderr, os.Stdout, nil, nil, nil)
 		if err != nil {
 			t.Errorf("TestNewModelSpecs case %d: %s\n", i, err)
@@ -615,7 +611,7 @@ func TestBuildModel(t *testing.T) {
 		logfile, err := os.Create("ModelMatixPP.log")
 		RoundToOneK := false
 		ms, err := NewModelSpecs(vindx, ti, *ip,
-			elem.allowDeposits, RoundToOneK, false, false,
+			RoundToOneK, false, false,
 			os.Stderr, logfile, nil, nil, nil)
 		if err != nil {
 			t.Errorf("TestNewModelSpecs case %d: %s\n", i, err)

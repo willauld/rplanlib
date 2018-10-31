@@ -199,11 +199,10 @@ func TestActivitySummaryHeader(t *testing.T) {
 			continue
 		}
 		csvfile := (*os.File)(nil)
-		allowDeposits := false
 		logfile := os.Stdout
 		RoundToOneK := false
 		ms, err := NewModelSpecs(vindx, ti, *ip,
-			allowDeposits, RoundToOneK, false, false,
+			RoundToOneK, false, false,
 			os.Stderr, logfile, csvfile, logfile, nil)
 		if err != nil {
 			t.Errorf("TestActivitySummaryHeader case %d: %s", i, err)
@@ -299,11 +298,10 @@ retiree1/retiree2
 			continue
 		}
 		csvfile := (*os.File)(nil)
-		allowDeposits := false
 		logfile := os.Stdout
 		RoundToOneK := false
 		ms, err := NewModelSpecs(vindx, ti, *ip,
-			allowDeposits, RoundToOneK, false, false,
+			RoundToOneK, false, false,
 			os.Stderr, logfile, csvfile, logfile, nil)
 		if err != nil {
 			t.Errorf("TestActivitySummaryHeader case %d: %s", i, err)
@@ -843,7 +841,7 @@ retiree1
 		csvfile := (*os.File)(nil)
 		RoundToOneK := false
 		ms, err := NewModelSpecs(vindx, ti, *ip,
-			false, RoundToOneK, false, false,
+			RoundToOneK, false, false,
 			os.Stderr, logfile, csvfile, logfile, nil)
 		if err != nil {
 			t.Errorf("TestActivityAccountTrans case %d: %s", i, err)
@@ -1010,7 +1008,7 @@ retiree1
 		csvfile := (*os.File)(nil)
 		RoundToOneK := false
 		ms, err := NewModelSpecs(vindx, ti, *ip,
-			false, RoundToOneK, false, false,
+			RoundToOneK, false, false,
 			os.Stderr, logfile, csvfile, logfile, nil)
 		if err != nil {
 			t.Errorf("TestPrintTax case %d: %s", i, err)
@@ -1184,7 +1182,7 @@ retiree1
 		csvfile := (*os.File)(nil)
 		RoundToOneK := false
 		ms, err := NewModelSpecs(vindx, ti, *ip,
-			false, RoundToOneK, false, false,
+			RoundToOneK, false, false,
 			os.Stderr, logfile, csvfile, logfile, nil)
 		if err != nil {
 			t.Errorf("TestPrintTaxBrackets case %d: %s", i, err)
@@ -1357,7 +1355,7 @@ retiree1
 		csvfile := (*os.File)(nil)
 		RoundToOneK := false
 		ms, err := NewModelSpecs(vindx, ti, *ip,
-			false, RoundToOneK, false, false,
+			RoundToOneK, false, false,
 			os.Stderr, logfile, csvfile, logfile, nil)
 		if err != nil {
 			t.Errorf("TestPrintCapGainsBrackets case %d: %s", i, err)
@@ -1488,7 +1486,7 @@ func TestOrdinaryTaxable(t *testing.T) {
 		csvfile := (*os.File)(nil)
 		RoundToOneK := false
 		ms, err := NewModelSpecs(vindx, ti, *ip,
-			false, RoundToOneK, false, false, os.Stderr, logfile, csvfile, logfile, nil)
+			RoundToOneK, false, false, os.Stderr, logfile, csvfile, logfile, nil)
 		if err != nil {
 			t.Errorf("TestOrdinaryTaxable case %d: %s", i, err)
 			continue
@@ -1580,7 +1578,7 @@ Total spendable (after tax money): $490_153`,
 		csvfile := (*os.File)(nil)
 		RoundToOneK := false
 		ms, err := NewModelSpecs(vindx, ti, *ip,
-			false, RoundToOneK, false, false,
+			RoundToOneK, false, false,
 			os.Stderr, logfile, csvfile, logfile, nil)
 		if err != nil {
 			t.Errorf("TestPrintBaseConfig case %d: %s", i, err)
@@ -1614,11 +1612,10 @@ func TestVerifyInputs(t *testing.T) {
 }
 func TestAssetByTagAndField(t *testing.T) {
 	tests := []struct {
-		ip            map[string]string
-		verbose       bool
-		allowDeposits bool
-		iRate         float64
-		CheckAsset    struct {
+		ip         map[string]string
+		verbose    bool
+		iRate      float64
+		CheckAsset struct {
 			Value            float64
 			BrokeragePercent float64
 		}
@@ -1693,9 +1690,8 @@ func TestAssetByTagAndField(t *testing.T) {
 				"filingStatus": "joint",
 				"eT_maximize":  "Spending", // or "PlusEstate"
 			},
-			verbose:       true,
-			allowDeposits: false,
-			iRate:         1.025,
+			verbose: true,
+			iRate:   1.025,
 		},
 		{ // Case 1  // case to match AWill.toml Hand coded
 			ip: map[string]string{
@@ -1804,9 +1800,8 @@ func TestAssetByTagAndField(t *testing.T) {
 				"eT_AssetRRatePercent3":        "4", // python defaults to global rate
 				"eT_AssetBrokeragePercent3":    "",
 			},
-			verbose:       true,
-			allowDeposits: false,
-			iRate:         1.025,
+			verbose: true,
+			iRate:   1.025,
 		},
 		{ // Case 2 // case to match mobile.toml
 			ip: map[string]string{
@@ -1906,9 +1901,8 @@ func TestAssetByTagAndField(t *testing.T) {
 				"eT_AssetRRatePercent2":        "6", // python defaults to global rate
 				"eT_AssetBrokeragePercent2":    "",
 			},
-			verbose:       true,
-			allowDeposits: false,
-			iRate:         1.025,
+			verbose: true,
+			iRate:   1.025,
 		},
 		{ // Case 3 // case to match mobile.toml
 			ip: map[string]string{
@@ -1956,9 +1950,8 @@ func TestAssetByTagAndField(t *testing.T) {
 				"eT_rRatePercent": "6",
 				"eT_maximize":     "Spending", // or "PlusEstate"
 			},
-			verbose:       true,
-			allowDeposits: false,
-			iRate:         1.025,
+			verbose: true,
+			iRate:   1.025,
 		},
 	}
 	if testing.Short() { //Skip if set "-short"
@@ -1997,7 +1990,7 @@ func TestAssetByTagAndField(t *testing.T) {
 		}
 		RoundToOneK := false
 		ms, err := NewModelSpecs(vindx, ti, *ip,
-			elem.allowDeposits, RoundToOneK, false, false,
+			RoundToOneK, false, false,
 			os.Stderr, logfile, csvfile, logfile, nil)
 		if err != nil {
 			t.Errorf("TestResultsOutput case %d: %s", i, err)
@@ -2077,7 +2070,7 @@ func TestAssetByTagAndField(t *testing.T) {
 				price := value * math.Pow(assetRR, float64(ageToSell-ms.Ip.Age1))
 				bfee := price * brate
 				net := price*(1-brate) - owed
-				if net < 0.0 || ageToSell < ms.Ip.StartPlan  || ageToSell > ms.Ip.EndPlan{
+				if net < 0.0 || ageToSell < ms.Ip.StartPlan || ageToSell > ms.Ip.EndPlan {
 					net = 0.0
 				}
 				exclude := 0.0
@@ -2085,7 +2078,7 @@ func TestAssetByTagAndField(t *testing.T) {
 				if prime == 1.0 {
 					exclude = ms.Ti.Primeresidence * math.Pow(ms.Ip.IRate, float64(ageToSell-ms.Ip.Age1))
 					if exclude > taxable {
-							exclude = taxable
+						exclude = taxable
 					}
 					taxable -= exclude
 				}
@@ -2149,10 +2142,9 @@ func TestAssetByTagAndField(t *testing.T) {
 
 func TestResultsOutput(t *testing.T) {
 	tests := []struct {
-		ip            map[string]string
-		verbose       bool
-		allowDeposits bool
-		iRate         float64
+		ip      map[string]string
+		verbose bool
+		iRate   float64
 	}{
 		{ // case 0 // driver generated from AWill.toml
 			ip: map[string]string{
@@ -2224,9 +2216,8 @@ func TestResultsOutput(t *testing.T) {
 				"filingStatus": "joint",
 				"eT_maximize":  "Spending", // or "PlusEstate"
 			},
-			verbose:       true,
-			allowDeposits: false,
-			iRate:         1.025,
+			verbose: true,
+			iRate:   1.025,
 		},
 		{ // Case 1  // case to match AWill.toml Hand coded
 			ip: map[string]string{
@@ -2335,9 +2326,8 @@ func TestResultsOutput(t *testing.T) {
 				"eT_AssetRRatePercent3":        "4", // python defaults to global rate
 				"eT_AssetBrokeragePercent3":    "",
 			},
-			verbose:       true,
-			allowDeposits: false,
-			iRate:         1.025,
+			verbose: true,
+			iRate:   1.025,
 		},
 		{ // Case 2 // case to match mobile.toml
 			ip: map[string]string{
@@ -2437,9 +2427,8 @@ func TestResultsOutput(t *testing.T) {
 				"eT_AssetRRatePercent2":        "6", // python defaults to global rate
 				"eT_AssetBrokeragePercent2":    "",
 			},
-			verbose:       true,
-			allowDeposits: false,
-			iRate:         1.025,
+			verbose: true,
+			iRate:   1.025,
 		},
 		{ // Case 3 // case to match mobile.toml
 			ip: map[string]string{
@@ -2487,9 +2476,8 @@ func TestResultsOutput(t *testing.T) {
 				"eT_rRatePercent": "6",
 				"eT_maximize":     "Spending", // or "PlusEstate"
 			},
-			verbose:       true,
-			allowDeposits: false,
-			iRate:         1.025,
+			verbose: true,
+			iRate:   1.025,
 		},
 	}
 	if !(testing.Short() && testing.Verbose()) { //Skip unless set "-v -short"
@@ -2546,7 +2534,7 @@ func TestResultsOutput(t *testing.T) {
 		}
 		RoundToOneK := false
 		ms, err := NewModelSpecs(vindx, ti, *ip,
-			elem.allowDeposits, RoundToOneK, false, false,
+			RoundToOneK, false, false,
 			os.Stderr, logfile, csvfile, logfile, nil)
 		if err != nil {
 			t.Errorf("TestResultsOutput case %d: %s", i, err)
@@ -2633,32 +2621,28 @@ func TestGenStockOutput(t *testing.T) {
 
 func GenStockOutput(t *testing.T) {
 	tests := []struct {
-		ip            map[string]string
-		name          string
-		verbose       bool
-		allowDeposits bool
-		iRate         float64
+		ip      map[string]string
+		name    string
+		verbose bool
+		iRate   float64
 	}{
 		{ // case 0 // driver generated from AWill.toml
-			ip:            sipSingle,
-			name:          "Single",
-			verbose:       true,
-			allowDeposits: false,
-			iRate:         1.025,
+			ip:      sipSingle,
+			name:    "Single",
+			verbose: true,
+			iRate:   1.025,
 		},
 		{ // Case 1  // case to match AWill.toml Hand coded
-			ip:            sipJoint,
-			name:          "Joint",
-			verbose:       true,
-			allowDeposits: false,
-			iRate:         1.025,
+			ip:      sipJoint,
+			name:    "Joint",
+			verbose: true,
+			iRate:   1.025,
 		},
 		{ // Case 2 // case to match mobile.toml
-			ip:            sipSingle3Acc,
-			name:          "Single3Acc",
-			verbose:       true,
-			allowDeposits: false,
-			iRate:         1.025,
+			ip:      sipSingle3Acc,
+			name:    "Single3Acc",
+			verbose: true,
+			iRate:   1.025,
 		},
 	}
 	Stockfile, err := os.Create("temp.go")
@@ -2700,7 +2684,7 @@ func GenStockOutput(t *testing.T) {
 		}
 		RoundToOneK := false
 		ms, err := NewModelSpecs(vindx, ti, *ip,
-			elem.allowDeposits, RoundToOneK, false, false,
+			RoundToOneK, false, false,
 			os.Stderr, logfile, csvfile, logfile, nil)
 		if err != nil {
 			t.Errorf("TestResultsOutput case %d: %s", i, err)

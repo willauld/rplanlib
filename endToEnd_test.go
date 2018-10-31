@@ -73,7 +73,7 @@ func TestE2E(t *testing.T) {
 	updateExpectFile := false
 	updateExpectFileInterationCounts := true
 	updateExpectFileSpendableAtLeast := false
-	ExecuteOnlyCase := -1 // -1 for all cases OR specific case number
+	ExecuteOnlyCase := 33 // -1 for all cases OR specific case number
 	//
 	// Bring this back in to make sure all configuration files are
 	// accounted for. Need to code this up
@@ -347,6 +347,10 @@ func TestE2E(t *testing.T) {
 		} else {
 			ms.Ao.Output("LPSimplex failed\n")
 			fmt.Printf("LPSimplex failed\n")
+			fmt.Printf("	With message:     %s\n", res.Message)
+			fmt.Printf("	After iterations: %d\n", res.Nitr)
+			t.Errorf("TestE2E case %d: LPSimplex() failed: %s", i, res.Message)
+
 		}
 		//createDefX(&res.X)
 	}

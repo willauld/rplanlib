@@ -863,181 +863,6 @@ func (ms ModelSpecs) BuildModel() ([]float64, [][]float64, []float64, []ModelNot
 	}
 
 	//
-	// Add constaints for (6') rows
-	//
-	notes = append(notes, ModelNote{len(A), "Constraints 6':"})
-	for year := 0; year < ms.Ip.Numyr; year++ {
-		row := make([]float64, nvars)
-		atleastone := false
-		totContrib := 0.0
-		for j := 0; j < len(ms.Accounttable); j++ {
-			t := ms.Accounttable[j].acctype
-			if t != Aftertax {
-				ownerAge := ms.accountOwnerAge(year, ms.Accounttable[j])
-				//fmt.Printf("888:: 6' account type: %v, ownerAge: %d\n", t.String(), ownerAge)
-				if t != IRA || ownerAge < int(ms.Ti.Contribspecs["TDRANOCONTRIBAGE"]) {
-					row[ms.Vindx.D(year, j)] = 1 // TODO if this is not executed, DONT register this constrain, DONT add to A and b
-					totContrib += AccessVector(ms.Accounttable[j].Contributions, year)
-					atleastone = true
-				}
-			}
-		}
-		if atleastone {
-			A = append(A, row)
-			//b+=[min(ms.Income[year],ms.Ti.maxContribution(year,None))]
-			// using ms.Taxed rather than ms.Income because income could
-			// include non-taxed anueities that don't count.
-			None := ""
-			infyears := ms.Ip.PrePlanYears + year
-			bmax := ms.Ti.maxContribution(year, infyears, ms.Retirees, None, ms.Ip.IRate)
-			if !ms.AllowTdraRothraDeposits {
-				//merging the Eq N' into 6' and 7'
-				bmax = math.Min(totContrib, bmax)
-			}
-			b = append(b, math.Min(AccessVector(ms.Taxed, year), bmax))
-		}
-	}
-	//
-	// Add constaints for (7') rows
-	//
-	notes = append(notes, ModelNote{len(A), "Constraints 7':"})
-	for year := 0; year < ms.Ip.Numyr; year++ {
-		for _, v := range ms.Retirees {
-			if AccessVector(ms.Taxed, year) > 0.0 {
-				// No deposits to tax favored accounts are allow when
-				// there is no taxable income. So those cases (I<=0)
-				// are covered by case (6') constrains
-				atleastone := false
-				row := make([]float64, nvars)
-				totContrib := 0.0
-				for j := 0; j < len(ms.Accounttable); j++ {
-					if v.mykey == ms.Accounttable[j].mykey {
-						t := ms.Accounttable[j].acctype
-						ownerAge := ms.accountOwnerAge(year, ms.Accounttable[j])
-						if t != IRA || ownerAge < int(ms.Ti.Contribspecs["TDRANOCONTRIBAGE"]) {
-							// ["acctype"] != "aftertax": no "mykey" in aftertax
-							// (this will either break or just not match - we
-							// will see)
-							row[ms.Vindx.D(year, j)] = 1 // TODO if this is not executed, DONT register this constraint, DONT add to A and b
-							totContrib += AccessVector(ms.Accounttable[j].Contributions, year)
-							atleastone = true
-						}
-					}
-				}
-				if atleastone {
-					A = append(A, row)
-					infyears := ms.Ip.PrePlanYears + year
-					bmax := ms.Ti.maxContribution(year, infyears, ms.Retirees, v.mykey, ms.Ip.IRate)
-					if !ms.AllowTdraRothraDeposits {
-						//merging the Eq N' into 6' and 7'
-						bmax = math.Min(totContrib, bmax)
-					}
-					b = append(b, math.Min(AccessVector(ms.Taxed, year), bmax))
-				}
-			}
-		}
-	}
-	//
-	// Add constaints for (8') rows
-	//
-	notes = append(notes, ModelNote{len(A), "Constraints 8':"})
-	for year := 0; year < ms.Ip.Numyr; year++ {
-		for j := 0; j < len(ms.Accounttable); j++ {
-			v := ms.Accounttable[j].Contributions
-			if v != nil {
-				if v[year] > 0 {
-					row := make([]float64, nvars)
-					row[ms.Vindx.D(year, j)] = -1
-					A = append(A, row)
-					b = append(b, -1*v[year])
-				}
-			}
-		}
-	}
-	//
-	// Add constaints for (9') rows
-	//
-	notes = append(notes, ModelNote{len(A), "Constraints 9':"})
-	for year := 0; year < ms.Ip.Numyr; year++ {
-		row := make([]float64, nvars)
-		rowActive := false
-		for j := 0; j < intMin(2, len(ms.Accounttable)); j++ {
-			// at most the first two accounts are type IRA w/
-			// RMD requirement
-			if ms.Accounttable[j].acctype == IRA {
-				ownerAge := ms.accountOwnerAge(year, ms.Accounttable[j])
-				if ownerAge >= int(ms.Ti.Contribspecs["TDRANOCONTRIBAGE"]) {
-					// set both accounts if both retirees are over 70
-					row[ms.Vindx.D(year, j)] = 1
-					rowActive = true
-				}
-			}
-		}
-		if rowActive {
-			A = append(A, row)
-			b = append(b, 0)
-		}
-	}
-	/* Incorportated into 6' and 7'
-	//
-	// Add constaints for (N') rows
-	//
-	notes = append(notes, ModelNote{len(A), "Constraints N':"})
-	if !ms.AllowTdraRothraDeposits {
-		for year := 0; year < ms.Ip.Numyr; year++ {
-			if AccessVector(ms.Taxed, year) >= 0.0 {
-				// Deposits to tax favored accounts are only allowed when
-				// there is taxable income.
-				// when there is none (6') constrains will cover (N')
-				tot := 0.0
-				for j := 0; j < len(ms.Accounttable); j++ {
-					v := ms.Accounttable[j].Contributions
-					if v != nil {
-						tot += v[year]
-					}
-				}
-				if tot > 0.0 {
-					// need a row for each account to set it's own contribution
-					for j := 0; j < len(ms.Accounttable); j++ {
-						ownerAge := ms.accountOwnerAge(year, ms.Accounttable[j])
-						t := ms.Accounttable[j].acctype
-						//fmt.Printf("888:: account type: %v, ownerAge: %d, maxage: %d\n", t.String(), ownerAge, int(ms.Ti.Contribspecs["TDRANOCONTRIBAGE"]))
-						if t != Aftertax && (t != IRA || ownerAge < int(ms.Ti.Contribspecs["TDRANOCONTRIBAGE"])) { // IRA over age 70 handled by 9'
-							v := ms.Accounttable[j].Contributions
-							max := 0.0
-							if v != nil {
-								max = v[year]
-							}
-							row := make([]float64, nvars)
-							row[ms.Vindx.D(year, j)] = 1
-							A = append(A, row)
-							b = append(b, max)
-						}
-					}
-				} else {
-					// use just one row for all accounts, no contribution
-					row := make([]float64, nvars)
-					rowActive := false
-					for j := 0; j < len(ms.Accounttable); j++ {
-						ownerAge := ms.accountOwnerAge(year, ms.Accounttable[j])
-						t := ms.Accounttable[j].acctype
-						//fmt.Printf("888:: account type: %v, ownerAge: %d, maxage: %d\n", t.String(), ownerAge, int(ms.Ti.Contribspecs["TDRANOCONTRIBAGE"]))
-						if t != Aftertax && (t != IRA || ownerAge < int(ms.Ti.Contribspecs["TDRANOCONTRIBAGE"])) { // IRA over age 70 handled by 9'
-							row[ms.Vindx.D(year, j)] = 1
-							rowActive = true
-						}
-					}
-					if rowActive {
-						A = append(A, row)
-						b = append(b, 0)
-					}
-				}
-			}
-		}
-
-	}
-	*/
-	//
 	// Add constaints for (10') rows
 	//
 	notes = append(notes, ModelNote{len(A), "Constraints 10':"})
@@ -1084,33 +909,6 @@ func (ms ModelSpecs) BuildModel() ([]float64, [][]float64, []float64, []ModelNot
 		b = append(b, ms.Ti.Stded*adjInf-AccessVector(ms.Taxed, year)-ms.Ti.SStaxable*AccessVector(ms.SS[0], year))
 	}
 	//
-	// Add constraints for (15')
-	//
-	if !ms.UsePieceWiseMethod {
-		notes = append(notes, ModelNote{len(A), "Constraints 15':"})
-		if ms.Ip.Accmap[Aftertax] > 0 {
-			// 15' is same as 11' exept that we are storing ordinary income
-			// in Sy (Shadow brackes) to be used to calc cap gains. That's
-			// why this is protected for Aftertax only
-			for year := 0; year < ms.Ip.Numyr; year++ {
-				adjInf := math.Pow(ms.Ip.IRate, float64(ms.Ip.PrePlanYears+year))
-				row := make([]float64, nvars)
-				for j := 0; j < intMin(2, len(ms.Accounttable)); j++ {
-					// IRA can only be in the first two accounts
-					if ms.Accounttable[j].acctype == IRA {
-						row[ms.Vindx.W(year, j)] = 1  // Account 0 is TDRA
-						row[ms.Vindx.D(year, j)] = -1 // Account 0 is TDRA
-					}
-				}
-				for l := 0; l < len(*ms.Ti.Capgainstable); l++ {
-					row[ms.Vindx.Sy(year, l)] = -1
-				}
-				A = append(A, row)
-				b = append(b, ms.Ti.Stded*adjInf-AccessVector(ms.Taxed, year)-ms.Ti.SStaxable*AccessVector(ms.SS[0], year))
-			}
-		}
-	}
-	//
 	// Add constraints for (12')
 	//
 	// Mrk*xi1 – ITi <= -btik*infadj, i = 1..n, k=1..Bt-1
@@ -1146,6 +944,33 @@ func (ms ModelSpecs) BuildModel() ([]float64, [][]float64, []float64, []ModelNot
 				row[ms.Vindx.X(year, k)] = 1
 				A = append(A, row)
 				b = append(b, ((*ms.Ti.Taxtable)[k][1])*math.Pow(ms.Ip.IRate, float64(ms.Ip.PrePlanYears+year))) // inflation adjusted
+			}
+		}
+	}
+	//
+	// Add constraints for (15')
+	//
+	if !ms.UsePieceWiseMethod {
+		notes = append(notes, ModelNote{len(A), "Constraints 15':"})
+		if ms.Ip.Accmap[Aftertax] > 0 {
+			// 15' is same as 11' exept that we are storing ordinary income
+			// in Sy (Shadow brackes) to be used to calc cap gains. That's
+			// why this is protected for Aftertax only
+			for year := 0; year < ms.Ip.Numyr; year++ {
+				adjInf := math.Pow(ms.Ip.IRate, float64(ms.Ip.PrePlanYears+year))
+				row := make([]float64, nvars)
+				for j := 0; j < intMin(2, len(ms.Accounttable)); j++ {
+					// IRA can only be in the first two accounts
+					if ms.Accounttable[j].acctype == IRA {
+						row[ms.Vindx.W(year, j)] = 1  // Account 0 is TDRA
+						row[ms.Vindx.D(year, j)] = -1 // Account 0 is TDRA
+					}
+				}
+				for l := 0; l < len(*ms.Ti.Capgainstable); l++ {
+					row[ms.Vindx.Sy(year, l)] = -1
+				}
+				A = append(A, row)
+				b = append(b, ms.Ti.Stded*adjInf-AccessVector(ms.Taxed, year)-ms.Ti.SStaxable*AccessVector(ms.SS[0], year))
 			}
 		}
 	}

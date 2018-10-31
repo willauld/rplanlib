@@ -32,3 +32,4 @@ testdata\strmap\test.strmap,0,77585,296,234,128
 testdata\toml\zeroSpendable.toml,0,169393,1264,969,710
 testdata\strmap\m900w.strmap,0,90754,1264,969,606
 testdata\toml\zeroSpendableShortTime.toml,0,99410,353,287,208
+testdata\strmap\simpleCapGainsTest.strmap,0,205079,220,188,135

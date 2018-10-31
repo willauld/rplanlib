@@ -336,7 +336,7 @@ func NewModelSpecs(vindx VectorVarIndex,
 		//tablefile:               tablefile,
 		OneK:               1000.0,
 		DeveloperInfo:      developerInfo,
-		UsePieceWiseMethod: true, // use ms.SetParam() to change
+		UsePieceWiseMethod: false, //true, // use ms.SetParam() to change
 	}
 	if !RoundToOneK {
 		ms.OneK = 1.0
@@ -953,7 +953,7 @@ func (ms ModelSpecs) BuildModel() ([]float64, [][]float64, []float64, []ModelNot
 	if !ms.UsePieceWiseMethod {
 		notes = append(notes, ModelNote{len(A), "Constraints 9':"})
 		if ms.Ip.Accmap[Aftertax] > 0 {
-			// 15' is same as 11' exept that we are storing ordinary income
+			// 9' is same as 7' exept that we are storing ordinary income
 			// in Sy (Shadow brackes) to be used to calc cap gains. That's
 			// why this is protected for Aftertax only
 			for year := 0; year < ms.Ip.Numyr; year++ {
@@ -1108,7 +1108,7 @@ func (ms ModelSpecs) BuildModel() ([]float64, [][]float64, []float64, []ModelNot
 			//
 			notes = append(notes, ModelNote{len(A), "Constraints 12b':"})
 			for year := 0; year < ms.Ip.Numyr; year++ {
-				/////// l == 0 is intentionally scipt as it is all zero
+				/////// l == 0 is intentionally skipped as it is all zero
 				for l := 0; l < len(*ms.Ti.Capgainstable); l++ {
 					row := make([]float64, nvars)
 					// line y=mx+b, b is yintercept

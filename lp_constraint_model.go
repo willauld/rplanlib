@@ -336,7 +336,7 @@ func NewModelSpecs(vindx VectorVarIndex,
 		//tablefile:               tablefile,
 		OneK:               1000.0,
 		DeveloperInfo:      developerInfo,
-		UsePieceWiseMethod: false, //true, // use ms.SetParam() to change
+		UsePieceWiseMethod: true, //false, //true, // use ms.SetParam() to change
 	}
 	if !RoundToOneK {
 		ms.OneK = 1.0
@@ -731,7 +731,14 @@ func (ms ModelSpecs) BuildModel() ([]float64, [][]float64, []float64, []ModelNot
 				}
 			}
 		}
+	} else {
+		// git rid of this soon
+		// adds pressure to xi4 so diff may work
+		for year := 0; year < ms.Ip.Numyr; year++ {
+			c[ms.Vindx.X(year, 4)] = 1 // minus unreal cg tax from ordinary income
+		}
 	}
+
 	//
 	// Adder objective function (R1') when PlusEstate is added
 	//
@@ -1104,7 +1111,7 @@ func (ms ModelSpecs) BuildModel() ([]float64, [][]float64, []float64, []ModelNot
 			// to get away from. Need to find a different method!!!!
 			// FIXME FIXME FIXME FIXME FIXME FIXME FIXME FIXME FIXME FIXME
 			//
-			// 2) mrik * xi1 - xi4 <= - yintercept ik for all i,k (14b')
+			// 2) mrik * xi1 - xi4 <= - yintercept ik for all i,k (12b')
 			//
 			notes = append(notes, ModelNote{len(A), "Constraints 12b':"})
 			for year := 0; year < ms.Ip.Numyr; year++ {
@@ -1211,17 +1218,17 @@ func (ms ModelSpecs) BuildModel() ([]float64, [][]float64, []float64, []ModelNot
 	//   Withdradrawal must be <= balance
 	//
 	notes = append(notes, ModelNote{len(A), "Constraints 14':"})
-	if !ms.UsePieceWiseMethod {
-		for year := 0; year < ms.Ip.Numyr; year++ {
-			for j := 0; j < len(ms.Accounttable); j++ {
-				row := make([]float64, nvars)
-				row[ms.Vindx.W(year, j)] = 1
-				row[ms.Vindx.B(year, j)] = -1
-				A = append(A, row)
-				b = append(b, 0.0)
-			}
+	//if !ms.UsePieceWiseMethod {
+	for year := 0; year < ms.Ip.Numyr; year++ {
+		for j := 0; j < len(ms.Accounttable); j++ {
+			row := make([]float64, nvars)
+			row[ms.Vindx.W(year, j)] = 1
+			row[ms.Vindx.B(year, j)] = -1
+			A = append(A, row)
+			b = append(b, 0.0)
 		}
 	}
+	//}
 	//
 	// Constraint for (15a')
 	//   Set the beginning b[1,j] balances

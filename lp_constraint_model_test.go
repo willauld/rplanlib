@@ -1044,7 +1044,7 @@ func TestPrintModelMatrix(t *testing.T) {
 
 func checkPrintModelOutput(ms ModelSpecs, A [][]float64, b []float64, c []float64, str string) bool {
 	//
-	// This code is pretty auwful. I should be improved when I have a chance
+	// This code is pretty auwful. It should be improved when I have a chance
 	//
 	// Maybe also add some checks to use ms.Vindx... or other data from ms.
 	//

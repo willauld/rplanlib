@@ -322,9 +322,14 @@ func TestE2E(t *testing.T) {
 			ms.PrintIncomeExpenseDetails()
 			ms.PrintAccountTrans(&res.X)
 			ms.PrintTax(&res.X)
-			ms.PrintTaxBrackets(&res.X)
-			ms.PrintShadowTaxBrackets(&res.X)
-			ms.PrintCapGainsBrackets(&res.X)
+			if !rplanlib.GetPiecewiseChoice() {
+				ms.PrintTaxBrackets(&res.X)
+				ms.PrintShadowTaxBrackets(&res.X)
+				ms.PrintCapGainsBrackets(&res.X)
+			} else {
+				// FIXME what to do here
+				ms.PrintPiecewiseLinearTax(&res.X)
+			}
 			ms.PrintAssetSummary()
 			ms.PrintBaseConfig(&res.X)
 

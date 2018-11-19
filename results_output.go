@@ -79,9 +79,11 @@ func (ms ModelSpecs) PrintActivitySummary(xp *[]float64) {
 
 		if ms.UsePieceWiseMethod {
 			// piecewise tax changes
-			tax = (*xp)[ms.Vindx.X(year, 2)]
+			//tax = (*xp)[ms.Vindx.X(year, 2)]
+			tax = (*xp)[ms.Vindx.IT(year)]
 			if ms.Accounttable[len(ms.Accounttable)-1].Acctype == Aftertax {
-				cgtax = (*xp)[ms.Vindx.Y(year, 2)]
+				//cgtax = (*xp)[ms.Vindx.Y(year, 2)]
+				cgtax = (*xp)[ms.Vindx.CGT(year)]
 			}
 			spendable = (*xp)[ms.Vindx.S(year)]
 		}
@@ -599,6 +601,56 @@ func (ms ModelSpecs) PrintTax(xp *[]float64) {
 		ms.Ao.Output("\n")
 	}
 	ms.printHeaderTax()
+}
+
+func (ms ModelSpecs) PrintPiecewiseLinearTax(xp *[]float64) {
+	ms.Ao.Output("\nTax Piecewise Linear Summary:\n\n")
+	//???start ms.printHeaderTax()
+	if ms.Ip.MyKey2 != "" && ms.Ip.FilingStatus == Joint {
+		ms.Ao.Output(fmt.Sprintf("%s/%s\n", ms.Ip.MyKey1, ms.Ip.MyKey2))
+		ms.Ao.Output("    age ")
+	} else {
+		if ms.Ip.MyKey1 != "nokey" {
+			ms.Ao.Output(fmt.Sprintf("%s\n", ms.Ip.MyKey1))
+		}
+		ms.Ao.Output(" age ")
+	}
+	str := fmt.Sprintf("&@%7s&@%7s&@%7s&@%7s&@%7s&@%7s&@%7s",
+		"TI", "IT", "CG", "CGT", "CGTS0",
+		"CGTS1", "CGTS2")
+	ms.Ao.Output(str)
+	str = fmt.Sprintf("&@%7s&@%7s&@%7s&@%7s&@%7s&@%7s",
+		"v0", "v1", "v2", "delta1", "delta2", "delta3")
+	ms.Ao.Output(str)
+	ms.Ao.Output("\n")
+	//???end ms.printHeaderTax()
+	for year := 0; year < ms.Ip.Numyr; year++ {
+		age := year + ms.Ip.StartPlan
+		//iMul := math.Pow(ms.Ip.IRate, float64(ms.Ip.PrePlanYears+year))
+		if ms.Ip.MyKey2 != "" && ms.Ip.FilingStatus == Joint {
+			ms.Ao.Output(fmt.Sprintf("%3d/%3d:", age, age-ms.Ip.AgeDelta))
+		} else {
+			ms.Ao.Output(fmt.Sprintf(" %3d:", year+ms.Ip.StartPlan))
+		}
+		str = fmt.Sprintf("&@%7.0f&@%7.0f&@%7.0f&@%7.0f&@%7.0f&@%7.0f&@%7.0f",
+			(*xp)[ms.Vindx.TI(year)]/ms.OneK,
+			(*xp)[ms.Vindx.IT(year)]/ms.OneK,
+			(*xp)[ms.Vindx.CG(year)]/ms.OneK,
+			(*xp)[ms.Vindx.CGT(year)]/ms.OneK,
+			(*xp)[ms.Vindx.CGTS(year, 0)]/ms.OneK,
+			(*xp)[ms.Vindx.CGTS(year, 1)]/ms.OneK,
+			(*xp)[ms.Vindx.CGTS(year, 2)]/ms.OneK)
+		ms.Ao.Output(str)
+		str = fmt.Sprintf("&@%7.0f&@%7.0f&@%7.0f&@%7.0f&@%7.0f&@%7.0f",
+			(*xp)[ms.Vindx.Boolvar(year, 0)]/ms.OneK,
+			(*xp)[ms.Vindx.Boolvar(year, 1)]/ms.OneK,
+			(*xp)[ms.Vindx.Boolvar(year, 2)]/ms.OneK,
+			(*xp)[ms.Vindx.Boolvar(year, 3)]/ms.OneK,
+			(*xp)[ms.Vindx.Boolvar(year, 4)]/ms.OneK,
+			(*xp)[ms.Vindx.Boolvar(year, 5)]/ms.OneK)
+		ms.Ao.Output(str)
+		ms.Ao.Output("\n")
+	}
 }
 
 func (ms ModelSpecs) printHeaderTaxBrackets() {
@@ -1122,7 +1174,8 @@ func (ms ModelSpecs) IncomeSummary(year int, xp *[]float64) (T, spendable, tax, 
 
 	T = ms.ordinaryTaxable(year, xp)
 	if ms.UsePieceWiseMethod {
-		tax = (*xp)[ms.Vindx.X(year, 2)]
+		//tax = (*xp)[ms.Vindx.X(year, 2)]
+		tax = (*xp)[ms.Vindx.IT(year)]
 		rate = -1
 	} else {
 		ntax := 0.0
@@ -1146,7 +1199,8 @@ func (ms ModelSpecs) IncomeSummary(year int, xp *[]float64) (T, spendable, tax, 
 	}
 	if ms.Ip.Accmap[Aftertax] > 0 {
 		if ms.UsePieceWiseMethod {
-			ncgtax = (*xp)[ms.Vindx.Y(year, 2)]
+			//ncgtax = (*xp)[ms.Vindx.Y(year, 2)]
+			ncgtax = (*xp)[ms.Vindx.CGT(year)]
 		} else {
 			for l := 0; l < len(*ms.Ti.Capgainstable); l++ {
 				ncgtax += (*xp)[ms.Vindx.Y(year, l)] * (*ms.Ti.Capgainstable)[l][2]

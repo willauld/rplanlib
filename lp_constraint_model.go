@@ -336,7 +336,7 @@ func NewModelSpecs(vindx VectorVarIndex,
 		//tablefile:               tablefile,
 		OneK:               1000.0,
 		DeveloperInfo:      developerInfo,
-		UsePieceWiseMethod: true, //false, //true, // use ms.SetParam() to change
+		UsePieceWiseMethod: GetPiecewiseChoice(),
 	}
 	if !RoundToOneK {
 		ms.OneK = 1.0
@@ -732,11 +732,12 @@ func (ms ModelSpecs) BuildModel() ([]float64, [][]float64, []float64, []ModelNot
 			}
 		}
 	} else {
+		// FIXME
 		// git rid of this soon
 		// adds pressure to xi4 so diff may work
-		for year := 0; year < ms.Ip.Numyr; year++ {
-			c[ms.Vindx.X(year, 4)] = 1 // minus unreal cg tax from ordinary income
-		}
+		//for year := 0; year < ms.Ip.Numyr; year++ {
+		//	c[ms.Vindx.X(year, 4)] = 1 // minus unreal cg tax from ordinary income
+		//}
 	}
 
 	//
@@ -776,7 +777,8 @@ func (ms ModelSpecs) BuildModel() ([]float64, [][]float64, []float64, []ModelNot
 		}
 		if ms.UsePieceWiseMethod {
 			// using X(year,2)===IT(year) or Income Tax for year
-			row[ms.Vindx.X(year, 2)] = 1
+			//row[ms.Vindx.X(year, 2)] = 1
+			row[ms.Vindx.IT(year)] = 1
 
 		} else {
 			for k := 0; k < len(*ms.Ti.Taxtable); k++ {
@@ -786,7 +788,8 @@ func (ms ModelSpecs) BuildModel() ([]float64, [][]float64, []float64, []ModelNot
 		if ms.Ip.Accmap[Aftertax] > 0 {
 			if ms.UsePieceWiseMethod {
 				// using Y(year,2)===CGIT(year) or Income Tax for year
-				row[ms.Vindx.Y(year, 2)] = 1
+				//row[ms.Vindx.Y(year, 2)] = 1
+				row[ms.Vindx.CGT(year)] = 1
 
 			} else {
 				for l := 0; l < len(*ms.Ti.Capgainstable); l++ {
@@ -896,7 +899,8 @@ func (ms ModelSpecs) BuildModel() ([]float64, [][]float64, []float64, []ModelNot
 		}
 		if ms.UsePieceWiseMethod {
 			// here x(year,1) represents total taxable income in year
-			row[ms.Vindx.X(year, 1)] = -1
+			//row[ms.Vindx.X(year, 1)] = -1
+			row[ms.Vindx.TI(year)] = -1
 		} else {
 			for k := 0; k < len(*ms.Ti.Taxtable); k++ {
 				row[ms.Vindx.X(year, k)] = -1
@@ -937,8 +941,10 @@ func (ms ModelSpecs) BuildModel() ([]float64, [][]float64, []float64, []ModelNot
 				y := (*ms.Ti.Taxtable)[k][3] * adj // tax at base
 				m := (*ms.Ti.Taxtable)[k][2]       // rate
 				yintercept := y - m*x
-				row[ms.Vindx.X(year, 1)] = 1 * m
-				row[ms.Vindx.X(year, 2)] = -1
+				//row[ms.Vindx.X(year, 1)] = 1 * m
+				//row[ms.Vindx.X(year, 2)] = -1
+				row[ms.Vindx.TI(year)] = 1 * m
+				row[ms.Vindx.IT(year)] = -1
 				A = append(A, row)
 				//b = append(b, ((*ms.Ti.Taxtable)[k][3])*math.Pow(ms.Ip.IRate, float64(ms.Ip.PrePlanYears+year))) // inflation adjusted
 				b = append(b, -yintercept) // inflation adjusted
@@ -1015,7 +1021,8 @@ func (ms ModelSpecs) BuildModel() ([]float64, [][]float64, []float64, []ModelNot
 			f := ms.cgTaxableFraction(year)
 			row := make([]float64, nvars)
 			if ms.UsePieceWiseMethod {
-				row[ms.Vindx.Y(year, 1)] = 1
+				//row[ms.Vindx.Y(year, 1)] = 1
+				row[ms.Vindx.CG(year)] = 1
 			} else {
 				for l := 0; l < len(*ms.Ti.Capgainstable); l++ {
 					row[ms.Vindx.Y(year, l)] = 1
@@ -1040,7 +1047,8 @@ func (ms ModelSpecs) BuildModel() ([]float64, [][]float64, []float64, []ModelNot
 			j := len(ms.Accounttable) - 1 // last Acc is investment / stocks
 			row[ms.Vindx.W(year, j)] = f
 			if ms.UsePieceWiseMethod {
-				row[ms.Vindx.Y(year, 1)] = -1
+				//row[ms.Vindx.Y(year, 1)] = -1
+				row[ms.Vindx.CG(year)] = -1
 			} else {
 				for l := 0; l < len(*ms.Ti.Capgainstable); l++ {
 					row[ms.Vindx.Y(year, l)] = -1
@@ -1050,127 +1058,271 @@ func (ms ModelSpecs) BuildModel() ([]float64, [][]float64, []float64, []ModelNot
 			b = append(b, -1*cgt)
 		}
 	}
-	if ms.UsePieceWiseMethod {
-		// line y=mx+b, b is yintercept
-		// X(year,1) === total taxable income
-		// X(year,2) === income tax for X(year,1)
-		// X(year,3) === amount if cap gains tax was for X(i,1)+Y(i,1)
-		// X(year,4) === amount if cap gains tax was for x(i,1)
-		// Y(year,1) === total taxable cap gains
-		// Y(year,2) === total cap gains tax
-		//x := (*ms.Ti.Taxtable)[k][0] * adj // base
-		//y := (*ms.Ti.Taxtable)[k][3] * adj // tax at base
-		//m := (*ms.Ti.Taxtable)[k][2]       // rate
-		//yintercept := y - m*x
-		// m * xi1 - xi2 <= -yintercept
-		//
-		// Add constraints for (12a', 12b', 12c' like 8')
-		//
-		// 1) mrik * xi1 + mrik * yi1 - xi3 <= - yintercept ik for all i,k (12a')
-		// 2) mrik * xi1 - xi4 <= - yintercept ik for all i,k (12b')
-		// 3) xi3 - xi4 - yi2 <= 0 for all i (12c')
-		if ms.Ip.Accmap[Aftertax] > 0 {
+	if ms.Ip.Accmap[Aftertax] > 0 {
+		if ms.UsePieceWiseMethod {
 			//
-			// 1) mrik * xi1 + mrik * yi1 - xi3 <= - yintercept ik for all i,k (12a')
+			// Add constraints for (12')
 			//
-			notes = append(notes, ModelNote{len(A), "Constraints 12a':"})
-			for year := 0; year < ms.Ip.Numyr; year++ {
-				/////// l == 0 is intentionally scipt as it is all zero
-				for l := 0; l < len(*ms.Ti.Capgainstable); l++ {
-					row := make([]float64, nvars)
-					// line y=mx+b, b is yintercept
-					// X(year,1) === total tabable income
-					// Y(year,1) === total taxable cap gains
-					// Y(year,2) === total cap gains tax
-					// X(year,3) === amount if cap gains tax was for X(i,1)+Y(i,1)
-					// X(year,4) === amount if cap gains tax was for x(i,1)
-					// adj inflation adjustment
-					adj := math.Pow(ms.Ip.IRate, float64(ms.Ip.PrePlanYears+year))
-					x := (*ms.Ti.Capgainstable)[l][0] * adj // base
-					y := (*ms.Ti.Capgainstable)[l][3] * adj // tax at base
-					m := (*ms.Ti.Capgainstable)[l][2]       // rate
-					yintercept := y - m*x
-					row[ms.Vindx.X(year, 1)] = 1 * m
-					row[ms.Vindx.Y(year, 1)] = 1 * m
-					row[ms.Vindx.X(year, 3)] = -1
-					A = append(A, row)
-					b = append(b, -yintercept) // inflation adjusted
-					/**/
-					if year < 3 {
-						fmt.Printf("14a l: %d, y: %10.5f, m: %10.5f, x: %10.5f, yintercep: %10.5f\n", l, y, m, x, yintercept)
-					}
-					/**/
-				}
+			/////// l == 0 is intentionally not skiped even though
+			/////// it is all zero
+			adj := 1.0
+			if len(*ms.Ti.Capgainstable) != 3 {
+				// Error: hand coded for 3 capital gains brakets
+				// cause a failure
+				a := 0.0
+				adj = 1 / a
 			}
-			// FIXME FIXME FIXME FIXME FIXME FIXME FIXME FIXME FIXME FIXME
-			// I now relize that the delta between 14a' and 14b' can be
-			// negitive or even 14b' itself may be negative so this approach
-			// does not work. So 14*' can't be used. Thought about using the
-			// shadow brackets (Sy) rather than 14b' but this requires pressure
-			// on them to fill from the bottom which is the problem I'm trying
-			// to get away from. Need to find a different method!!!!
-			// FIXME FIXME FIXME FIXME FIXME FIXME FIXME FIXME FIXME FIXME
-			//
-			// 2) mrik * xi1 - xi4 <= - yintercept ik for all i,k (12b')
-			//
-			notes = append(notes, ModelNote{len(A), "Constraints 12b':"})
+			notes = append(notes, ModelNote{len(A), "Constraints 12':"})
 			for year := 0; year < ms.Ip.Numyr; year++ {
-				/////// l == 0 is intentionally skipped as it is all zero
-				for l := 0; l < len(*ms.Ti.Capgainstable); l++ {
-					row := make([]float64, nvars)
-					// line y=mx+b, b is yintercept
-					// X(year,1) === total tabable income
-					// Y(year,1) === total taxable cap gains
-					// Y(year,2) === total cap gains tax
-					// X(year,3) === amount if cap gains tax was for X(i,1)+Y(i,1)
-					// X(year,4) === amount if cap gains tax was for x(i,1)
-					// adj inflation adjustment
-					adj := math.Pow(ms.Ip.IRate, float64(ms.Ip.PrePlanYears+year))
-					x := (*ms.Ti.Capgainstable)[l][0] * adj // base
-					y := (*ms.Ti.Capgainstable)[l][3] * adj // tax at base
-					m := (*ms.Ti.Capgainstable)[l][2]       // rate
-					yintercept := y - m*x
-					row[ms.Vindx.X(year, 1)] = 1 * m
-					row[ms.Vindx.X(year, 4)] = -1
-					A = append(A, row)
-					b = append(b, -yintercept) // inflation adjusted
-					/**/
-					if year < 3 {
-						fmt.Printf("14b l: %d, y: %6.2f, m: %10.5f, x: %10.5f, yintercep: %10.5f\n", l, y, m, x, yintercept)
-					}
-					/**/
-				}
-			}
-			//
-			// 3) xi3 - xi4 - yi2 <= 0 for all i (12c')
-			//
-			notes = append(notes, ModelNote{len(A), "Constraints 12c':"})
-			for year := 0; year < ms.Ip.Numyr; year++ {
-				// Y(year,2) === total cap gains tax
-				// X(year,3) === amount if cap gains tax was for X(i,1)+Y(i,1)
-				// X(year,4) === amount if cap gains tax was for x(i,1)
+				var row []float64
+				adj = math.Pow(ms.Ip.IRate, float64(ms.Ip.PrePlanYears+year))
+				// line y=mx+b, b is yintercept
+				//x := (*ms.Ti.Capgainstable)[l][0] * adj // base
+				//y := (*ms.Ti.Capgainstable)[l][3] * adj // tax at base
+				//m := (*ms.Ti.Capgainstable)[l][2]       // rate also tcg(l)
+				//yintercept := y - m*x
+				x1 := (*ms.Ti.Capgainstable)[0][0] * adj // base
+				y1 := (*ms.Ti.Capgainstable)[0][3] * adj // tax at base
+				m1 := (*ms.Ti.Capgainstable)[0][2]       // rate
+				x2 := (*ms.Ti.Capgainstable)[1][0] * adj // base
+				y2 := (*ms.Ti.Capgainstable)[1][3] * adj // tax at base
+				m2 := (*ms.Ti.Capgainstable)[1][2]       // rate
+				x3 := (*ms.Ti.Capgainstable)[2][0] * adj // base
+				y3 := (*ms.Ti.Capgainstable)[2][3] * adj // tax at base
+				m3 := (*ms.Ti.Capgainstable)[2][2]       // rate
+				//m2m1 := m2 - m1
+				//m3m2 := m3 - m2
+				//LB2m2m1 := x2 * m2m1
+				//LB3m3m2 := x3 * m3m2
+				yintercept1 := y1 - m1*x1
+				yintercept2 := y2 - m2*x2
+				yintercept3 := y3 - m3*x3
+				yintercept11 := yintercept1 - yintercept1
+				yintercept21 := yintercept2 - yintercept1
+				yintercept22 := yintercept2 - yintercept2
+				yintercept31 := yintercept3 - yintercept1
+				yintercept32 := yintercept3 - yintercept2
+				yintercept33 := yintercept3 - yintercept3
+				fmt.Printf("b1: %5.1f, b2: %6.1f, b3: %6.1f\n", yintercept1, yintercept2, yintercept3)
+				fmt.Printf("b11: %5.1f, b21: %6.1f, b22: %6.1f\n", yintercept11, yintercept21, yintercept22)
+				fmt.Printf("b31: %5.1f, b32: %6.1f, b33: %6.1f\n", yintercept31, yintercept32, yintercept33)
+
+				/**
+				// let CGTS(0) >= max(TIm2m1-LB2m2m1, 0) by the next tow constraints
+				// ==> CGTS(0) >= TI m2m1 - LB2m2m1
+				//    ==> -CGTS(0) + TI m2m1 <=  LB2m2m1
 				row := make([]float64, nvars)
-				row[ms.Vindx.X(year, 3)] = 1
-				row[ms.Vindx.X(year, 4)] = -1
-				row[ms.Vindx.Y(year, 2)] = -1
+				row[ms.Vindx.CGTS(year, 0)] = -1
+				row[ms.Vindx.TI(year)] = m2m1
+				A = append(A, row)
+				b = append(b, LB2m2m1)
+				// ==> CGTS(0) >= 0.0
+				//    ==> -CGTS(0) <= 0.0
+				row = make([]float64, nvars)
+				row[ms.Vindx.CGTS(year, 0)] = -1
 				A = append(A, row)
 				b = append(b, 0.0)
+
+				// let CGTS(1) >= max(TIm3m2-LB3m3m2, 0) by the next tow constraints
+				// ==> CGTS(1) >= TI m3m2 - LB3m3m2
+				//    ==> -CGTS(1) + TI m3m2 <=  LB3m3m2
+				row = make([]float64, nvars)
+				row[ms.Vindx.CGTS(year, 1)] = -1
+				row[ms.Vindx.TI(year)] = m3m2
+				A = append(A, row)
+				b = append(b, LB3m3m2)
+				// ==> CGTS(1) >= 0.0
+				//    ==> -CGTS(1) <= 0.0
+				row = make([]float64, nvars)
+				row[ms.Vindx.CGTS(year, 0)] = -1
+				A = append(A, row)
+				b = append(b, 0.0)
+
+				// Now get a var CGTS2 that is <= CGTS0 + CGTS1
+				row = make([]float64, nvars)
+				row[ms.Vindx.CGTS(year, 2)] = 1
+				row[ms.Vindx.CGTS(year, 0)] = -1
+				row[ms.Vindx.CGTS(year, 1)] = -1
+				A = append(A, row)
+				b = append(b, 0.0)
+				*/
+
+				//
+				// Find the capital gains bracket TI is in and use the
+				// info to set the Least Upper bound on the correct
+				// segment (bracket)
+				//
+				// v0 >= x2 + 0.1 - TI
+				//     -v0 -TI <= -x2 - 0.1
+				row = make([]float64, nvars)
+				row[ms.Vindx.Boolvar(year, 0)] = -1
+				row[ms.Vindx.TI(year)] = -1
+				A = append(A, row)
+				b = append(b, -x2-0.1)
+				// v1 >= x2 - x3 - 0.1 + TI
+				//    -v1 + TI <= -x2 + x3 + 0.1
+				row = make([]float64, nvars)
+				row[ms.Vindx.Boolvar(year, 1)] = -1
+				row[ms.Vindx.TI(year)] = 1
+				A = append(A, row)
+				b = append(b, x3-x2+0.1)
+				// v2 >= TI - x3 - 0.1
+				//    -v2 + TI <= x3 + 0.1
+				row = make([]float64, nvars)
+				row[ms.Vindx.Boolvar(year, 2)] = -1
+				row[ms.Vindx.TI(year)] = 1
+				A = append(A, row)
+				b = append(b, x3+0.1)
+				// vi >= 0 // assumed
+
+				// deltai <= vi*100 let daltai be boolvar(i+3)
+				//     deltai - vi 100 <= 0.0 let daltai be boolvar(i+3)
+				row = make([]float64, nvars)
+				row[ms.Vindx.Boolvar(year, 3)] = 1 // deltai
+				row[ms.Vindx.Boolvar(year, 0)] = -100
+				A = append(A, row)
+				b = append(b, 0.0)
+
+				row = make([]float64, nvars)
+				row[ms.Vindx.Boolvar(year, 4)] = 1 // deltai
+				row[ms.Vindx.Boolvar(year, 1)] = -100
+				A = append(A, row)
+				b = append(b, 0.0)
+
+				row = make([]float64, nvars)
+				row[ms.Vindx.Boolvar(year, 5)] = 1 // deltai
+				row[ms.Vindx.Boolvar(year, 2)] = -100
+				A = append(A, row)
+				b = append(b, 0.0)
+
+				// deltai <= 1
+				row = make([]float64, nvars)
+				row[ms.Vindx.Boolvar(year, 3)] = 1 // deltai
+				A = append(A, row)
+				b = append(b, 1.0)
+
+				row = make([]float64, nvars)
+				row[ms.Vindx.Boolvar(year, 4)] = 1 // deltai
+				A = append(A, row)
+				b = append(b, 1.0)
+
+				row = make([]float64, nvars)
+				row[ms.Vindx.Boolvar(year, 5)] = 1 // deltai
+				A = append(A, row)
+				b = append(b, 1.0)
+
+				// deltai >= 0 // assumed
+
+				//test a -cgts0 + m1*(TI+CG) <= -yintercpt1
+				//  test a -cgts0  + m1*(TI+CG) <= -yintercpt1
+				row = make([]float64, nvars)
+				row[ms.Vindx.CGTS(year, 0)] = -1
+				row[ms.Vindx.CG(year)] = m1
+				row[ms.Vindx.TI(year)] = m1
+				A = append(A, row)
+				b = append(b, -yintercept1)
+				//test b -cgts0 + m2*(TI+CG) <= -yintercpt2
+				//  test b -cgts0 + m2*(TI+CG) <= -yintercpt2
+				row = make([]float64, nvars)
+				row[ms.Vindx.CGTS(year, 0)] = -1
+				row[ms.Vindx.CG(year)] = m2
+				row[ms.Vindx.TI(year)] = m2
+				A = append(A, row)
+				b = append(b, -yintercept2)
+				//test c -cgts0+m3*(TI+CG) <= -yintercpt3
+				//  test c -cgts0+m3*(TI+CG)  <= -yintercpt3
+				row = make([]float64, nvars)
+				row[ms.Vindx.CGTS(year, 0)] = -1
+				row[ms.Vindx.CG(year)] = m3
+				row[ms.Vindx.TI(year)] = m3
+				A = append(A, row)
+				b = append(b, -yintercept3)
+
+				//test a' -cgts1 <= -m1 * TI + -yintercpt1
+				//  test a' -cgts1  + m1 * TI <= -yintercpt1
+				row = make([]float64, nvars)
+				row[ms.Vindx.CGTS(year, 1)] = -1
+				row[ms.Vindx.TI(year)] = m1
+				A = append(A, row)
+				b = append(b, -yintercept1)
+				//test b' -cgts1 <= -m2*TI + -yintercpt2
+				//  test b' -cgts1 + m2*TI <= -yintercpt2
+				row = make([]float64, nvars)
+				row[ms.Vindx.CGTS(year, 1)] = -1
+				row[ms.Vindx.TI(year)] = m2
+				A = append(A, row)
+				b = append(b, -yintercept2)
+				//test c' -cgts1 <= -m3*TI + -yintercpt3
+				//  test c' -cgts1 + m3*TI  <= -yintercpt3
+				row = make([]float64, nvars)
+				row[ms.Vindx.CGTS(year, 1)] = -1
+				row[ms.Vindx.TI(year)] = m3
+				A = append(A, row)
+				b = append(b, -yintercept3)
+
+				//
+				// now the least upper bound part
+				//
+				//test a'M: cgts1 <= m1 * TI + yintercpt1 + M - M * delta1
+				//							i.e.,		M(1-delta1)
+				//  test a'M: cgts1 - m1 * TI + M * delta1 <= yintercpt1 + M
+				row = make([]float64, nvars)
+				row[ms.Vindx.CGTS(year, 1)] = 1
+				row[ms.Vindx.TI(year)] = -m1
+				row[ms.Vindx.Boolvar(year, 3)] = 2000000.0 // delta1
+				A = append(A, row)
+				b = append(b, yintercept1+2000000.0)
+
+				//test b'M: cgts1 <= m2*TI + yintercpt2 + M -M*delta2 + M*delta3
+				//  test b'M: cgts1 - m2*TI +M*delta2 - M*delta3 <= yintercpt2 + M
+				row = make([]float64, nvars)
+				row[ms.Vindx.CGTS(year, 1)] = 1
+				row[ms.Vindx.TI(year)] = -m2
+				row[ms.Vindx.Boolvar(year, 4)] = 2000000.0  // delta2
+				row[ms.Vindx.Boolvar(year, 5)] = -2000000.0 // delta3
+				A = append(A, row)
+				b = append(b, yintercept2+2000000.0)
+
+				//test c'M: cgts1 <= m3*TI + yintercpt3 + M - M* delta3
+				//  test c'M: cgts1 - m3*TI + M*delta3 <= yintercpt3 + M
+				row = make([]float64, nvars)
+				row[ms.Vindx.CGTS(year, 1)] = 1
+				row[ms.Vindx.TI(year)] = -m3
+				row[ms.Vindx.Boolvar(year, 5)] = 2000000.0 // delta3
+				A = append(A, row)
+				b = append(b, yintercept3+2000000.0)
+
+				// Now combine
+				// CGT >= CGTS0 - CGTS1
+				//   ==> -CGT + CGTS0 + -CGTS1 <= 0.0
+				row = make([]float64, nvars)
+				row[ms.Vindx.CGT(year)] = -1
+				row[ms.Vindx.CGTS(year, 0)] = 1
+				row[ms.Vindx.CGTS(year, 1)] = -1
+				A = append(A, row)
+				b = append(b, 0.0)
+
+				/** /
+				if year < 3 {
+					fmt.Printf("14a l: %d, y: %10.5f, m: %10.5f, x: %10.5f, yintercep: %10.5f\n", l, y, m, x, yintercept)
+				}
+				/ **/
 			}
-		}
-	} else {
-		//
-		// Add constraints for (12')
-		//
-		notes = append(notes, ModelNote{len(A), "Constraints 12':"})
-		if ms.Ip.Accmap[Aftertax] > 0 {
-			for year := 0; year < ms.Ip.Numyr; year++ {
-				adjInf := math.Pow(ms.Ip.IRate, float64(ms.Ip.PrePlanYears+year))
-				for l := 0; l < len(*ms.Ti.Capgainstable)-1; l++ {
-					row := make([]float64, nvars)
-					row[ms.Vindx.Y(year, l)] = 1
-					row[ms.Vindx.Sy(year, l)] = 1
-					A = append(A, row)
-					b = append(b, (*ms.Ti.Capgainstable)[l][1]*adjInf) // mcg[i,l] inflation adjusted
+		} else {
+			//
+			// Add constraints for (12')
+			//
+			notes = append(notes, ModelNote{len(A), "Constraints 12':"})
+			if ms.Ip.Accmap[Aftertax] > 0 {
+				for year := 0; year < ms.Ip.Numyr; year++ {
+					adjInf := math.Pow(ms.Ip.IRate, float64(ms.Ip.PrePlanYears+year))
+					for l := 0; l < len(*ms.Ti.Capgainstable)-1; l++ {
+						row := make([]float64, nvars)
+						row[ms.Vindx.Y(year, l)] = 1
+						row[ms.Vindx.Sy(year, l)] = 1
+						A = append(A, row)
+						b = append(b, (*ms.Ti.Capgainstable)[l][1]*adjInf) // mcg[i,l] inflation adjusted
+					}
 				}
 			}
 		}
@@ -1498,8 +1650,12 @@ func (ms ModelSpecs) ConsistencyCheckSpendable(X *[]float64) (OK bool) {
 		}
 
 		bt := 0.0
-		for k := 0; k < len(*ms.Ti.Taxtable); k++ {
-			bt += (*X)[ms.Vindx.X(year, k)] * (*ms.Ti.Taxtable)[k][2]
+		if !GetPiecewiseChoice() {
+			for k := 0; k < len(*ms.Ti.Taxtable); k++ {
+				bt += (*X)[ms.Vindx.X(year, k)] * (*ms.Ti.Taxtable)[k][2]
+			}
+		} else {
+			bt = (*X)[ms.Vindx.IT(year)] // FIXME should this be calc outside of simplex for more actuate check????
 		}
 		if tax+0.1 < bt || tax-0.1 > bt {
 			OK = false
@@ -1745,25 +1901,27 @@ func (ms ModelSpecs) printModelRow(row []float64, suppressNewline bool) {
 		fmt.Fprintf(ms.Logfile, "%s\n", e)
 		return
 	}
-	for i := 0; i < ms.Ip.Numyr; i++ { // x[]
-		for k := 0; k < len(*ms.Ti.Taxtable); k++ {
-			if row[ms.Vindx.X(i, k)] != 0 {
-				fmt.Fprintf(ms.Logfile, "x[%d,%d]=%6.3f, ", i, k, row[ms.Vindx.X(i, k)])
-			}
-		}
-	}
-	if ms.Ip.Accmap[Aftertax] > 0 {
-		for i := 0; i < ms.Ip.Numyr; i++ { // sy[]
-			for l := 0; l < len(*ms.Ti.Capgainstable); l++ {
-				if row[ms.Vindx.Sy(i, l)] != 0 {
-					fmt.Fprintf(ms.Logfile, "sy[%d,%d]=%6.3f, ", i, l, row[ms.Vindx.Sy(i, l)])
+	if !GetPiecewiseChoice() {
+		for i := 0; i < ms.Ip.Numyr; i++ { // x[]
+			for k := 0; k < len(*ms.Ti.Taxtable); k++ {
+				if row[ms.Vindx.X(i, k)] != 0 {
+					fmt.Fprintf(ms.Logfile, "x[%d,%d]=%6.3f, ", i, k, row[ms.Vindx.X(i, k)])
 				}
 			}
 		}
-		for i := 0; i < ms.Ip.Numyr; i++ { // y[]
-			for l := 0; l < len(*ms.Ti.Capgainstable); l++ {
-				if row[ms.Vindx.Y(i, l)] != 0 {
-					fmt.Fprintf(ms.Logfile, "y[%d,%d]=%6.3f, ", i, l, row[ms.Vindx.Y(i, l)])
+		if ms.Ip.Accmap[Aftertax] > 0 {
+			for i := 0; i < ms.Ip.Numyr; i++ { // sy[]
+				for l := 0; l < len(*ms.Ti.Capgainstable); l++ {
+					if row[ms.Vindx.Sy(i, l)] != 0 {
+						fmt.Fprintf(ms.Logfile, "sy[%d,%d]=%6.3f, ", i, l, row[ms.Vindx.Sy(i, l)])
+					}
+				}
+			}
+			for i := 0; i < ms.Ip.Numyr; i++ { // y[]
+				for l := 0; l < len(*ms.Ti.Capgainstable); l++ {
+					if row[ms.Vindx.Y(i, l)] != 0 {
+						fmt.Fprintf(ms.Logfile, "y[%d,%d]=%6.3f, ", i, l, row[ms.Vindx.Y(i, l)])
+					}
 				}
 			}
 		}
@@ -1792,6 +1950,44 @@ func (ms ModelSpecs) printModelRow(row []float64, suppressNewline bool) {
 			fmt.Fprintf(ms.Logfile, "d[%d]=%6.3f, ", i, row[ms.Vindx.D(i)])
 		}
 	}
+	if GetPiecewiseChoice() {
+		for i := 0; i < ms.Ip.Numyr; i++ { // IT[]
+			if row[ms.Vindx.IT(i)] != 0 {
+				fmt.Fprintf(ms.Logfile, "it[%d]=%6.3f, ", i, row[ms.Vindx.IT(i)])
+			}
+		}
+		for i := 0; i < ms.Ip.Numyr; i++ { // TI[]
+			if row[ms.Vindx.TI(i)] != 0 {
+				fmt.Fprintf(ms.Logfile, "ti[%d]=%6.3f, ", i, row[ms.Vindx.TI(i)])
+			}
+		}
+		if ms.Ip.Accmap[Aftertax] > 0 {
+			for i := 0; i < ms.Ip.Numyr; i++ { // CG[]
+				if row[ms.Vindx.CG(i)] != 0 {
+					fmt.Fprintf(ms.Logfile, "cg[%d]=%6.3f, ", i, row[ms.Vindx.CG(i)])
+				}
+			}
+			for i := 0; i < ms.Ip.Numyr; i++ { // CGT[]
+				if row[ms.Vindx.CGT(i)] != 0 {
+					fmt.Fprintf(ms.Logfile, "cgt[%d]=%6.3f, ", i, row[ms.Vindx.CGT(i)])
+				}
+			}
+			for i := 0; i < ms.Ip.Numyr; i++ { // CGTS[]
+				for l := 0; l < len(*ms.Ti.Capgainstable); l++ {
+					if row[ms.Vindx.CGTS(i, l)] != 0 {
+						fmt.Fprintf(ms.Logfile, "cgts[%d,%d]=%6.3f, ", i, l, row[ms.Vindx.CGTS(i, l)])
+					}
+				}
+			}
+			for i := 0; i < ms.Ip.Numyr; i++ { // boolvar[]
+				for l := 0; l < ms.Vindx.Boolvars; l++ {
+					if row[ms.Vindx.Boolvar(i, l)] != 0 {
+						fmt.Fprintf(ms.Logfile, "boolvar[%d,%d]=%6.3f, ", i, l, row[ms.Vindx.Boolvar(i, l)])
+					}
+				}
+			}
+		}
+	}
 	if !suppressNewline {
 		fmt.Fprintf(ms.Logfile, "\n")
 	}
@@ -1805,46 +2001,48 @@ func (ms ModelSpecs) PrintObjectFunctionSolution(c []float64, row []float64) {
 	}
 	localSum := 0.0
 	globalSum := 0.0
-	for i := 0; i < ms.Ip.Numyr; i++ { // x[]
-		for k := 0; k < len(*ms.Ti.Taxtable); k++ {
-			cIndx := ms.Vindx.X(i, k)
-			if c[cIndx] != 0 {
-				cXrow := c[cIndx] * row[cIndx]
-				localSum += cXrow
-				fmt.Fprintf(ms.Logfile, "C[%d]=%6.3f * x[%d,%d]=%6.3f == %6.3f\n", cIndx, c[cIndx], i, k, row[cIndx], cXrow)
-			}
-		}
-	}
-	fmt.Fprintf(ms.Logfile, "\tSum Ci*Xi == %6.3f\n", localSum)
-	globalSum += localSum
-	localSum = 0.0
-	if ms.Ip.Accmap[Aftertax] > 0 {
-		for i := 0; i < ms.Ip.Numyr; i++ { // sy[]
-			for l := 0; l < len(*ms.Ti.Capgainstable); l++ {
-				cIndx := ms.Vindx.Sy(i, l)
+	if !GetPiecewiseChoice() {
+		for i := 0; i < ms.Ip.Numyr; i++ { // x[]
+			for k := 0; k < len(*ms.Ti.Taxtable); k++ {
+				cIndx := ms.Vindx.X(i, k)
 				if c[cIndx] != 0 {
 					cXrow := c[cIndx] * row[cIndx]
 					localSum += cXrow
-					fmt.Fprintf(ms.Logfile, "C[%d]=%6.3f * Sy[%d,%d]=%6.3f == %6.3f\n", cIndx, c[cIndx], i, l, row[cIndx], cXrow)
+					fmt.Fprintf(ms.Logfile, "C[%d]=%6.3f * x[%d,%d]=%6.3f == %6.3f\n", cIndx, c[cIndx], i, k, row[cIndx], cXrow)
 				}
 			}
 		}
-		fmt.Fprintf(ms.Logfile, "\tSum Ci*Syi == %6.3f\n", localSum)
+		fmt.Fprintf(ms.Logfile, "\tSum Ci*Xi == %6.3f\n", localSum)
 		globalSum += localSum
 		localSum = 0.0
-		for i := 0; i < ms.Ip.Numyr; i++ { // y[]
-			for l := 0; l < len(*ms.Ti.Capgainstable); l++ {
-				cIndx := ms.Vindx.Y(i, l)
-				if c[cIndx] != 0 {
-					cXrow := c[cIndx] * row[cIndx]
-					localSum += cXrow
-					fmt.Fprintf(ms.Logfile, "C[%d]=%6.3f * Y[%d,%d]=%6.3f == %6.3f\n", cIndx, c[cIndx], i, l, row[cIndx], cXrow)
+		if ms.Ip.Accmap[Aftertax] > 0 {
+			for i := 0; i < ms.Ip.Numyr; i++ { // sy[]
+				for l := 0; l < len(*ms.Ti.Capgainstable); l++ {
+					cIndx := ms.Vindx.Sy(i, l)
+					if c[cIndx] != 0 {
+						cXrow := c[cIndx] * row[cIndx]
+						localSum += cXrow
+						fmt.Fprintf(ms.Logfile, "C[%d]=%6.3f * Sy[%d,%d]=%6.3f == %6.3f\n", cIndx, c[cIndx], i, l, row[cIndx], cXrow)
+					}
 				}
 			}
+			fmt.Fprintf(ms.Logfile, "\tSum Ci*Syi == %6.3f\n", localSum)
+			globalSum += localSum
+			localSum = 0.0
+			for i := 0; i < ms.Ip.Numyr; i++ { // y[]
+				for l := 0; l < len(*ms.Ti.Capgainstable); l++ {
+					cIndx := ms.Vindx.Y(i, l)
+					if c[cIndx] != 0 {
+						cXrow := c[cIndx] * row[cIndx]
+						localSum += cXrow
+						fmt.Fprintf(ms.Logfile, "C[%d]=%6.3f * Y[%d,%d]=%6.3f == %6.3f\n", cIndx, c[cIndx], i, l, row[cIndx], cXrow)
+					}
+				}
+			}
+			fmt.Fprintf(ms.Logfile, "\tSum Ci*Yi == %6.3f\n", localSum)
+			globalSum += localSum
+			localSum = 0.0
 		}
-		fmt.Fprintf(ms.Logfile, "\tSum Ci*Yi == %6.3f\n", localSum)
-		globalSum += localSum
-		localSum = 0.0
 	}
 	for i := 0; i < ms.Ip.Numyr; i++ { // w[]
 		for j := 0; j < ms.Ip.Numacc; j++ {
@@ -1893,6 +2091,80 @@ func (ms ModelSpecs) PrintObjectFunctionSolution(c []float64, row []float64) {
 	}
 	fmt.Fprintf(ms.Logfile, "\tSum Ci*Di == %6.3f\n", localSum)
 	globalSum += localSum
-	fmt.Fprintf(ms.Logfile, "\t\tSum overall == %6.3f\n", globalSum)
 	localSum = 0.0
+	if GetPiecewiseChoice() {
+		for i := 0; i < ms.Ip.Numyr; i++ { // IT[]
+			cIndx := ms.Vindx.IT(i)
+			if c[cIndx] != 0 {
+				cXrow := c[cIndx] * row[cIndx]
+				localSum += cXrow
+				fmt.Fprintf(ms.Logfile, "C[%d]=%6.3f * IT[%d]=%6.3f == %6.3f\n", cIndx, c[cIndx], i, row[cIndx], cXrow)
+			}
+		}
+		fmt.Fprintf(ms.Logfile, "\tSum Ci*ITi == %6.3f\n", localSum)
+		globalSum += localSum
+		localSum = 0.0
+		for i := 0; i < ms.Ip.Numyr; i++ { // TI[]
+			cIndx := ms.Vindx.TI(i)
+			if c[cIndx] != 0 {
+				cXrow := c[cIndx] * row[cIndx]
+				localSum += cXrow
+				fmt.Fprintf(ms.Logfile, "C[%d]=%6.3f * TI[%d]=%6.3f == %6.3f\n", cIndx, c[cIndx], i, row[cIndx], cXrow)
+			}
+		}
+		fmt.Fprintf(ms.Logfile, "\tSum Ci*TIi == %6.3f\n", localSum)
+		globalSum += localSum
+		localSum = 0.0
+		if ms.Ip.Accmap[Aftertax] > 0 {
+			for i := 0; i < ms.Ip.Numyr; i++ { // CG[]
+				cIndx := ms.Vindx.CG(i)
+				if c[cIndx] != 0 {
+					cXrow := c[cIndx] * row[cIndx]
+					localSum += cXrow
+					fmt.Fprintf(ms.Logfile, "C[%d]=%6.3f * CG[%d]=%6.3f == %6.3f\n", cIndx, c[cIndx], i, row[cIndx], cXrow)
+				}
+			}
+			fmt.Fprintf(ms.Logfile, "\tSum Ci*CGi == %6.3f\n", localSum)
+			globalSum += localSum
+			localSum = 0.0
+			for i := 0; i < ms.Ip.Numyr; i++ { // CGT[]
+				cIndx := ms.Vindx.CGT(i)
+				if c[cIndx] != 0 {
+					cXrow := c[cIndx] * row[cIndx]
+					localSum += cXrow
+					fmt.Fprintf(ms.Logfile, "C[%d]=%6.3f * CGT[%d]=%6.3f == %6.3f\n", cIndx, c[cIndx], i, row[cIndx], cXrow)
+				}
+			}
+			fmt.Fprintf(ms.Logfile, "\tSum Ci*CGTi == %6.3f\n", localSum)
+			globalSum += localSum
+			localSum = 0.0
+			for i := 0; i < ms.Ip.Numyr; i++ { // CGTS[]
+				for l := 0; l < len(*ms.Ti.Capgainstable); l++ {
+					cIndx := ms.Vindx.CGTS(i, l)
+					if c[cIndx] != 0 {
+						cXrow := c[cIndx] * row[cIndx]
+						localSum += cXrow
+						fmt.Fprintf(ms.Logfile, "C[%d]=%6.3f * CGTS[%d,%d]=%6.3f == %6.3f\n", cIndx, c[cIndx], i, l, row[cIndx], cXrow)
+					}
+				}
+			}
+			fmt.Fprintf(ms.Logfile, "\tSum Ci*CGTSi == %6.3f\n", localSum)
+			globalSum += localSum
+			localSum = 0.0
+			for i := 0; i < ms.Ip.Numyr; i++ { // boolvar[]
+				for l := 0; l < ms.Vindx.Boolvars; l++ {
+					cIndx := ms.Vindx.Boolvar(i, l)
+					if c[cIndx] != 0 {
+						cXrow := c[cIndx] * row[cIndx]
+						localSum += cXrow
+						fmt.Fprintf(ms.Logfile, "C[%d]=%6.3f * boolvar[%d,%d]=%6.3f == %6.3f\n", cIndx, c[cIndx], i, l, row[cIndx], cXrow)
+					}
+				}
+			}
+			fmt.Fprintf(ms.Logfile, "\tSum Ci*boolvarsi == %6.3f\n", localSum)
+			globalSum += localSum
+			localSum = 0.0
+		}
+	}
+	fmt.Fprintf(ms.Logfile, "\t\tSum overall == %6.3f\n", globalSum)
 }

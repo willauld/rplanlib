@@ -1205,7 +1205,11 @@ retiree1
 			return // should this be continue?
 		}
 
-		ms.PrintTaxBrackets(elem.sxp)
+		if !GetPiecewiseChoice() {
+			ms.PrintTaxBrackets(elem.sxp)
+		} else {
+			// do what ever for the piecewise output
+		}
 
 		str := ms.RestoreModelSpecsTable(mychan, oldout, w, DoNothing)
 		strn := strings.TrimSpace(str)
@@ -1380,7 +1384,11 @@ retiree1
 			return // should this be continue?
 		}
 
-		ms.PrintCapGainsBrackets(elem.sxp)
+		if !GetPiecewiseChoice() {
+			ms.PrintCapGainsBrackets(elem.sxp)
+		} else {
+			// FIXME do whatever for the piecewise choice
+		}
 
 		str := ms.RestoreModelSpecsTable(mychan, oldout, w, DoNothing)
 		strn := strings.TrimSpace(str)
@@ -2076,8 +2084,12 @@ func TestAssetByTagAndField(t *testing.T) {
 				ms.PrintIncomeExpenseDetails()
 				ms.PrintAccountTrans(&res.X)
 				ms.PrintTax(&res.X)
-				ms.PrintTaxBrackets(&res.X)
-				ms.PrintCapGainsBrackets(&res.X)
+				if !GetPiecewiseChoice() {
+					ms.PrintTaxBrackets(&res.X)
+					ms.PrintCapGainsBrackets(&res.X)
+				} else {
+					// FIXME what should be done here?
+				}
 				/*
 					//ms.print_model_results(res.x)
 						        if args.verboseincome:

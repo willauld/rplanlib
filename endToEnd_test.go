@@ -68,8 +68,9 @@ func TestE2E(t *testing.T) {
 	//
 	// Define the local Testing options
 	//
-	DisplayOutputAndTiming := false  //true
+	DisplayOutputAndTiming := true   //false  //true
 	DoModelOptimizationTest := false //true //false
+	DoScaleModel := true             // false            // true
 	updateExpectFile := false
 	updateExpectFileInterationCounts := true
 	updateExpectFileSpendableAtLeast := false
@@ -208,6 +209,13 @@ func TestE2E(t *testing.T) {
 		bland := false
 		maxiter := 4000
 
+		if DoScaleModel {
+			//lpsimplex.LPSimplexSetNewBehavior(lpsimplex.NB_CMD_RESET | lpsimplex.NB_CMD_SCALEME | lpsimplex.NB_CMD_SCALEME_PIV_DIFF)
+			lpsimplex.LPSimplexSetNewBehavior(lpsimplex.NB_CMD_RESET | lpsimplex.NB_CMD_SCALEME)
+		} else {
+			lpsimplex.LPSimplexSetNewBehavior(lpsimplex.NB_CMD_RESET)
+		}
+
 		callback := lpsimplex.Callbackfunc(nil)
 		//callback := lpsimplex.LPSimplexVerboseCallback
 		//callback := lpsimplex.LPSimplexTerseCallback
@@ -345,8 +353,21 @@ func TestE2E(t *testing.T) {
 				ms.PrintModelMatrix(c, a, b, notes, slack, bindingOnly, nil)
 			}
 		} else {
+			str := fmt.Sprintf("Message: %v\n", res.Message)
+			ms.Ao.Output(str)
+			str = fmt.Sprintf("Time: LPSimplex() took %s\n", elapsed)
+			ms.Ao.Output(str)
+			str = fmt.Sprintf("\tIterations: %d\n", res.Nitr)
+			ms.Ao.Output(str)
+			str = fmt.Sprintf("Called LPSimplex() for m:%d x n:%d model\n", len(a), len(a[0]))
+			ms.Ao.Output(str)
 			ms.Ao.Output("LPSimplex failed\n")
-			fmt.Printf("LPSimplex failed\n")
+			varIndex := lpsimplex.LPSimplexNewBehaviorGetUnboundedVarNum()
+			str = fmt.Sprintf(", unbounded at %s", ms.Vindx.Varstr(varIndex))
+			if len(str) < 16 {
+				str = ""
+			}
+			t.Errorf("TestE2E case %d: Unexpected simplex failure after %d iterations with msg: %s%s", i, res.Nitr, res.Message, str)
 		}
 		//createDefX(&res.X)
 	}

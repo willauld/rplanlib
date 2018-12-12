@@ -1037,6 +1037,7 @@ func TestPrintModelMatrix(t *testing.T) {
 
 		str := ms.RestoreModelSpecsLog(mychan, oldout, w)
 		if !checkPrintModelOutput(ms, A, b, c, str) {
+			fmt.Printf("Missmatched string:\n%s\n", str)
 			t.Errorf("PrintModelMatrix Case %d: did not match expected\n", i)
 		}
 	}

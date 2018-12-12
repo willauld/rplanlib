@@ -460,32 +460,33 @@ func NewModelSpecs(vindx VectorVarIndex,
 		a.Bal = a.Origbal*math.Pow(a.RRate, float64(ip.PrePlanYears)) + dbal
 		ms.Accounttable = append(ms.Accounttable, a)
 	}
-	if ip.Aftatax > 0 || ip.AftataxContrib > 0 {
-		var dbasis float64
-		a := account{}
-		a.RRate = ip.AftataxRate
-		infr := 1.0
-		if ip.AftataxContribInflate == true {
-			infr = ip.IRate
-		}
-		a.Acctype = Aftertax
-		a.mykey = "" // need to make this definable for pc versions
-		a.Owner = noOwner
-		a.Origbal = float64(ip.Aftatax)
-		a.Origbasis = float64(ip.AftataxBasis)
-		a.Contrib = float64(ip.AftataxContrib)
-		a.Contributions, dbal, dbasis, err = genContrib(ip.AftataxContrib,
-			ms.convertAge(ip.AftataxContribStart, a.mykey),
-			ms.convertAge(ip.AftataxContribEnd, a.mykey),
-			ip.StartPlan, ip.EndPlan, infr, a.RRate, ip.Age1)
-		if err != nil {
-			return nil, err
-		}
-		a.Bal = a.Origbal*math.Pow(a.RRate, float64(ip.PrePlanYears)) + dbal
-		a.Basis = a.Origbasis + dbasis
-		//fmt.Printf("aftertax accout: %#v\n", a)
-		ms.Accounttable = append(ms.Accounttable, a)
+	// Starting 12-11-2018 always assume an after tax account
+	//if ip.Aftatax > 0 || ip.AftataxContrib > 0 {
+	var dbasis float64
+	a := account{}
+	a.RRate = ip.AftataxRate
+	infr := 1.0
+	if ip.AftataxContribInflate == true {
+		infr = ip.IRate
 	}
+	a.Acctype = Aftertax
+	a.mykey = "" // need to make this definable for pc versions
+	a.Owner = noOwner
+	a.Origbal = float64(ip.Aftatax)
+	a.Origbasis = float64(ip.AftataxBasis)
+	a.Contrib = float64(ip.AftataxContrib)
+	a.Contributions, dbal, dbasis, err = genContrib(ip.AftataxContrib,
+		ms.convertAge(ip.AftataxContribStart, a.mykey),
+		ms.convertAge(ip.AftataxContribEnd, a.mykey),
+		ip.StartPlan, ip.EndPlan, infr, a.RRate, ip.Age1)
+	if err != nil {
+		return nil, err
+	}
+	a.Bal = a.Origbal*math.Pow(a.RRate, float64(ip.PrePlanYears)) + dbal
+	a.Basis = a.Origbasis + dbasis
+	//fmt.Printf("aftertax accout: %#v\n", a)
+	ms.Accounttable = append(ms.Accounttable, a)
+	//}
 	if len(ms.Accounttable) != ms.Ip.Numacc {
 		e := fmt.Errorf("NewModelSpecs: len(accounttable): %d not equal to numacc: %d", len(ms.Accounttable), ms.Ip.Numacc)
 		return nil, e
@@ -731,6 +732,17 @@ func (ms ModelSpecs) BuildModel() ([]float64, [][]float64, []float64, []ModelNot
 		}
 	}
 	//
+	// Add objective function penalty for deposits as counter to
+	// tax forcing function
+	//
+	if ms.Ip.Accmap[Aftertax] > 0 {
+		depositCosts := 0.45
+		age70 := ms.firstYearAge70()
+		for year := 0; year < age70; year++ {
+			c[ms.Vindx.D(year)] = depositCosts
+		}
+	}
+	//
 	// Adder objective function (R1') when PlusEstate is added
 	//
 	//fmt.Printf("ms.Ip.Maximize: %#v\n", ms.Ip.Maximize)
@@ -835,7 +847,8 @@ func (ms ModelSpecs) BuildModel() ([]float64, [][]float64, []float64, []ModelNot
 		row := make([]float64, nvars)
 		row[ms.Vindx.S(year)] = 1
 		A = append(A, row)
-		b = append(b, float64(ms.Ip.Max)) // [ dm_i]
+		finalYearMax := float64(ms.Ip.Max)
+		b = append(b, finalYearMax) // [ dm_i]
 		//}
 	}
 
@@ -1081,6 +1094,18 @@ func (ms ModelSpecs) BuildModel() ([]float64, [][]float64, []float64, []ModelNot
 	return c, A, b, notes
 }
 
+// firstYearAge70 returns the first plan year that any retiree will be 70
+func (ms ModelSpecs) firstYearAge70() int {
+	year := 200
+	for _, v := range ms.Retirees {
+		y := 70 - v.ageAtStart
+		if year > y {
+			year = y
+		}
+	}
+	return year
+}
+
 // accountOwnerAge finds the age of the retiree who owns the account
 // Only valid in plan years
 func (ms ModelSpecs) accountOwnerAge(year int, acc account) int {
@@ -1202,6 +1227,10 @@ func (ms ModelSpecs) ConsistencyCheckBrackets(X *[]float64) (OK bool) {
 				ms.Ao.Output(fmt.Sprintf("\nImproperly packed brackets in year %d, bracket %d not empty while previous bracket not full (short by %6.0f)", year, k, gap))
 			}
 			gap = math.Abs(size - (*X)[ms.Vindx.X(year, k)])
+			if gap < -0.1 {
+				OK = false
+				ms.Ao.Output(fmt.Sprintf("\nImproperly packed brackets in year %d, bracket %d has more than posible (overage is %6.0f)", year, k, -gap))
+			}
 			fnf = false
 			if gap > 0.1 {
 				fnf = true
@@ -1226,6 +1255,10 @@ func (ms ModelSpecs) ConsistencyCheckBrackets(X *[]float64) (OK bool) {
 					ms.Ao.Output(fmt.Sprintf("\nImproperly packed shadow brackets in year %d, bracket %d not empty while previous bracket not full (short by %6.0f)", year, l, gap))
 				}
 				gap = math.Abs(size - (*X)[ms.Vindx.Sy(year, l)])
+				if gap < -0.1 {
+					OK = false
+					ms.Ao.Output(fmt.Sprintf("\nImproperly packed shadow brackets in year %d, bracket %d has more than posible (overage is %6.0f)", year, l, -gap))
+				}
 				fnf = false
 				if gap > 0.1 {
 					fnf = true

@@ -19,6 +19,7 @@ type errorCode int
 
 type acase struct {
 	Testfile         string    `csv:"Testfile"`
+	Logfile          string    `csv:"Logfile"`
 	ErrorType        errorCode `csv:"Error Type"`
 	SpendableAtLeast int       `csv:"Spendable At Least"`
 	ModelM           int       `csv:"Model M"`
@@ -72,8 +73,11 @@ func TestE2E(t *testing.T) {
 	DoModelOptimizationTest := false //true //false
 	DoScaleModel := true             // false            // true
 	updateExpectFile := false
-	updateExpectFileInterationCounts := true
+	updateExpectFileInterationCounts := false
 	updateExpectFileSpendableAtLeast := false
+	updateExpectFileModelMxN := false
+	updateExpectFileLogName := false
+	//updateExpectFileExpectedError := false // Not good to automate this one
 	ExecuteOnlyCase := -1 // -1 for all cases OR specific case number
 	//
 	// Bring this back in to make sure all configuration files are
@@ -103,8 +107,20 @@ func TestE2E(t *testing.T) {
 			}
 		}
 		if match == false {
+			var lfile string
+			base := filepath.Base(ifile)
+			extention := filepath.Ext(ifile)
+			if extention == ".strmap" {
+				lfile = "./testdata/strmap_test_output/" + base + ".log"
+
+			} else if extention == ".toml" {
+				lfile = "./testdata/toml_test_output/" + base + ".log"
+			} else {
+				// Error
+			}
 			c := acase{
 				Testfile:         ifile,
+				Logfile:          lfile,
 				ErrorType:        0,
 				SpendableAtLeast: 0,
 			}
@@ -141,7 +157,7 @@ func TestE2E(t *testing.T) {
 				// expected error
 				continue
 			}
-			t.Errorf("TestE2E case %d: configuration file error (%s): %s", i, curCase.Testfile, err)
+			t.Errorf("TestE2E case %d: configuration file error (%s): %s", i, curCase.Logfile, err)
 			rplanlib.PrintAndClearMsg(os.Stdout, msgList)
 			continue
 		}
@@ -162,7 +178,14 @@ func TestE2E(t *testing.T) {
 			t.Errorf("TestE2E case %d: %s", i, err)
 			continue
 		}
-		logname := "./testdata/" + ifileext[1:] + "_test_output/" + ifilecore + ".log"
+		logname := curCase.Logfile
+		if logname == "" {
+			logname = "./testdata/" + ifileext[1:] + "_test_output/" + ifilecore + ".log"
+		}
+		if updateExpectFile || updateExpectFileLogName {
+			cases[i].Logfile = logname
+			curCase.Logfile = logname
+		}
 		logfile, err := os.Create(logname)
 		if err != nil {
 			t.Errorf("TestE2E case %d: %s", i, err)
@@ -266,7 +289,7 @@ func TestE2E(t *testing.T) {
 			//OK := ms.ConsistencyCheck(os.Stdout, &res.X)
 			OK := ms.ConsistencyCheckBrackets(&res.X)
 			if !OK {
-				t.Errorf("TestE2E case %d: Check Brackets found issues with %s", i, curCase.Testfile)
+				t.Errorf("TestE2E case %d: Check Brackets found issues with %s", i, curCase.Logfile)
 			}
 			OK = ms.ConsistencyCheckSpendable(&res.X)
 			if !(OK || curCase.ErrorType != 0) {
@@ -274,17 +297,22 @@ func TestE2E(t *testing.T) {
 					if ms.Ip.Accmap[rplanlib.Aftertax] > 0 {
 						foundError := 2
 						if curCase.ErrorType != 2 {
-							t.Errorf("TestE2E case %d: %s for file %s", i, errorTypeTable[foundError].ErrorStr, curCase.Testfile)
+							t.Errorf("TestE2E case %d: %s for file %s", i, errorTypeTable[foundError].ErrorStr, curCase.Logfile)
 						}
 					} else {
 						foundError := 1
 						if curCase.ErrorType != 1 {
 							// actual error does not match expected error
-							t.Errorf("TestE2E case %d: %s for file %s", i, errorTypeTable[foundError].ErrorStr, curCase.Testfile)
+							t.Errorf("TestE2E case %d: %s for file %s", i, errorTypeTable[foundError].ErrorStr, curCase.Logfile)
 						}
 					}
 				} else {
-					t.Errorf("TestE2E case %d: did not generate expected error for file %s", i, curCase.Testfile)
+					t.Errorf("TestE2E case %d: did not generate expected error for file %s", i, curCase.Logfile)
+				}
+			} else {
+				if curCase.ErrorType != 0 {
+					// actual error does not match expected error
+					t.Errorf("TestE2E case %d: Expected %s but DID NOT find it for file %s", i, errorTypeTable[curCase.ErrorType].ErrorStr, curCase.Logfile)
 				}
 			}
 			//
@@ -298,14 +326,15 @@ func TestE2E(t *testing.T) {
 				curCase.SpendableAtLeast = newVal
 			}
 			if s < float64(curCase.SpendableAtLeast) {
-				t.Errorf("TestE2E case %d: first year spendable (%6.0f) is less than expected (%d diff of %6.0f) for file %s", i, s, curCase.SpendableAtLeast, float64(curCase.SpendableAtLeast)-s, curCase.Testfile)
+				t.Errorf("TestE2E case %d: first year spendable (%6.0f) is less than expected (%d diff of %6.0f) for file %s", i, s, curCase.SpendableAtLeast, float64(curCase.SpendableAtLeast)-s, curCase.Logfile)
 			}
 			//
 			// Check expected model size
 			//
 			m := len(a)
 			n := len(a[0])
-			if updateExpectFile {
+			if updateExpectFile ||
+				updateExpectFileModelMxN {
 				cases[i].ModelM = m
 				curCase.ModelM = m
 				cases[i].ModelN = n
@@ -368,12 +397,16 @@ func TestE2E(t *testing.T) {
 				str = ""
 			}
 			t.Errorf("TestE2E case %d: Unexpected simplex failure after %d iterations with msg: %s%s", i, res.Nitr, res.Message, str)
+
+			ms.PrintModelMatrix(c, a, b, notes, nil, false, nil)
 		}
 		//createDefX(&res.X)
 	}
 	if updateExpectFile ||
 		updateExpectFileInterationCounts ||
-		updateExpectFileSpendableAtLeast {
+		updateExpectFileSpendableAtLeast ||
+		updateExpectFileLogName ||
+		updateExpectFileModelMxN {
 		err = csvtag.DumpToFile(cases, "testdata/expect.csv")
 		if err != nil {
 			t.Errorf("***** Update of expect.csv failed *******")

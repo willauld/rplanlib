@@ -370,7 +370,8 @@ func TestNewInputParams(t *testing.T) {
 			startPlan:    65,
 			endPlan:      98,
 			numyr:        33,
-			accmap:       map[Acctype]int{IRA: 2, Roth: 1, Aftertax: 0},
+			accmap:       map[Acctype]int{IRA: 2, Roth: 1, Aftertax: 1},
+			// aftertax is always present
 		},
 		{ // case 3 // switch retirees
 			ip: map[string]string{
@@ -421,7 +422,8 @@ func TestNewInputParams(t *testing.T) {
 			startPlan:    65,
 			endPlan:      86,
 			numyr:        21,
-			accmap:       map[Acctype]int{IRA: 1, Roth: 1, Aftertax: 0},
+			accmap:       map[Acctype]int{IRA: 1, Roth: 1, Aftertax: 1},
+			// aftertax is always present
 		},
 		{ // case 4 // test definedContributionPlan
 			ip: map[string]string{
@@ -476,7 +478,8 @@ func TestNewInputParams(t *testing.T) {
 			startPlan:    65,
 			endPlan:      86,
 			numyr:        21,
-			accmap:       map[Acctype]int{IRA: 1, Roth: 1, Aftertax: 0},
+			accmap:       map[Acctype]int{IRA: 1, Roth: 1, Aftertax: 1},
+			// aftertax is always present
 		},
 		{ // case 5
 			ip: map[string]string{
@@ -629,7 +632,8 @@ func TestNewInputParams(t *testing.T) {
 		if modelip.Accmap[Roth] != elem.accmap[Roth] {
 			t.Errorf("NewInputParams case %d: Failed - roth accounts Expected %v but found %v\n", i, elem.accmap[Roth], modelip.Accmap[Roth])
 		}
-		if modelip.Accmap[Aftertax] != elem.accmap[Aftertax] {
+
+		if modelip.Accmap[Aftertax] != elem.accmap[Aftertax] /*Now always assume 1; need to update elem.accmap[Aftertax] */ {
 			t.Errorf("NewInputParams case %d: Failed - aftertax accounts Expected %v but found %v\n", i, elem.accmap[Aftertax], modelip.Accmap[Aftertax])
 		}
 	}

@@ -547,9 +547,10 @@ func NewInputParams(ip map[string]string, warnList *WarnErrorList) (*InputParams
 	rip.AftataxContribStart = getIPIntValue(ip["eT_Aftatax_ContribStartAge"])
 	rip.AftataxContribEnd = getIPIntValue(ip["eT_Aftatax_ContribEndAge"])
 	rip.AftataxContribInflate = getIPBoolValue(ip["eT_Aftatax_ContribInflate"])
-	if rip.Aftatax > 0 || rip.AftataxContrib > 0 {
-		rip.Accmap[Aftertax]++
-	}
+	// Starting 12-11-2018 Always assume an Aftertax account
+	//if rip.Aftatax > 0 || rip.AftataxContrib > 0 {
+	rip.Accmap[Aftertax]++
+	//}
 	if rip.AftataxRate < 0 {
 		rip.AftataxRate = rip.RRate
 	} else {

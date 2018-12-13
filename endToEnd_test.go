@@ -72,7 +72,7 @@ func TestE2E(t *testing.T) {
 	DisplayOutputAndTiming := true   //false  //true
 	DoModelOptimizationTest := false //true //false
 	DoScaleModel := true             // false            // true
-	updateExpectFile := false
+	updateExpectFile := false        // true
 	updateExpectFileInterationCounts := false
 	updateExpectFileSpendableAtLeast := false
 	updateExpectFileModelMxN := false

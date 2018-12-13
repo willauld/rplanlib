@@ -736,7 +736,7 @@ func (ms ModelSpecs) BuildModel() ([]float64, [][]float64, []float64, []ModelNot
 	// tax forcing function
 	//
 	if ms.Ip.Accmap[Aftertax] > 0 {
-		depositCosts := 0.45
+		depositCosts := 0.40
 		age70 := ms.firstYearAge70()
 		for year := 0; year < age70; year++ {
 			c[ms.Vindx.D(year)] = depositCosts

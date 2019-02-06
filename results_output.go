@@ -186,6 +186,17 @@ func (ms ModelSpecs) printIncomeHeader(headerkeylist []string, countlist []int, 
 	ms.Ao.Output("\n")
 }
 
+func (ms ModelSpecs) GetRMD(xp *[]float64, year int, j int) float64 {
+	rmdval := 0.0
+	if ms.Accounttable[j].Acctype == IRA {
+		rmd := ms.Ti.rmdNeeded(year, ms.matchRetiree(ms.Accounttable[j].mykey, year, true))
+		if rmd > 0 {
+			rmdval = (*xp)[ms.Vindx.B(year, j)] / rmd
+		}
+	}
+	return rmdval
+}
+
 /**/
 func (ms ModelSpecs) getSSIncomeAssetExpenseList() ([]string, []int, [][]float64) {
 	typeList := []string{"SocialSecurity", "income", "asset", "expense"}
